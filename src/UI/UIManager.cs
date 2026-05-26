@@ -26,6 +26,7 @@ namespace UnityExplorer.UI
             LightsManager,
             CamPaths,
             PostProcessingPanel,
+            Paralives,
             AnimatorPanel,
             Misc,
         }
@@ -100,6 +101,10 @@ namespace UnityExplorer.UI
             UIPanels.Add(Panels.LightsManager, new LightsManager(UiBase));
             UIPanels.Add(Panels.CamPaths, new CamPaths(UiBase));
             UIPanels.Add(Panels.PostProcessingPanel, new PostProcessingPanel(UiBase));
+#if MONO
+            if (UnityExplorer.McpBridge.Paralives.ParalivesControlService.IsAvailable)
+                UIPanels.Add(Panels.Paralives, new ParalivesPanel(UiBase));
+#endif
             UIPanels.Add(Panels.AnimatorPanel, new AnimatorPanel(UiBase));
             UIPanels.Add(Panels.Misc, new UnityExplorer.UI.Panels.Misc(UiBase));
             UIPanels.Add(Panels.Options, new OptionsPanel(UiBase));

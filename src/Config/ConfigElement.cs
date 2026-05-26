@@ -4,6 +4,9 @@
     {
         public string Name { get; }
         public string Description { get; }
+        public string Category { get; }
+        public bool RequiresRestart { get; }
+        public bool Advanced { get; }
 
         public bool IsInternal { get; }
         public Type ElementType => typeof(T);
@@ -30,10 +33,20 @@
             set => SetValue((T)value);
         }
 
-        public ConfigElement(string name, string description, T defaultValue, bool isInternal = false)
+        public ConfigElement(
+            string name,
+            string description,
+            T defaultValue,
+            bool isInternal = false,
+            string category = "General",
+            bool requiresRestart = false,
+            bool advanced = false)
         {
             Name = name;
             Description = description;
+            Category = category;
+            RequiresRestart = requiresRestart;
+            Advanced = advanced;
 
             m_value = defaultValue;
             DefaultValue = defaultValue;

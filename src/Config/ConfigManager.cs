@@ -72,10 +72,24 @@ public static ConfigElement<bool> Log_To_Disk;
         public static ConfigElement<int> McpBridge_Port;
         public static ConfigElement<int> McpBridge_RequestTimeoutMs;
 
+        public static ConfigElement<ParalivesSafeActionMode> Paralives_SafeActionMode;
+
+        public static ConfigElement<int> Paralives_SavedGameListLimit;
+
+        public static ConfigElement<int> Paralives_LoadingWaitTimeoutMs;
+
+        public static ConfigElement<bool> Paralives_PreferUiFlowForSaveLoad;
+
         public enum Language
         {
             English,
             Chinese
+        }
+
+        public enum ParalivesSafeActionMode
+        {
+            ConfirmRequired,
+            OneClickInUI
         }
 
         // internal configs
@@ -125,54 +139,109 @@ public static ConfigElement<bool> Log_To_Disk;
         {
             LanguageSetting = new("Language",
                 "The language used by UnityExplorer. Requires restart to fully take effect.",
-DetectDefaultLanguage());
+DetectDefaultLanguage(),
+                category: "General",
+                requiresRestart: true);
 
             Master_Toggle = new("CinematicUnityExplorer Toggle",
                 "The key to enable or disable CinematicUnityExplorer's menu and features.",
-                KeyCode.F7);
+                KeyCode.F7,
+                category: "General");
 
             Hide_On_Startup = new("Hide On Startup",
                 "Should CinematicUnityExplorer be hidden on startup?",
-                false);
+                false,
+                category: "UI");
 
+            McpBridge_Enabled = new("MCP Bridge Enabled",
+                "Expose a local WebSocket bridge for Model Context Protocol tooling.",
+                true,
+                category: "MCP",
+                requiresRestart: true);
+
+            McpBridge_Port = new("MCP Bridge Port",
+                "The localhost WebSocket port used by the UnityExplorer MCP bridge.",
+                8765,
+                category: "MCP",
+                requiresRestart: true);
+
+            McpBridge_RequestTimeoutMs = new("MCP Bridge Request Timeout Ms",
+                "How long the bridge waits for Unity main-thread MCP commands before timing out.",
+                5000,
+                category: "MCP");
+
+            Paralives_SafeActionMode = new("Paralives Safe Action Mode",
+                "Controls whether game-side Paralives UI actions require a second click confirmation. MCP writes still require dryRun false and the confirmation phrase.",
+                ParalivesSafeActionMode.ConfirmRequired,
+                category: "Paralives");
+
+            Paralives_SavedGameListLimit = new("Paralives Saved Game List Limit",
+                "Maximum saved games to display in the Paralives panel.",
+                50,
+                category: "Paralives");
+
+            Paralives_LoadingWaitTimeoutMs = new("Paralives Loading Wait Timeout Ms",
+                "Maximum time to wait for Paralives loading actions before treating them as timed out.",
+                30000,
+                category: "Paralives",
+                advanced: true);
+
+            Paralives_PreferUiFlowForSaveLoad = new("Paralives Prefer UI Flow For Save Load",
+                "Prefer visible Paralives UI flows for save loading when available; fallback methods are shown before execution.",
+                true,
+                category: "Paralives");
             Startup_Delay_Time = new("Startup Delay Time",
                 "The delay on startup before the UI is created.",
-                1f);
+                1f,
+                category: "UI",
+                requiresRestart: true);
 
             Target_Display = new("Target Display",
                 "The monitor index for CinematicUnityExplorer to use, if you have multiple. 0 is the default display, 1 is secondary, etc. " +
                 "Restart recommended when changing this setting. Make sure your extra monitors are the same resolution as your primary monitor.",
-                0);
+                0,
+                category: "UI",
+                requiresRestart: true);
 
             Force_Unlock_Mouse = new("Force Unlock Mouse",
-                "Force the Cursor to be unlocked (visible) when the CinematicUnityExplorer menu is open.",
-                true);
+"Force the Cursor to be unlocked (visible) when the CinematicUnityExplorer menu is open.",
+                true,
+                category: "UI");
             Force_Unlock_Mouse.OnValueChanged += (bool value) => UniverseLib.Config.ConfigManager.Force_Unlock_Mouse = value;
 
             Force_Unlock_Toggle = new("Force Unlock Toggle Key",
                 "The keybind to toggle the 'Force Unlock Mouse' setting. Only usable when CinematicUnityExplorer is open.",
-                KeyCode.None);
+                KeyCode.None,
+                category: "UI");
 
             Disable_EventSystem_Override = new("Disable EventSystem override",
                 "If enabled, CinematicUnityExplorer will not override the EventSystem from the game.\n<b>May require restart to take effect.</b>",
-                false);
+                false,
+                category: "Advanced",
+                requiresRestart: true,
+                advanced: true);
             Disable_EventSystem_Override.OnValueChanged += (bool value) => UniverseLib.Config.ConfigManager.Disable_EventSystem_Override = value;
 
             Default_Output_Path = new("Default Output Path",
                 "The default output path when exporting things from CinematicUnityExplorer.",
-                Path.Combine(ExplorerCore.ExplorerFolder, "Output"));
+                Path.Combine(ExplorerCore.ExplorerFolder, "Output"),
+                category: "Export");
 
             DnSpy_Path = new("dnSpy Path",
                 "The full path to dnSpy.exe (64-bit).",
-                @"C:/Program Files/dnspy/dnSpy.exe");
+                @"C:/Program Files/dnspy/dnSpy.exe",
+                category: "Inspector",
+                advanced: true);
 
             Main_Navbar_Anchor = new("Main Navbar Anchor",
-                "The vertical anchor of the main CinematicUnityExplorer Navbar, in case you want to move it.",
-                UIManager.VerticalAnchor.Top);
+"The vertical anchor of the main CinematicUnityExplorer Navbar, in case you want to move it.",
+                UIManager.VerticalAnchor.Top,
+                category: "UI");
 
             Log_Unity_Debug = new("Log Unity Debug",
                 "Should UnityEngine.Debug.Log messages be printed to CinematicUnityExplorer's log?",
-                false);
+                false,
+                category: "Console");
 
             Log_To_Disk = new("Log To Disk",
                 "Should CinematicUnityExplorer save log files to the disk?",
@@ -180,28 +249,36 @@ DetectDefaultLanguage());
 
             World_MouseInspect_Keybind = new("World Mouse-Inspect Keybind",
                 "Optional keybind to being a World-mode Mouse Inspect.",
-                KeyCode.None);
+                KeyCode.None,
+                category: "Inspector");
 
             UI_MouseInspect_Keybind = new("UI Mouse-Inspect Keybind",
                 "Optional keybind to begin a UI-mode Mouse Inspect.",
-                KeyCode.None);
+                KeyCode.None,
+                category: "Inspector");
 
             CSConsole_Assembly_Blacklist = new("CSharp Console Assembly Blacklist",
                 "Use this to blacklist Assembly names from being referenced by the C# Console. Requires a Reset of the C# Console.\n" +
                 "Separate each Assembly with a semicolon ';'." +
                 "For example, to blacklist Assembly-CSharp, you would add 'Assembly-CSharp;'",
-                "");
+                "",
+                category: "Console",
+                advanced: true);
 
             Reflection_Signature_Blacklist = new("Member Signature Blacklist",
                 "Use this to blacklist certain member signatures if they are known to cause a crash or other issues.\r\n" +
                 "Seperate signatures with a semicolon ';'.\r\n" +
                 "For example, to blacklist Camera.main, you would add 'UnityEngine.Camera.main;'",
-                "");
+                "",
+                category: "Inspector",
+                advanced: true);
 
             Reflection_Hide_NativeInfoPtrs = new("Hide NativeMethodInfoPtr_s and NativeFieldInfoPtr_s",
                 "Use this to blacklist NativeMethodPtr_s and NativeFieldInfoPtrs_s from the class inspector, mainly to reduce clutter.\r\n" +
                 "For example, this will hide 'Class.NativeFieldInfoPtr_value' for the field 'Class.value'.",
-                false);
+false,
+                category: "Inspector",
+                advanced: true);
 
             Auto_Scale_UI = new("Make the mod UI automatically scale with resolution",
                 "Especially useful when running games in high resolutions and you are having a hard time reading the mods menu (requires restart).",
@@ -337,18 +414,6 @@ DetectDefaultLanguage());
                 "The camera that will be targeted by the freecam methods.\n" +
                 "Only used when Freecam Camera Target Selection is enabled.",
                 "\\");
-
-            McpBridge_Enabled = new("MCP Bridge Enabled",
-                "Expose a local WebSocket bridge for Model Context Protocol tooling.",
-                true);
-
-            McpBridge_Port = new("MCP Bridge Port",
-                "The localhost WebSocket port used by the UnityExplorer MCP bridge.",
-                8765);
-
-            McpBridge_RequestTimeoutMs = new("MCP Bridge Request Timeout Ms",
-                "How long the bridge waits for Unity main-thread MCP commands before timing out.",
-                5000);
         }
 
         private static Language DetectDefaultLanguage()

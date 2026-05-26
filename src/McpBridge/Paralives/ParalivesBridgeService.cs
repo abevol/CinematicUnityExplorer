@@ -7,7 +7,7 @@ namespace UnityExplorer.McpBridge.Paralives
 {
     internal static class ParalivesBridgeService
     {
-        private const string ConfirmPhrase = "CONFIRM_PARALIVES_WRITE";
+        internal const string ConfirmPhrase = "CONFIRM_PARALIVES_WRITE";
         private const int MaxListedFiles = 200;
         private const int MaxListedSavedGames = 100;
         private static readonly Dictionary<string, string> mainMenuActionButtons = new(StringComparer.OrdinalIgnoreCase)
@@ -80,6 +80,56 @@ namespace UnityExplorer.McpBridge.Paralives
                 "paralives://types/cheats" => new Dictionary<string, object> { ["types"] = typeIndex.Cheats },
                 _ => throw new McpBridgeException("invalid_request", $"Unknown Paralives resource '{uri}'.")
             };
+        }
+
+        internal static Dictionary<string, object> GetGameStateSnapshot()
+        {
+            EnsureAvailable();
+            return (Dictionary<string, object>)GetGameState();
+        }
+
+        internal static Dictionary<string, object> GetLoadingStateSnapshot()
+        {
+            EnsureAvailable();
+            return (Dictionary<string, object>)GetLoadingState();
+        }
+
+        internal static Dictionary<string, object> ListMainMenuActionSnapshots()
+        {
+            EnsureAvailable();
+            return (Dictionary<string, object>)ListMainMenuActions();
+        }
+
+        internal static Dictionary<string, object> InvokeMainMenuActionForUi(string action, bool confirmed)
+        {
+            EnsureAvailable();
+            Dictionary<string, object> parameters = new()
+            {
+                ["action"] = action,
+                ["dryRun"] = !confirmed
+            };
+            if (confirmed)
+                parameters["confirm"] = ConfirmPhrase;
+            return (Dictionary<string, object>)InvokeMainMenuAction(parameters);
+        }
+
+        internal static Dictionary<string, object> ListSavedGamesForUi(int limit)
+        {
+            EnsureAvailable();
+            return (Dictionary<string, object>)ListSavedGames(new Dictionary<string, object> { ["limit"] = limit });
+        }
+
+        internal static Dictionary<string, object> LoadSavedGameForUi(string argumentName, string argumentValue, bool confirmed)
+        {
+            EnsureAvailable();
+            Dictionary<string, object> parameters = new()
+            {
+                [argumentName] = argumentValue,
+                ["dryRun"] = !confirmed
+            };
+            if (confirmed)
+                parameters["confirm"] = ConfirmPhrase;
+            return (Dictionary<string, object>)LoadSavedGame(parameters);
         }
 
         private static object GetTypeIndex()
@@ -196,7 +246,10 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object ListSavedGames(Dictionary<string, object> parameters)
         {
-            int limit = Clamp(GetOptionalInt(parameters, "limit", 50), 1, MaxListedSavedGames);
+            int defaultLimit = UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit != null
+                ? UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit.Value
+                : 50;
+            int limit = Clamp(GetOptionalInt(parameters, "limit", defaultLimit), 1, MaxListedSavedGames);
             List<object> managerItems = TryListSavedGamesFromManager(limit);
             List<object> files = ListSavedGameFiles(limit);
 

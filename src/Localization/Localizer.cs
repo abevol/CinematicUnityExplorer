@@ -15,7 +15,9 @@ namespace UnityExplorer.Localization
             { "PANEL_FREECAM", "自由相机" },
             { "PANEL_CLIPBOARD", "剪贴板" },
             { "PANEL_LOG", "日志" },
-            { "PANEL_OPTIONS", "设置" },
+            { "PANEL_OPTIONS", "设置" },
+
+            { "PANEL_PARALIVES", "Paralives 控制台" },
             { "PANEL_UI_INSPECTOR_RESULTS", "UI 检查器结果" },
 
             // Tabs

@@ -4,6 +4,9 @@
     {
         string Name { get; }
         string Description { get; }
+        string Category { get; }
+        bool RequiresRestart { get; }
+        bool Advanced { get; }
 
         bool IsInternal { get; }
         Type ElementType { get; }
