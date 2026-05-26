@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.Config;
+using UnityExplorer.McpBridge;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
 using UnityExplorer.UI.Widgets;
@@ -33,10 +34,12 @@ namespace UnityExplorer
             DontDestroyOnLoad(obj);
             obj.hideFlags = HideFlags.HideAndDontSave;
             Instance = obj.AddComponent<ExplorerBehaviour>();
+            McpBridgeController.Init();
         }
 
         internal void Update()
         {
+            McpBridgeController.Update();
             ExplorerCore.Update();
         }
 
@@ -53,8 +56,9 @@ namespace UnityExplorer
         {
             if (quitting) return;
             quitting = true;
-            if (UIManager.UIRoot)
-                TryDestroy(UIManager.UIRoot.transform.root.gameObject);
+            McpBridgeController.Shutdown();
+
+            TryDestroy(UIManager.UIRoot?.transform.root.gameObject);
 
             TryDestroy((typeof(Universe).Assembly.GetType("UniverseLib.UniversalBehaviour")
                 .GetProperty("Instance", BindingFlags.Static | BindingFlags.NonPublic)

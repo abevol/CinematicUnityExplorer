@@ -144,6 +144,10 @@
             <HintPath>..\lib\net35\mcs.dll</HintPath>
             <Private>True</Private>
         </Reference>
+        <Reference Include="Mono.Cecil">
+            <HintPath>..\UnityEditorPackage\Runtime\Mono.Cecil.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
     <!-- MelonLoader net6 -->
     <ItemGroup Condition="'$(Configuration)'=='ML_Cpp_net6' or '$(Configuration)'=='ML_Cpp_net6_interop'">

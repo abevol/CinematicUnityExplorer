@@ -67,6 +67,10 @@ namespace UnityExplorer.Config
         public static ConfigElement<string> Custom_Components_To_Disable;
         public static ConfigElement<string> Preferred_Target_Camera;
 
+        public static ConfigElement<bool> McpBridge_Enabled;
+        public static ConfigElement<int> McpBridge_Port;
+        public static ConfigElement<int> McpBridge_RequestTimeoutMs;
+
         public enum Language
         {
             English,
@@ -332,6 +336,18 @@ namespace UnityExplorer.Config
                 "The camera that will be targeted by the freecam methods.\n" +
                 "Only used when Freecam Camera Target Selection is enabled.",
                 "\\");
+
+            McpBridge_Enabled = new("MCP Bridge Enabled",
+                "Expose a local WebSocket bridge for Model Context Protocol tooling.",
+                true);
+
+            McpBridge_Port = new("MCP Bridge Port",
+                "The localhost WebSocket port used by the UnityExplorer MCP bridge.",
+                8765);
+
+            McpBridge_RequestTimeoutMs = new("MCP Bridge Request Timeout Ms",
+                "How long the bridge waits for Unity main-thread MCP commands before timing out.",
+                5000);
         }
     }
 }
