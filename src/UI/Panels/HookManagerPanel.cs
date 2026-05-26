@@ -31,6 +31,8 @@ namespace UnityExplorer.UI.Panels
 
         public Pages CurrentPage { get; private set; } = Pages.ClassMethodSelector;
 
+        private Text dashboardLabel;
+
         public HookManagerPanel(UIBase owner) : base(owner)
         {
         }
@@ -59,6 +61,12 @@ namespace UnityExplorer.UI.Panels
             }
         }
 
+        public override void Update()
+        {
+            base.Update();
+            UpdateDashboard();
+        }
+
         public override void SetDefaultSizeAndPosition()
         {
             base.SetDefaultSizeAndPosition();
@@ -84,6 +92,8 @@ namespace UnityExplorer.UI.Panels
             //GameObject leftGroup = UIFactory.CreateVerticalGroup(ContentRoot, "LeftGroup", true, true, true, true);
             UIFactory.SetLayoutElement(ContentRoot.gameObject, minWidth: 300, flexibleWidth: 9999, flexibleHeight: 9999);
 
+            dashboardLabel = UEUI.CreateStatus(ContentRoot, "HookDashboard", "Hooks: 0 active / 0 total");
+
             hookList.ConstructUI(ContentRoot);
 
             // // Right Group
@@ -98,6 +108,22 @@ namespace UnityExplorer.UI.Panels
 
             genericArgsHandler.ConstructUI(ContentRoot);
             genericArgsHandler.UIRoot.SetActive(false);
+        }
+
+        private void UpdateDashboard()
+        {
+            if (!dashboardLabel)
+                return;
+
+            int total = HookList.currentHooks.Count;
+            int active = 0;
+            foreach (object item in HookList.currentHooks.Values)
+            {
+                if (item is HookInstance hook && hook.Enabled)
+                    active++;
+            }
+
+            dashboardLabel.text = $"Hooks: {active} active / {total} total | Patch types: Prefix, Postfix, Finalizer, Transpiler";
         }
     }
 }

@@ -18,6 +18,8 @@ namespace UnityExplorer.Localization
             { "PANEL_OPTIONS", "设置" },
 
             { "PANEL_PARALIVES", "Paralives 控制台" },
+
+            { "PANEL_MCP", "MCP 桥接" },
             { "PANEL_UI_INSPECTOR_RESULTS", "UI 检查器结果" },
 
             // Tabs
@@ -61,9 +63,15 @@ namespace UnityExplorer.Localization
             { "LBL_SCENE_FILTER", "场景过滤:" },
             { "LBL_NAME_CONTAINS", "名称包含:" },
             { "LBL_RESULTS_COUNT", "共 {0} 个结果" },
-            { "CONTEXT_UNITYOBJECT", "Unity 对象" },
+            { "CONTEXT_UNITYOBJECT", "Unity 对象" },
+
+            { "CONTEXT_GAMEOBJECT", "GameObject" },
+
+            { "CONTEXT_COMPONENT", "Component" },
             { "CONTEXT_SINGLETON", "单例 (Singleton)" },
-            { "CONTEXT_CLASS", "类型 (Class)" },
+            { "CONTEXT_CLASS", "类型 (Class)" },
+
+            { "CONTEXT_STATICCLASS", "静态类 (Static Class)" },
             { "FILTER_ANY", "任意" },
             { "FILTER_ROOTONLY", "仅根级" },
             { "FILTER_CHILDONLY", "仅子级" },

@@ -4,6 +4,15 @@ namespace UnityExplorer.McpBridge
 {
     internal static class McpBridgeController
     {
+        internal sealed class RequestLogEntry
+        {
+            public DateTime Time;
+            public string Action;
+            public bool Ok;
+            public string Error;
+            public long DurationMs;
+        }
+
         private sealed class PendingRequest
         {
             public string Payload;
@@ -12,7 +21,13 @@ namespace UnityExplorer.McpBridge
         }
 
         private static readonly Queue<PendingRequest> pendingRequests = new();
+        private static readonly List<RequestLogEntry> requestLog = new();
         private static McpWebSocketServer server;
+        private static bool listening;
+        private static string lastError;
+        private static string lastAction;
+        private static DateTime? lastRequestTime;
+        private static long lastDurationMs;
 
         public static void Init()
         {
@@ -21,12 +36,15 @@ namespace UnityExplorer.McpBridge
 
             server = new McpWebSocketServer(Config.ConfigManager.McpBridge_Port.Value);
             server.Start(SubmitFromTransport);
+            listening = true;
+            lastError = null;
         }
 
         public static void Shutdown()
         {
             server?.Stop();
             server = null;
+            listening = false;
 
             lock (pendingRequests)
             {
@@ -36,6 +54,40 @@ namespace UnityExplorer.McpBridge
                     request.Response = BuildErrorResponse(null, "execution_failed", "UnityExplorer MCP bridge is shutting down.");
                     request.Complete.Set();
                 }
+            }
+        }
+
+        public static Dictionary<string, object> GetStatusSnapshot()
+        {
+            int pending;
+            lock (pendingRequests)
+                pending = pendingRequests.Count;
+
+            lock (requestLog)
+            {
+                return new Dictionary<string, object>
+                {
+                    ["enabled"] = Config.ConfigManager.McpBridge_Enabled.Value,
+                    ["listening"] = listening,
+                    ["port"] = Config.ConfigManager.McpBridge_Port.Value,
+                    ["pendingRequests"] = pending,
+                    ["lastAction"] = lastAction,
+                    ["lastError"] = lastError,
+                    ["lastRequestTime"] = lastRequestTime?.ToString("HH:mm:ss") ?? "",
+                    ["lastDurationMs"] = lastDurationMs,
+                    ["requests"] = requestLog
+                        .Take(25)
+                        .Select(entry => new Dictionary<string, object>
+                        {
+                            ["time"] = entry.Time.ToString("HH:mm:ss"),
+                            ["action"] = entry.Action,
+                            ["ok"] = entry.Ok,
+                            ["error"] = entry.Error,
+                            ["durationMs"] = entry.DurationMs
+                        })
+                        .Cast<object>()
+                        .ToList()
+                };
             }
         }
 
@@ -74,6 +126,8 @@ namespace UnityExplorer.McpBridge
         private static string HandlePayload(string payload)
         {
             object id = null;
+            string action = "";
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
 
             try
             {
@@ -81,9 +135,11 @@ namespace UnityExplorer.McpBridge
                     throw new McpBridgeException("invalid_request", "Request must be a JSON object.");
 
                 request.TryGetValue("id", out id);
-                string action = GetRequiredString(request, "action");
+                action = GetRequiredString(request, "action");
                 Dictionary<string, object> parameters = GetParameters(request);
                 object result = McpBridgeService.Handle(action, parameters);
+                sw.Stop();
+                RecordRequest(action, true, null, sw.ElapsedMilliseconds);
 
                 return McpJson.Stringify(new Dictionary<string, object>
                 {
@@ -94,12 +150,39 @@ namespace UnityExplorer.McpBridge
             }
             catch (McpBridgeException ex)
             {
+                sw.Stop();
+                RecordRequest(action, false, ex.Code, sw.ElapsedMilliseconds);
                 return BuildErrorResponse(id, ex.Code, ex.Message);
             }
             catch (Exception ex)
             {
                 ExplorerCore.LogWarning($"MCP bridge request failed: {ex}");
+                sw.Stop();
+                RecordRequest(action, false, "execution_failed", sw.ElapsedMilliseconds);
                 return BuildErrorResponse(id, "execution_failed", ex.GetInnerMostException().Message);
+            }
+        }
+
+        private static void RecordRequest(string action, bool ok, string error, long durationMs)
+        {
+            lastAction = string.IsNullOrEmpty(action) ? "<invalid>" : action;
+            lastError = ok ? null : error;
+            lastRequestTime = DateTime.Now;
+            lastDurationMs = durationMs;
+
+            lock (requestLog)
+            {
+                requestLog.Insert(0, new RequestLogEntry
+                {
+                    Time = DateTime.Now,
+                    Action = lastAction,
+                    Ok = ok,
+                    Error = error,
+                    DurationMs = durationMs
+                });
+
+                if (requestLog.Count > 50)
+                    requestLog.RemoveRange(50, requestLog.Count - 50);
             }
         }
 

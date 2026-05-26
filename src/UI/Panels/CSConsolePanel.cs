@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityExplorer.CSConsole;
 using UnityExplorer.Localization;
+using UnityExplorer.UI.Widgets;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets;
@@ -27,6 +28,8 @@ namespace UnityExplorer.UI.Panels
         public Text LineNumberText { get; private set; }
 
         public Dropdown HelpDropdown { get; private set; }
+
+        private Text statusLabel;
 
         // events
         public Action<string> OnInputChanged;
@@ -64,6 +67,12 @@ namespace UnityExplorer.UI.Panels
             OnPanelResized?.Invoke();
         }
 
+        private void SetStatus(string text)
+        {
+            if (statusLabel)
+                statusLabel.text = text ?? "";
+        }
+
         protected override void ConstructPanelContent()
         {
             // Tools Row
@@ -77,12 +86,12 @@ namespace UnityExplorer.UI.Panels
             ButtonRef compileButton = UIFactory.CreateButton(toolsRow, "CompileButton", Localizer.Get("BTN_COMPILE", "Compile"), new Color(0.33f, 0.5f, 0.33f));
             UIFactory.SetLayoutElement(compileButton.Component.gameObject, minHeight: 28, minWidth: 130, flexibleHeight: 0);
             compileButton.ButtonText.fontSize = 15;
-            compileButton.OnClick += () => { OnCompileClicked?.Invoke(); };
+            compileButton.OnClick += () => { SetStatus("Compile requested."); OnCompileClicked?.Invoke(); };
 
             ButtonRef resetButton = UIFactory.CreateButton(toolsRow, "ResetButton", Localizer.Get("BTN_RESET", "Reset"), new Color(0.33f, 0.33f, 0.33f));
             UIFactory.SetLayoutElement(resetButton.Component.gameObject, minHeight: 28, minWidth: 80, flexibleHeight: 0);
             resetButton.ButtonText.fontSize = 15;
-            resetButton.OnClick += () => { OnResetClicked?.Invoke(); };
+            resetButton.OnClick += () => { SetStatus("Console reset requested."); OnResetClicked?.Invoke(); };
 
             // Help dropdown
 
@@ -114,6 +123,8 @@ namespace UnityExplorer.UI.Panels
             autoIndentToggleText.alignment = TextAnchor.UpperLeft;
             autoIndentToggleText.text = Localizer.Get("LBL_AUTO_INDENT", "Auto-indent");
             AutoIndentToggle.onValueChanged.AddListener((bool val) => { OnAutoIndentToggled?.Invoke(val); });
+
+            statusLabel = UEUI.CreateStatus(ContentRoot, "ConsoleStatus", "Mode: REPL / Script / Class input. Compile with button or Ctrl+R when enabled.");
 
             // Console Input
 

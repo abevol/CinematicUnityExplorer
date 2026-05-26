@@ -10,6 +10,7 @@ using CinematicUnityExplorer.Cinematic;
 #if UNHOLLOWER
 using UnhollowerRuntimeLib;
 #endif
+
 #if INTEROP
 using Il2CppInterop.Runtime.Injection;
 #endif
@@ -82,6 +83,7 @@ namespace UnityExplorer.UI.Panels
         static bool disabledOrthographic;
         static bool disabledOcclusionCulling;
         static List<string> stringComponentsToDisable = new();
+        static Text statusLabel;
         
         private class DisableTarget
         {
@@ -151,6 +153,8 @@ namespace UnityExplorer.UI.Panels
 
             if (freecamCursorUnlocker == null) freecamCursorUnlocker = new FreecamCursorUnlocker();
             freecamCursorUnlocker.Enable();
+
+            RefreshStatus();
         }
 
         private static Camera[] GetAvailableCameras()
@@ -432,6 +436,8 @@ namespace UnityExplorer.UI.Panels
                 lastMainCamera.enabled = true;
 
             freecamCursorUnlocker.Disable();
+
+            RefreshStatus();
         }
 
         internal static void MaybeResetFreecam()
@@ -587,6 +593,10 @@ namespace UnityExplorer.UI.Panels
 
         protected override void ConstructPanelContent()
         {
+            statusLabel = UIFactory.CreateLabel(ContentRoot, "FreecamStatus", "", TextAnchor.UpperLeft);
+            UIFactory.SetLayoutElement(statusLabel.gameObject, flexibleWidth: 9999, minHeight: 20);
+            RefreshStatus();
+
             startStopButton = UIFactory.CreateButton(ContentRoot, "ToggleButton", Localizer.Get("BTN_FREECAM", "Freecam"));
             UIFactory.SetLayoutElement(startStopButton.GameObject, minWidth: 150, minHeight: 25, flexibleWidth: 9999);
             startStopButton.OnClick += StartStopButton_OnClick;
@@ -797,6 +807,10 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(inspectButton.GameObject, flexibleWidth: 9999, minHeight: 25);
             inspectButton.OnClick += () => { InspectorManager.Inspect(ourCamera); };
             inspectButton.GameObject.SetActive(false);
+
+            ButtonRef teleportButton = UIFactory.CreateButton(ContentRoot, "TeleportSelected", "Teleport to Selected");
+            UIFactory.SetLayoutElement(teleportButton.GameObject, flexibleWidth: 9999, minHeight: 25);
+            teleportButton.OnClick += OnTeleportSelectedClicked;
 
             AddSpacer(5);
         }
@@ -1224,6 +1238,39 @@ namespace UnityExplorer.UI.Panels
 
         public static void SetFOV(float newFOV){
             GetFreecam().fieldOfView = newFOV;
+        }
+
+        private void OnTeleportSelectedClicked()
+        {
+            object target = InspectorManager.ActiveInspector?.Target;
+            GameObject go = target as GameObject;
+            if (!go && target is Component component)
+                go = component.gameObject;
+
+            if (!go)
+            {
+                ExplorerCore.LogWarning("Freecam teleport needs the active Inspector target to be a GameObject or Component.");
+                return;
+            }
+
+            currentUserCameraPosition = go.transform.position;
+            if (inFreeCamMode && ourCamera)
+                ourCamera.transform.position = go.transform.position;
+            UpdatePositionInput();
+            RefreshStatus();
+        }
+
+        private static void RefreshStatus()
+        {
+            if (!statusLabel)
+                return;
+
+            Camera cam = GetFreecam();
+            string mode = !inFreeCamMode ? "Inactive" : "Active";
+            string pos = cam ? ParseUtility.ToStringForInput<Vector3>(cam.transform.position) : "none";
+            string camType = inFreeCamMode ? Enum.GetName(typeof(FreeCameraType), currentCameraType) : "-";
+            string fov = cam ? cam.fieldOfView.ToString("0.0") : "n/a";
+            statusLabel.text = $"{mode} | {camType} | speed {desiredMoveSpeed:0.##} | FOV {fov} | pos {pos}";
         }
     }
 
@@ -1816,3 +1863,4 @@ namespace UnityExplorer.UI.Panels
             Enabled = false;
         }
     }
+}

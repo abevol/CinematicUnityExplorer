@@ -1,7 +1,8 @@
 ﻿using System.Collections;
 using UnityEngine.SceneManagement;
 using UnityExplorer.UI;
-using UnityExplorer.UI.Panels;
+using UnityExplorer.UI.Panels;
+using UnityExplorer.UI.Widgets;
 using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -39,7 +40,9 @@ namespace UnityExplorer.ObjectExplorer
         // scene loader
         private Dropdown allSceneDropdown;
         private ButtonRef loadButton;
-        private ButtonRef loadAdditiveButton;
+        private ButtonRef loadAdditiveButton;
+
+        private Text statusLabel;
 
         private IEnumerable<GameObject> GetRootEntries() => SceneHandler.CurrentRootObjects;
 
@@ -52,11 +55,17 @@ namespace UnityExplorer.ObjectExplorer
             }
         }
 
-        public void UpdateTree()
-        {
-            SceneHandler.Update();
-            Tree.RefreshData(true, false, false, false);
-        }
+        public void UpdateTree()
+        {
+            if (statusLabel != null)
+                statusLabel.text = "Refreshing scene tree...";
+
+            SceneHandler.Update();
+            Tree.RefreshData(true, false, false, false);
+
+            if (statusLabel != null)
+                statusLabel.text = $"{SceneHandler.CurrentRootObjects.Count()} root object(s) in {GetSelectedSceneName()}";
+        }
 
         public void JumpToTransform(Transform transform)
         {
@@ -111,11 +120,14 @@ namespace UnityExplorer.ObjectExplorer
             OnSelectedSceneChanged(scene);
         }
 
-        private void OnSelectedSceneChanged(Scene scene)
-        {
-            if (refreshRow)
-                refreshRow.SetActive(!scene.IsValid());
-        }
+        private void OnSelectedSceneChanged(Scene scene)
+        {
+            if (refreshRow)
+                refreshRow.SetActive(!scene.IsValid());
+
+            if (statusLabel != null)
+                statusLabel.text = $"{SceneHandler.CurrentRootObjects.Count()} root object(s) in {GetSelectedSceneName()}";
+        }
 
         private void SceneHandler_OnLoadedScenesUpdated(List<Scene> loadedScenes)
         {
@@ -174,7 +186,20 @@ namespace UnityExplorer.ObjectExplorer
             }
         }
 
-        public override void ConstructUI(GameObject content)
+        private string GetSelectedSceneName()
+        {
+            Scene? selected = SceneHandler.SelectedScene;
+            if (selected == null)
+                return "none";
+
+            Scene scene = selected.Value;
+            if (!scene.IsValid())
+                return "HideAndDontSave";
+
+            return string.IsNullOrEmpty(scene.name) ? Localizer.Get("LBL_UNTITLED", "<untitled>") : scene.name;
+        }
+
+        public override void ConstructUI(GameObject content)
         {
             uiRoot = UIFactory.CreateUIObject("SceneExplorer", content);
             UIFactory.SetLayoutGroup<VerticalLayoutGroup>(uiRoot, true, true, true, true, 0, 2, 2, 2, 2);
@@ -183,7 +208,9 @@ namespace UnityExplorer.ObjectExplorer
             // Tool bar (top area)
 
             GameObject toolbar = UIFactory.CreateVerticalGroup(uiRoot, "Toolbar", true, true, true, true, 2, new Vector4(2, 2, 2, 2),
-               new Color(0.15f, 0.15f, 0.15f));
+               new Color(0.15f, 0.15f, 0.15f));
+
+            statusLabel = UEUI.CreateStatus(toolbar, "SceneStatus", "Scene tree ready.");
 
             // Scene selector dropdown
 
