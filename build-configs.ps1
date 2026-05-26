@@ -7,12 +7,19 @@
 Push-Location $PSScriptRoot
 
 $configurations = @(
+    "Release_ML_Cpp_net6",
+    "Release_ML_Cpp_CoreCLR",
+    "Release_ML_Cpp_net6_interop",
+    "Release_ML_Cpp_net472",
+    "Release_BIE_Cpp",
     "Release_BIE_CoreCLR",
+    "Release_BIE_Unity_Cpp",
     "Release_BIE5_Mono",
     "Release_BIE6_Mono",
-    "Release_ML_Cpp_net6",
-    "Release_ML_Cpp_net6_interop",
+    "Release_BIE6_Unity_Mono",
     "Release_ML_Mono",
+    "Release_STANDALONE_Cpp",
+    "Release_STANDALONE_Cpp_CoreCLR",
     "Release_STANDALONE_Mono"
 )
 
