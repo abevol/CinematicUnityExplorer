@@ -11,7 +11,7 @@
         <DebugType>embedded</DebugType>
         <RootNamespace>UnityExplorer</RootNamespace>
         <LangVersion>latest</LangVersion>
-        <Configurations>BIE_Cpp_CoreCLR;BIE5_Mono;BIE6_Mono;ML_Cpp_net6;ML_Cpp_net6_interop;ML_Mono;STANDALONE_Mono</Configurations>
+        <Configurations>BIE_Cpp;BIE_Cpp_CoreCLR;BIE5_Mono;BIE6_Mono;ML_Cpp_net6;ML_Cpp_net6_interop;ML_Cpp_net472;ML_Mono;STANDALONE_Cpp;STANDALONE_Mono</Configurations>
         <TargetFramework>net6.0</TargetFramework>
         <CodePage>65001</CodePage>
         <NuGetAudit>false</NuGetAudit>
@@ -31,15 +31,13 @@
         <DefineConstants>CPP,ML,INTEROP</DefineConstants>
         <AssemblyName>UnityExplorer.ML.IL2CPP.net6preview.interop</AssemblyName>
     </PropertyGroup>
-    <!-- ML IL2CPP net472 (TEMP) -->
-    <!--
+    <!-- ML IL2CPP net472 -->
     <PropertyGroup Condition="'$(Configuration)'=='ML_Cpp_net472'">
         <TargetFramework>net472</TargetFramework>
         <OutputPath>..\Release\UnityExplorer.MelonLoader.IL2CPP\</OutputPath>
         <DefineConstants>CPP,ML,UNHOLLOWER</DefineConstants>
         <AssemblyName>UnityExplorer.ML.IL2CPP</AssemblyName>
     </PropertyGroup>
-    -->
     <!-- ML MONO -->
     <PropertyGroup Condition="'$(Configuration)'=='ML_Mono'">
         <TargetFramework>net35</TargetFramework>
@@ -48,14 +46,12 @@
         <AssemblyName>UnityExplorer.ML.Mono</AssemblyName>
     </PropertyGroup>
     <!-- BEPINEX IL2CPP -->
-    <!--
     <PropertyGroup Condition="'$(Configuration)'=='BIE_Cpp'">
         <TargetFramework>net472</TargetFramework>
         <OutputPath>..\Release\UnityExplorer.BepInEx.IL2CPP\</OutputPath>
         <DefineConstants>CPP,BIE,BIE6,UNHOLLOWER</DefineConstants>
         <AssemblyName>UnityExplorer.BIE.IL2CPP</AssemblyName>
     </PropertyGroup>
-    -->
     <!-- BEPINEX IL2CPP CoreCLR -->
     <PropertyGroup Condition="'$(Configuration)'=='BIE_Cpp_CoreCLR'">
         <TargetFramework>net6</TargetFramework>
@@ -85,14 +81,12 @@
         <AssemblyName>UnityExplorer.STANDALONE.Mono</AssemblyName>
     </PropertyGroup>
     <!-- STANDALONE Il2Cpp -->
-    <!--
     <PropertyGroup Condition="'$(Configuration)'=='STANDALONE_Cpp'">
         <TargetFramework>net472</TargetFramework>
         <OutputPath>..\Release\UnityExplorer.Standalone.IL2CPP\</OutputPath>
         <DefineConstants>CPP,STANDALONE,UNHOLLOWER</DefineConstants>
         <AssemblyName>UnityExplorer.STANDALONE.IL2CPP</AssemblyName>
     </PropertyGroup>
-    -->
 
     <!-- ~~~~~ NUGET ~~~~~ -->
     <ItemGroup>
@@ -101,34 +95,40 @@
     </ItemGroup>
 
     <!-- IL2CPP Unhollower Configurations -->
-    <ItemGroup Condition="'$(Configuration)' == 'ML_Cpp_net6'">
+    <ItemGroup Condition="'$(Configuration)' == 'ML_Cpp_net6' or '$(Configuration)' == 'ML_Cpp_net472' or '$(Configuration)' == 'BIE_Cpp' or '$(Configuration)' == 'STANDALONE_Cpp'">
         <PackageReference Include="Il2CppAssemblyUnhollower.BaseLib" Version="0.4.22" />
-        <PackageReference Include="UniverseLib.IL2CPP" Version="1.0.0" />
+        <Reference Include="UniverseLib.IL2CPP.Unhollower">
+            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Unhollower\UniverseLib.IL2CPP.Unhollower.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
 
     <!-- IL2CPP Interop Configurations -->
     <ItemGroup Condition="'$(Configuration)' == 'BIE_Cpp_CoreCLR'">
-        <PackageReference Include="Il2CppInterop.Common" Version="1.5.0" />
-        <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.0" />
-        <PackageReference Include="UniverseLib.IL2CPP" Version="1.0.0" />
+        <PackageReference Include="Il2CppInterop.Common" Version="1.0.0" />
+        <PackageReference Include="Il2CppInterop.Runtime" Version="1.0.0" />
+        <Reference Include="UniverseLib.BIE.IL2CPP.Interop">
+            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
 
     <!-- ML Interop Specific Package -->
     <ItemGroup Condition="'$(Configuration)' == 'ML_Cpp_net6_interop'">
-        <PackageReference Include="Il2CppInterop.Common" Version="1.5.0" />
-        <PackageReference Include="Il2CppInterop.Runtime" Version="1.5.0" />
-        <!-- Commented out NuGet reference -->
-        <!-- <PackageReference Include="UniverseLib.IL2CPP.Interop.ML" Version="1.5.4.1" /> -->
-        <!-- Reference to locally built DLL -->
-        <Reference Include="UniverseLib.IL2CPP.Interop.ML">
-            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Interop.ML\net6.0\UniverseLib.IL2CPP.Interop.ML.dll</HintPath>
-            <Private>False</Private>
+        <PackageReference Include="Il2CppInterop.Common" Version="1.0.0" />
+        <PackageReference Include="Il2CppInterop.Runtime" Version="1.0.0" />
+        <Reference Include="UniverseLib.ML.IL2CPP.Interop">
+            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.ML.IL2CPP.Interop.dll</HintPath>
+            <Private>True</Private>
         </Reference>
     </ItemGroup>
 
     <!-- mono nuget -->
     <ItemGroup Condition="'$(Configuration)' == 'BIE6_Mono' or '$(Configuration)' == 'BIE5_Mono' or '$(Configuration)' == 'ML_Mono' or '$(Configuration)' == 'STANDALONE_Mono'">
-        <PackageReference Include="UniverseLib.Mono" Version="1.0.0" />
+        <Reference Include="UniverseLib.Mono">
+            <HintPath>..\UniverseLib_src\Release\UniverseLib.Mono\UniverseLib.Mono.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
     </ItemGroup>
 
     <!-- ~~~~~ ASSEMBLY REFERENCES ~~~~~ -->
@@ -158,7 +158,7 @@
         </Reference>
     </ItemGroup>
     <!-- MelonLoader net35 -->
-    <ItemGroup Condition="'$(Configuration)'=='ML_Mono'">
+    <ItemGroup Condition="'$(Configuration)'=='ML_Mono' or '$(Configuration)'=='ML_Cpp_net472'">
         <Reference Include="MelonLoader">
             <HintPath>..\lib\net35\MelonLoader.dll</HintPath>
             <Private>False</Private>
@@ -183,7 +183,7 @@
         </Reference>
     </ItemGroup>
     <!-- BepInEx Il2Cpp -->
-    <ItemGroup Condition="'$(Configuration)'=='BIE_Cpp_CoreCLR'">
+    <ItemGroup Condition="'$(Configuration)'=='BIE_Cpp_CoreCLR' or '$(Configuration)'=='BIE_Cpp'">
         <Reference Include="BepInEx">
             <HintPath>..\lib\net472\BepInEx.Core.dll</HintPath>
             <Private>False</Private>
@@ -205,7 +205,7 @@
         </Reference>
     </ItemGroup>
     <!-- Il2Cpp Unhollower -->
-    <ItemGroup Condition="'$(Configuration)'=='ML_Cpp_net6'">
+    <ItemGroup Condition="'$(Configuration)'=='ML_Cpp_net6' or '$(Configuration)'=='ML_Cpp_net472' or '$(Configuration)'=='BIE_Cpp' or '$(Configuration)'=='STANDALONE_Cpp'">
         <Reference Include="Il2Cppmscorlib">
             <HintPath>..\lib\unhollowed\Il2Cppmscorlib.dll</HintPath>
             <Private>False</Private>
