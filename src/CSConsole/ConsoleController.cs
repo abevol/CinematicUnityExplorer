@@ -11,7 +11,7 @@ namespace UnityExplorer.CSConsole
 {
     public static class ConsoleController
     {
-        public static ScriptEvaluator Evaluator { get; private set; }
+        public static ScriptEvaluator Evaluator => consoleEvaluator?.Evaluator;
         public static LexerBuilder Lexer { get; private set; }
         public static CSAutoCompleter Completer { get; private set; }
 
@@ -29,8 +29,7 @@ namespace UnityExplorer.CSConsole
         public static string ScriptsFolder => Path.Combine(ExplorerCore.ExplorerFolder, "Scripts");
 
         static HashSet<string> usingDirectives;
-        static StringBuilder evaluatorOutput;
-        static StringWriter evaluatorStringWriter;
+        static ConsoleScriptEvaluator consoleEvaluator;
         static float timeOfLastCtrlR;
 
         static bool settingCaretCoroutine;
@@ -61,7 +60,7 @@ namespace UnityExplorer.CSConsole
             {
                 ResetConsole(false);
                 // ensure the compiler is supported (if this fails then SRE is probably stripped)
-                Evaluator.Compile("0 == 0");
+                consoleEvaluator.Compile("0 == 0");
             }
             catch (Exception ex)
             {
@@ -109,12 +108,6 @@ namespace UnityExplorer.CSConsole
 
         #region Evaluating
 
-        static void GenerateTextWriter()
-        {
-            evaluatorOutput = new StringBuilder();
-            evaluatorStringWriter = new StringWriter(evaluatorOutput);
-        }
-
         public static void ResetConsole() => ResetConsole(true);
 
         public static void ResetConsole(bool logSuccess = true)
@@ -122,14 +115,10 @@ namespace UnityExplorer.CSConsole
             if (SRENotSupported)
                 return;
 
-            if (Evaluator != null)
-                Evaluator.Dispose();
+            if (consoleEvaluator == null)
+                consoleEvaluator = new ConsoleScriptEvaluator();
 
-            GenerateTextWriter();
-            Evaluator = new ScriptEvaluator(evaluatorStringWriter)
-            {
-                InteractiveBaseClass = typeof(ScriptInteraction)
-            };
+            consoleEvaluator.Recreate();
 
             usingDirectives = new HashSet<string>();
             foreach (string use in DefaultUsing)
@@ -161,16 +150,12 @@ namespace UnityExplorer.CSConsole
             if (SRENotSupported)
                 return;
 
-            if (evaluatorStringWriter == null || evaluatorOutput == null)
-            {
-                GenerateTextWriter();
-                Evaluator._textWriter = evaluatorStringWriter;
-            }
+            consoleEvaluator.Initialize();
 
             try
             {
                 // Compile the code. If it returned a CompiledMethod, it is REPL.
-                CompiledMethod repl = Evaluator.Compile(input);
+                CompiledMethod repl = consoleEvaluator.Compile(input);
 
                 if (repl != null)
                 {
@@ -194,11 +179,11 @@ namespace UnityExplorer.CSConsole
                 {
                     // The compiled code was not REPL, so it was a using directive or it defined classes.
 
-                    string output = Evaluator._textWriter.ToString();
+                    string output = consoleEvaluator.ToString();
                     string[] outputSplit = output.Split('\n');
                     if (outputSplit.Length >= 2)
                         output = outputSplit[outputSplit.Length - 2];
-                    evaluatorOutput.Clear();
+                    consoleEvaluator.ClearOutput();
 
                     if (ScriptEvaluator._reportPrinter.ErrorsCount > 0)
                         throw new FormatException($"Unable to compile the code. Evaluator's last output was:\r\n{output}");

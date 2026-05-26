@@ -9,6 +9,11 @@ namespace UnityExplorer.CSConsole
     {
         internal TextWriter _textWriter;
         internal static StreamReportPrinter _reportPrinter;
+        internal TextWriter TextWriter
+        {
+            get => _textWriter;
+            set => _textWriter = value;
+        }
 
         private static readonly HashSet<string> StdLib = new(StringComparer.InvariantCultureIgnoreCase)
         {
@@ -31,6 +36,8 @@ namespace UnityExplorer.CSConsole
             AppDomain.CurrentDomain.AssemblyLoad -= OnAssemblyLoad;
             _textWriter.Dispose();
         }
+
+        public override string ToString() => _textWriter?.ToString();
 
         private void OnAssemblyLoad(object sender, AssemblyLoadEventArgs args)
         {
@@ -72,7 +79,8 @@ namespace UnityExplorer.CSConsole
                 StdLib = true,
                 Target = Target.Library,
                 WarningLevel = 0,
-                EnhancedWarnings = false
+                EnhancedWarnings = false,
+                Unsafe = true
             };
 
             return new CompilerContext(settings, _reportPrinter);
