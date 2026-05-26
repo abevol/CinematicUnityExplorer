@@ -1,5 +1,6 @@
 ﻿using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
+using System.Globalization;
 
 namespace UnityExplorer.Config
 {
@@ -12,7 +13,7 @@ namespace UnityExplorer.Config
         // See the UnityExplorer.Loader namespace for the implementations.
         public static ConfigHandler Handler { get; private set; }
 
-        // Actual CUE Settings
+// Actual CUE Settings
         public static ConfigElement<Language> LanguageSetting;
         public static ConfigElement<KeyCode> Master_Toggle;
         public static ConfigElement<bool> Hide_On_Startup;
@@ -24,7 +25,7 @@ namespace UnityExplorer.Config
         public static ConfigElement<string> Default_Output_Path;
         public static ConfigElement<string> DnSpy_Path;
         public static ConfigElement<bool> Log_Unity_Debug;
-        public static ConfigElement<bool> Log_To_Disk;
+public static ConfigElement<bool> Log_To_Disk;
         public static ConfigElement<UIManager.VerticalAnchor> Main_Navbar_Anchor;
         public static ConfigElement<KeyCode> World_MouseInspect_Keybind;
         public static ConfigElement<KeyCode> UI_MouseInspect_Keybind;
@@ -124,7 +125,7 @@ namespace UnityExplorer.Config
         {
             LanguageSetting = new("Language",
                 "The language used by UnityExplorer. Requires restart to fully take effect.",
-                Language.English);
+DetectDefaultLanguage());
 
             Master_Toggle = new("CinematicUnityExplorer Toggle",
                 "The key to enable or disable CinematicUnityExplorer's menu and features.",
@@ -348,6 +349,25 @@ namespace UnityExplorer.Config
             McpBridge_RequestTimeoutMs = new("MCP Bridge Request Timeout Ms",
                 "How long the bridge waits for Unity main-thread MCP commands before timing out.",
                 5000);
+        }
+
+        private static Language DetectDefaultLanguage()
+        {
+            try
+            {
+                string unityLanguage = Application.systemLanguage.ToString();
+                if (unityLanguage.StartsWith("Chinese", StringComparison.OrdinalIgnoreCase))
+                    return Language.Chinese;
+
+                string cultureName = CultureInfo.CurrentUICulture.Name;
+                if (cultureName.StartsWith("zh", StringComparison.OrdinalIgnoreCase))
+                    return Language.Chinese;
+            }
+            catch
+            {
+            }
+
+            return Language.English;
         }
     }
 }
