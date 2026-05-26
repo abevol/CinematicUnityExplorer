@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
+using UnityExplorer.Localization;
 #if UNHOLLOWER
 using IL2CPPUtils = UnhollowerBaseLib.UnhollowerUtils;
 #endif
@@ -36,16 +37,12 @@ namespace UnityExplorer.UI.Widgets
 
         public void Update()
         {
-            // Force the timescale in case the game tries force it for us
             if (overrideTimeScaleToggle.isOn)
                 SetTimeScale(desiredTime);
-
-            //if (!timeInput.Component.isFocused)
-            //    timeInput.Text = Time.timeScale.ToString("F2");
         }
 
-        public void PauseToggle(){
-            // If not paused but moved the slider to 0, consider that as it being paused
+        public void PauseToggle()
+        {
             if (desiredTime == 0 && overrideTimeScaleToggle.isOn && !pause) pause = true;
 
             pause = !pause;
@@ -57,7 +54,8 @@ namespace UnityExplorer.UI.Widgets
             pressedPauseHotkey = false;
         }
 
-        public bool IsPaused(){
+        public bool IsPaused()
+        {
             return pause;
         }
 
@@ -89,29 +87,28 @@ namespace UnityExplorer.UI.Widgets
             overrideTimeScaleToggle.isOn = !overrideTimeScaleToggle.isOn;
         }
 
-        // UI event listeners
-
         void OnTimeInputEndEdit(string val)
         {
             if (float.TryParse(val, out float f))
             {
-                if (f < slider.minValue){
+                if (f < slider.minValue)
+                {
                     ExplorerCore.LogWarning("Error, new time scale value outside of margins.");
                     timeInput.Text = desiredTime.ToString("0.00");
                     return;
                 }
 
-                // Allow registering timescale values above the slider max value
-                if (f >= slider.maxValue) {
-                    // Move the slider to the right
+                if (f >= slider.maxValue)
+                {
                     slider.value = slider.maxValue;
 
                     desiredTime = f;
                     pause = false;
                     previousDesiredTime = desiredTime;
                 }
-                else {
-                    slider.value = f; // Will update the desiredTime value and extra things
+                else
+                {
+                    slider.value = f;
                 }
 
                 timeInput.Text = f.ToString("0.00");
@@ -120,26 +117,25 @@ namespace UnityExplorer.UI.Widgets
 
         void OnOverrideValueChanged(bool value)
         {
-            if (!pressedPauseHotkey){
+            if (!pressedPauseHotkey)
+            {
                 previousOverride = overrideTimeScaleToggle.isOn;
-                // If the game was paused we consider this an unpause
                 if (pause) pause = false;
             }
 
-            if (value){
+            if (value)
+            {
                 SetTimeScale(desiredTime);
             }
-            else {
-                // We assume the vanilla game speed was 1f before editing it
+            else
+            {
                 SetTimeScale(1f);
             }
         }
 
-        // UI Construction
-
         void ConstructUI(GameObject parent)
         {
-            Text timeLabel = UIFactory.CreateLabel(parent, "TimeLabel", "Time:", TextAnchor.MiddleRight, Color.grey);
+            Text timeLabel = UIFactory.CreateLabel(parent, "TimeLabel", Localizer.Get("LBL_TIME_SCALE", "Time:"), TextAnchor.MiddleRight, Color.grey);
             UIFactory.SetLayoutElement(timeLabel.gameObject, minHeight: 25, minWidth: 35);
 
             timeInput = UIFactory.CreateInputField(parent, "TimeInput", "timeScale");
@@ -155,13 +151,14 @@ namespace UnityExplorer.UI.Widgets
             desiredTime = 1;
             previousDesiredTime = 1;
 
-            slider.onValueChanged.AddListener((newTimeScale) => {
+            slider.onValueChanged.AddListener((newTimeScale) =>
+            {
                 desiredTime = newTimeScale;
                 timeInput.Text = desiredTime.ToString("0.00");
-                
-                if (!pressedPauseHotkey){
+
+                if (!pressedPauseHotkey)
+                {
                     pause = false;
-                    // Don't save 0 as a previous desired time, it might not do anything when unpausing
                     if (desiredTime != 0) previousDesiredTime = desiredTime;
                 }
             });
@@ -173,12 +170,11 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutElement(overrideTimeScaleObj, minHeight: 25, flexibleWidth: 0);
             overrideTimeScaleToggle.isOn = false;
             overrideTimeScaleToggle.onValueChanged.AddListener(OnOverrideValueChanged);
-            overrideTimeScaleText.text = "Override";
+            overrideTimeScaleText.text = Localizer.Get("LBL_OVERRIDE_TIMESCALE", "Override");
         }
 
         static void InitPatch()
         {
-
             try
             {
                 MethodInfo target = typeof(Time).GetProperty("timeScale").GetSetMethod();

@@ -1,4 +1,5 @@
-﻿using UnityExplorer.UI.Panels;
+using UnityExplorer.UI.Panels;
+using UnityExplorer.Localization;
 using UnityExplorer.Utility;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -73,12 +74,12 @@ namespace UnityExplorer.UI.Widgets
                 if (lastParentState)
                 {
                     ViewParentButton.ButtonText.color = Color.white;
-                    ViewParentButton.ButtonText.text = "◄ View Parent";
+                    ViewParentButton.ButtonText.text = Localizer.Get("BTN_VIEW_PARENT", "◄ View Parent");
                 }
                 else
                 {
                     ViewParentButton.ButtonText.color = Color.grey;
-                    ViewParentButton.ButtonText.text = "No parent";
+                    ViewParentButton.ButtonText.text = Localizer.Get("LBL_NO_PARENT", "No parent");
                 }
             }
 
@@ -96,7 +97,7 @@ namespace UnityExplorer.UI.Widgets
             if (force || Target.scene.handle != lastSceneHandle)
             {
                 lastSceneHandle = Target.scene.handle;
-                SceneButton.ButtonText.text = Target.scene.IsValid() ? Target.scene.name : "None (Asset/Resource)";
+                SceneButton.ButtonText.text = Target.scene.IsValid() ? Target.scene.name : Localizer.Get("LBL_NONE_ASSET_RESOURCE", "None (Asset/Resource)");
             }
 
             if (force || (!TagInput.Component.isFocused && Target.tag != lastTag))
@@ -131,7 +132,6 @@ namespace UnityExplorer.UI.Widgets
 
             Owner.TransformControl.UpdateTransformControlValues(false);
         }
-
 
         #region UI event listeners
 
@@ -225,7 +225,7 @@ namespace UnityExplorer.UI.Widgets
                 ExplorerCore.LogWarning($"Exception setting tag! {ex.ReflectionExToString()}");
             }
         }
-        
+
         void OnSceneButtonClicked()
         {
             InspectorManager.Inspect(Target.scene);
@@ -272,7 +272,6 @@ namespace UnityExplorer.UI.Widgets
 
         #endregion
 
-
         #region UI Construction
 
         public void Create()
@@ -288,7 +287,7 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(firstRow, false, false, true, true, 5, 0, 0, 0, 0, default);
             UIFactory.SetLayoutElement(firstRow, minHeight: 25, flexibleWidth: 9999);
 
-            ViewParentButton = UIFactory.CreateButton(firstRow, "ViewParentButton", "◄ View Parent", new Color(0.2f, 0.2f, 0.2f));
+            ViewParentButton = UIFactory.CreateButton(firstRow, "ViewParentButton", Localizer.Get("BTN_VIEW_PARENT", "◄ View Parent"), new Color(0.2f, 0.2f, 0.2f));
             ViewParentButton.ButtonText.fontSize = 13;
             UIFactory.SetLayoutElement(ViewParentButton.Component.gameObject, minHeight: 25, minWidth: 100);
             ViewParentButton.OnClick += OnViewParentClicked;
@@ -309,7 +308,7 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutElement(PathInput.UIRoot, minHeight: 25, minWidth: 100, flexibleWidth: 9999);
             PathInput.Component.lineType = InputField.LineType.MultiLineSubmit;
 
-            ButtonRef copyButton = UIFactory.CreateButton(firstRow, "CopyButton", "Copy to Clipboard", new Color(0.2f, 0.2f, 0.2f, 1));
+            ButtonRef copyButton = UIFactory.CreateButton(firstRow, "CopyButton", Localizer.Get("BTN_COPY_TO_CLIPBOARD", "Copy to Clipboard"), new Color(0.2f, 0.2f, 0.2f, 1));
             copyButton.ButtonText.color = Color.yellow;
             UIFactory.SetLayoutElement(copyButton.Component.gameObject, minHeight: 25, minWidth: 120);
             copyButton.OnClick += OnCopyClicked;
@@ -354,18 +353,18 @@ namespace UnityExplorer.UI.Widgets
             // activeSelf
             GameObject activeToggleObj = UIFactory.CreateToggle(secondRow, "ActiveSelf", out ActiveSelfToggle, out ActiveSelfText);
             UIFactory.SetLayoutElement(activeToggleObj, minHeight: 25, minWidth: 100);
-            ActiveSelfText.text = "ActiveSelf";
+            ActiveSelfText.text = Localizer.Get("LBL_ACTIVE_SELF", "ActiveSelf");
             ActiveSelfToggle.onValueChanged.AddListener(OnActiveSelfToggled);
 
             // isStatic
             GameObject isStaticObj = UIFactory.CreateToggle(secondRow, "IsStatic", out IsStaticToggle, out Text staticText);
             UIFactory.SetLayoutElement(isStaticObj, minHeight: 25, minWidth: 80);
-            staticText.text = "IsStatic";
+            staticText.text = Localizer.Get("LBL_IS_STATIC", "IsStatic");
             staticText.color = Color.grey;
             IsStaticToggle.interactable = false;
 
             // InstanceID
-            Text instanceIdLabel = UIFactory.CreateLabel(secondRow, "InstanceIDLabel", "Instance ID:", TextAnchor.MiddleRight, Color.grey);
+            Text instanceIdLabel = UIFactory.CreateLabel(secondRow, "InstanceIDLabel", Localizer.Get("LBL_INSTANCE_ID", "Instance ID:"), TextAnchor.MiddleRight, Color.grey);
             UIFactory.SetLayoutElement(instanceIdLabel.gameObject, minHeight: 25, minWidth: 90);
 
             InstanceIDInput = UIFactory.CreateInputField(secondRow, "InstanceIDInput", "error");
@@ -374,7 +373,7 @@ namespace UnityExplorer.UI.Widgets
             InstanceIDInput.Component.readOnly = true;
 
             //Tag
-            Text tagLabel = UIFactory.CreateLabel(secondRow, "TagLabel", "Tag:", TextAnchor.MiddleRight, Color.grey);
+            Text tagLabel = UIFactory.CreateLabel(secondRow, "TagLabel", Localizer.Get("LBL_TAG", "Tag:"), TextAnchor.MiddleRight, Color.grey);
             UIFactory.SetLayoutElement(tagLabel.gameObject, minHeight: 25, minWidth: 40);
 
             TagInput = UIFactory.CreateInputField(secondRow, "TagInput", "none");
@@ -383,12 +382,12 @@ namespace UnityExplorer.UI.Widgets
             TagInput.Component.GetOnEndEdit().AddListener((string val) => { OnTagEndEdit(val); });
 
             // Instantiate
-            ButtonRef instantiateBtn = UIFactory.CreateButton(secondRow, "InstantiateBtn", "Instantiate", new Color(0.2f, 0.2f, 0.2f));
+            ButtonRef instantiateBtn = UIFactory.CreateButton(secondRow, "InstantiateBtn", Localizer.Get("BTN_INSTANTIATE", "Instantiate"), new Color(0.2f, 0.2f, 0.2f));
             UIFactory.SetLayoutElement(instantiateBtn.Component.gameObject, minHeight: 25, minWidth: 120);
             instantiateBtn.OnClick += OnInstantiateClicked;
 
             // Destroy
-            ButtonRef destroyBtn = UIFactory.CreateButton(secondRow, "DestroyBtn", "Destroy", new Color(0.3f, 0.2f, 0.2f));
+            ButtonRef destroyBtn = UIFactory.CreateButton(secondRow, "DestroyBtn", Localizer.Get("BTN_DESTROY", "Destroy"), new Color(0.3f, 0.2f, 0.2f));
             UIFactory.SetLayoutElement(destroyBtn.Component.gameObject, minHeight: 25, minWidth: 80);
             destroyBtn.OnClick += OnDestroyClicked;
 
@@ -399,13 +398,13 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutElement(thirdrow, minHeight: 25, flexibleWidth: 9999);
 
             // Inspect in Explorer button
-            ButtonRef explorerBtn = UIFactory.CreateButton(thirdrow, "ExploreBtn", "Show in Explorer", new Color(0.15f, 0.15f, 0.15f));
+            ButtonRef explorerBtn = UIFactory.CreateButton(thirdrow, "ExploreBtn", Localizer.Get("BTN_SHOW_IN_EXPLORER", "Show in Explorer"), new Color(0.15f, 0.15f, 0.15f));
             UIFactory.SetLayoutElement(explorerBtn.Component.gameObject, minHeight: 25, minWidth: 100);
             explorerBtn.ButtonText.fontSize = 12;
             explorerBtn.OnClick += OnExploreButtonClicked;
 
             // Scene
-            Text sceneLabel = UIFactory.CreateLabel(thirdrow, "SceneLabel", "Scene:", TextAnchor.MiddleLeft, Color.grey);
+            Text sceneLabel = UIFactory.CreateLabel(thirdrow, "SceneLabel", Localizer.Get("LBL_SCENE", "Scene:"), TextAnchor.MiddleLeft, Color.grey);
             UIFactory.SetLayoutElement(sceneLabel.gameObject, minHeight: 25, minWidth: 50);
 
             SceneButton = UIFactory.CreateButton(thirdrow, "SceneButton", "untitled");
@@ -413,7 +412,7 @@ namespace UnityExplorer.UI.Widgets
             SceneButton.OnClick += OnSceneButtonClicked;
 
             // Layer
-            Text layerLabel = UIFactory.CreateLabel(thirdrow, "LayerLabel", "Layer:", TextAnchor.MiddleLeft, Color.grey);
+            Text layerLabel = UIFactory.CreateLabel(thirdrow, "LayerLabel", Localizer.Get("LBL_LAYER", "Layer:"), TextAnchor.MiddleLeft, Color.grey);
             UIFactory.SetLayoutElement(layerLabel.gameObject, minHeight: 25, minWidth: 50);
 
             GameObject layerDrop = UIFactory.CreateDropdown(thirdrow, "LayerDropdown", out LayerDropdown, "0", 14, OnLayerDropdownChanged);
@@ -427,7 +426,7 @@ namespace UnityExplorer.UI.Widgets
             LayerDropdown.RefreshShownValue();
 
             // Flags
-            Text flagsLabel = UIFactory.CreateLabel(thirdrow, "FlagsLabel", "Flags:", TextAnchor.MiddleRight, Color.grey);
+            Text flagsLabel = UIFactory.CreateLabel(thirdrow, "FlagsLabel", Localizer.Get("LBL_FLAGS", "Flags:"), TextAnchor.MiddleRight, Color.grey);
             UIFactory.SetLayoutElement(flagsLabel.gameObject, minHeight: 25, minWidth: 50);
 
             GameObject flagsDrop = UIFactory.CreateDropdown(thirdrow, "FlagsDropdown", out FlagsDropdown, "None", 14, OnFlagsDropdownChanged);
@@ -469,6 +468,6 @@ namespace UnityExplorer.UI.Widgets
         }
 
         #endregion
-   
+
     }
 }

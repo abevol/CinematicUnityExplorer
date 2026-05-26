@@ -1,5 +1,6 @@
 ﻿using UniverseLib.Input;
 using UniverseLib.UI;
+using UnityExplorer.Localization;
 
 namespace UnityExplorer.UI.Widgets
 {
@@ -94,10 +95,10 @@ namespace UnityExplorer.UI.Widgets
                 new Vector4(2, 2, 0, 0), new Color(0.1f, 0.1f, 0.1f));
             UIFactory.SetLayoutElement(transformGroup, minHeight: 100, flexibleWidth: 9999);
 
-            PositionControl = Vector3Control.Create(this, transformGroup, "Position:", TransformType.Position);
-            LocalPositionControl = Vector3Control.Create(this, transformGroup, "Local Position:", TransformType.LocalPosition);
-            RotationControl = Vector3Control.Create(this, transformGroup, "Rotation:", TransformType.Rotation);
-            ScaleControl = Vector3Control.Create(this, transformGroup, "Scale:", TransformType.Scale);
+            PositionControl = Vector3Control.Create(this, transformGroup, Localizer.Get("LBL_POSITION", "Position:"), TransformType.Position);
+            LocalPositionControl = Vector3Control.Create(this, transformGroup, Localizer.Get("LBL_LOCAL_POSITION", "Local Position:"), TransformType.LocalPosition);
+            RotationControl = Vector3Control.Create(this, transformGroup, Localizer.Get("LBL_ROTATION", "Rotation:"), TransformType.Rotation);
+            ScaleControl = Vector3Control.Create(this, transformGroup, Localizer.Get("LBL_SCALE", "Scale:"), TransformType.Scale);
         }
     }
 }

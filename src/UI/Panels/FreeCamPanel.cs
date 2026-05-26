@@ -1,6 +1,6 @@
-﻿using UnityEngine.SceneManagement;
 using UnityExplorer.Config;
 using UnityExplorer.Inspectors;
+using UnityExplorer.Localization;
 using UniverseLib.Input;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -35,7 +35,7 @@ namespace UnityExplorer.UI.Panels
             }
         }
 
-        public override string Name => "Freecam";
+        public override string Name => Localizer.Get("PANEL_FREECAM", "Freecam");
         public override UIManager.Panels PanelType => UIManager.Panels.Freecam;
         public override int MinWidth => 500;
         public override int MinHeight => 750;
@@ -587,7 +587,7 @@ namespace UnityExplorer.UI.Panels
 
         protected override void ConstructPanelContent()
         {
-            startStopButton = UIFactory.CreateButton(ContentRoot, "ToggleButton", "Freecam");
+            startStopButton = UIFactory.CreateButton(ContentRoot, "ToggleButton", Localizer.Get("BTN_FREECAM", "Freecam"));
             UIFactory.SetLayoutElement(startStopButton.GameObject, minWidth: 150, minHeight: 25, flexibleWidth: 9999);
             startStopButton.OnClick += StartStopButton_OnClick;
             SetToggleButtonState();
@@ -635,12 +635,12 @@ namespace UnityExplorer.UI.Panels
             }
             
 
-            GameObject movespeedRow = AddInputField("MoveSpeed", "Move Speed:", "Default: 1", out moveSpeedInput, MoveSpeedInput_OnEndEdit, 85, 25);
+            GameObject movespeedRow = AddInputField("MoveSpeed", Localizer.Get("LBL_MOVE_SPEED", "Move Speed:"), Localizer.Get("TXT_MOVE_SPEED_PLACEHOLDER", "Default: 1"), out moveSpeedInput, MoveSpeedInput_OnEndEdit, 85, 25);
             moveSpeedInput.Text = desiredMoveSpeed.ToString();
 
-            AddInputField("Position", "Freecam Pos:", "eg. 0 0 0", out positionInput, PositionInput_OnEndEdit, 100, 175, movespeedRow);
+            AddInputField("Position", Localizer.Get("LBL_FREECAM_POS", "Freecam Pos:"), Localizer.Get("TXT_FREECAM_POS_PLACEHOLDER", "eg. 0 0 0"), out positionInput, PositionInput_OnEndEdit, 100, 175, movespeedRow);
 
-            ButtonRef resetPosButton = UIFactory.CreateButton(movespeedRow, "ResetButton", "Reset");
+            ButtonRef resetPosButton = UIFactory.CreateButton(movespeedRow, "ResetButton", Localizer.Get("BTN_RESET", "Reset"));
             UIFactory.SetLayoutElement(resetPosButton.GameObject, minWidth: 70, minHeight: 25);
             resetPosButton.OnClick += OnResetPosButtonClicked;
 
@@ -793,7 +793,7 @@ namespace UnityExplorer.UI.Panels
 
             AddSpacer(5);
 
-            inspectButton = UIFactory.CreateButton(ContentRoot, "InspectButton", "Inspect Free Camera");
+            inspectButton = UIFactory.CreateButton(ContentRoot, "InspectButton", Localizer.Get("BTN_INSPECT_FREECAM", "Inspect Free Camera"));
             UIFactory.SetLayoutElement(inspectButton.GameObject, flexibleWidth: 9999, minHeight: 25);
             inspectButton.OnClick += () => { InspectorManager.Inspect(ourCamera); };
             inspectButton.GameObject.SetActive(false);
@@ -895,12 +895,12 @@ namespace UnityExplorer.UI.Panels
             if (inFreeCamMode)
             {
                 RuntimeHelper.SetColorBlockAuto(startStopButton.Component, new(0.4f, 0.2f, 0.2f));
-                startStopButton.ButtonText.text = "End Freecam";
+                startStopButton.ButtonText.text = Localizer.Get("BTN_END_FREECAM", "End Freecam");
             }
             else
             {
                 RuntimeHelper.SetColorBlockAuto(startStopButton.Component, new(0.2f, 0.4f, 0.2f));
-                startStopButton.ButtonText.text = "Begin Freecam";
+                startStopButton.ButtonText.text = Localizer.Get("BTN_BEGIN_FREECAM", "Begin Freecam");
             }
         }
 
@@ -1816,4 +1816,3 @@ namespace UnityExplorer.UI.Panels
             Enabled = false;
         }
     }
-}

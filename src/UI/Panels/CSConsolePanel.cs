@@ -1,5 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 using UnityExplorer.CSConsole;
+using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets;
@@ -8,7 +12,7 @@ namespace UnityExplorer.UI.Panels
 {
     public class CSConsolePanel : UEPanel
     {
-        public override string Name => "C# Console";
+        public override string Name => Localizer.Get("PANEL_CS_CONSOLE", "C# Console");
         public override UIManager.Panels PanelType => UIManager.Panels.CSConsole;
 
         public override int MinWidth => 750;
@@ -70,19 +74,19 @@ namespace UnityExplorer.UI.Panels
 
             // Buttons
 
-            ButtonRef compileButton = UIFactory.CreateButton(toolsRow, "CompileButton", "Compile", new Color(0.33f, 0.5f, 0.33f));
+            ButtonRef compileButton = UIFactory.CreateButton(toolsRow, "CompileButton", Localizer.Get("BTN_COMPILE", "Compile"), new Color(0.33f, 0.5f, 0.33f));
             UIFactory.SetLayoutElement(compileButton.Component.gameObject, minHeight: 28, minWidth: 130, flexibleHeight: 0);
             compileButton.ButtonText.fontSize = 15;
             compileButton.OnClick += () => { OnCompileClicked?.Invoke(); };
 
-            ButtonRef resetButton = UIFactory.CreateButton(toolsRow, "ResetButton", "Reset", new Color(0.33f, 0.33f, 0.33f));
+            ButtonRef resetButton = UIFactory.CreateButton(toolsRow, "ResetButton", Localizer.Get("BTN_RESET", "Reset"), new Color(0.33f, 0.33f, 0.33f));
             UIFactory.SetLayoutElement(resetButton.Component.gameObject, minHeight: 28, minWidth: 80, flexibleHeight: 0);
             resetButton.ButtonText.fontSize = 15;
             resetButton.OnClick += () => { OnResetClicked?.Invoke(); };
 
             // Help dropdown
 
-            GameObject helpDrop = UIFactory.CreateDropdown(toolsRow, "HelpDropdown", out Dropdown dropdown, "Help", 14, null);
+            GameObject helpDrop = UIFactory.CreateDropdown(toolsRow, "HelpDropdown", out Dropdown dropdown, Localizer.Get("LBL_HELP", "Help"), 14, null);
             UIFactory.SetLayoutElement(helpDrop, minHeight: 25, minWidth: 100);
             HelpDropdown = dropdown;
             HelpDropdown.onValueChanged.AddListener((int val) => { this.OnHelpDropdownChanged?.Invoke(val); });
@@ -92,7 +96,7 @@ namespace UnityExplorer.UI.Panels
             GameObject ctrlRToggleObj = UIFactory.CreateToggle(toolsRow, "CtrlRToggle", out Toggle CtrlRToggle, out Text ctrlRToggleText);
             UIFactory.SetLayoutElement(ctrlRToggleObj, minWidth: 150, flexibleWidth: 0, minHeight: 25);
             ctrlRToggleText.alignment = TextAnchor.UpperLeft;
-            ctrlRToggleText.text = "Compile on Ctrl+R";
+            ctrlRToggleText.text = Localizer.Get("LBL_COMPILE_CTRL_R", "Compile on Ctrl+R");
             CtrlRToggle.onValueChanged.AddListener((bool val) => { OnCtrlRToggled?.Invoke(val); });
 
             // Enable Suggestions toggle
@@ -100,7 +104,7 @@ namespace UnityExplorer.UI.Panels
             GameObject suggestToggleObj = UIFactory.CreateToggle(toolsRow, "SuggestionToggle", out Toggle SuggestionsToggle, out Text suggestToggleText);
             UIFactory.SetLayoutElement(suggestToggleObj, minWidth: 120, flexibleWidth: 0, minHeight: 25);
             suggestToggleText.alignment = TextAnchor.UpperLeft;
-            suggestToggleText.text = "Suggestions";
+            suggestToggleText.text = Localizer.Get("LBL_SUGGESTIONS", "Suggestions");
             SuggestionsToggle.onValueChanged.AddListener((bool val) => { OnSuggestionsToggled?.Invoke(val); });
 
             // Enable Auto-indent toggle
@@ -108,7 +112,7 @@ namespace UnityExplorer.UI.Panels
             GameObject autoIndentToggleObj = UIFactory.CreateToggle(toolsRow, "IndentToggle", out Toggle AutoIndentToggle, out Text autoIndentToggleText);
             UIFactory.SetLayoutElement(autoIndentToggleObj, minWidth: 120, flexibleWidth: 0, minHeight: 25);
             autoIndentToggleText.alignment = TextAnchor.UpperLeft;
-            autoIndentToggleText.text = "Auto-indent";
+            autoIndentToggleText.text = Localizer.Get("LBL_AUTO_INDENT", "Auto-indent");
             AutoIndentToggle.onValueChanged.AddListener((bool val) => { OnAutoIndentToggled?.Invoke(val); });
 
             // Console Input

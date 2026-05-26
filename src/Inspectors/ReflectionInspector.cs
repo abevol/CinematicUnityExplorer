@@ -8,6 +8,7 @@ using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
 using UnityExplorer.Utility;
 using UnityExplorer.UI.Widgets;
+using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.ObjectPool;
@@ -161,7 +162,7 @@ namespace UnityExplorer.Inspectors
                 asmText = Path.GetFileName(TargetType.Assembly.Location);
                 dnSpyButton.GameObject.SetActive(true);
             }
-            assemblyText.text = $"<color=grey>Assembly:</color> {asmText}";
+            assemblyText.text = string.Format(Localizer.Get("LBL_ASSEMBLY", "<color=grey>Assembly:</color> {0}"), asmText);
 
             // Unity object helper widget
 
@@ -369,7 +370,7 @@ namespace UnityExplorer.Inspectors
             }
             else
             {
-                Notification.ShowMessage($"Please set a valid dnSpy path in CinematicUnityExplorer Settings.");
+                Notification.ShowMessage(Localizer.Get("MSG_SET_DNSPY_PATH", "Please set a valid dnSpy path in CinematicUnityExplorer Settings."));
             }
         }
 
@@ -419,14 +420,14 @@ namespace UnityExplorer.Inspectors
             GameObject titleHolder = UIFactory.CreateUIObject("TitleHolder", topRow);
             UIFactory.SetLayoutElement(titleHolder, minHeight: 35, flexibleHeight: 0, flexibleWidth: 9999);
 
-            nameText = UIFactory.CreateLabel(titleHolder, "VisibleTitle", "NotSet", TextAnchor.MiddleLeft);
+            nameText = UIFactory.CreateLabel(titleHolder, "VisibleTitle", Localizer.Get("LBL_NOT_SET", "not set"), TextAnchor.MiddleLeft);
             RectTransform namerect = nameText.GetComponent<RectTransform>();
             namerect.anchorMin = new Vector2(0, 0);
             namerect.anchorMax = new Vector2(1, 1);
             nameText.fontSize = 17;
             UIFactory.SetLayoutElement(nameText.gameObject, minHeight: 35, flexibleHeight: 0, minWidth: 300, flexibleWidth: 9999);
 
-            hiddenNameText = UIFactory.CreateInputField(titleHolder, "Title", "not set");
+            hiddenNameText = UIFactory.CreateInputField(titleHolder, "Title", Localizer.Get("LBL_NOT_SET", "not set"));
             RectTransform hiddenrect = hiddenNameText.Component.gameObject.GetComponent<RectTransform>();
             hiddenrect.anchorMin = new Vector2(0, 0);
             hiddenrect.anchorMax = new Vector2(1, 1);
@@ -438,12 +439,12 @@ namespace UnityExplorer.Inspectors
             hiddenNameText.Component.textComponent.color = Color.clear;
             UIFactory.SetLayoutElement(hiddenNameText.Component.gameObject, minHeight: 35, flexibleHeight: 0, flexibleWidth: 9999);
 
-            makeGenericButton = UIFactory.CreateButton(topRow, "MakeGenericButton", "Construct Generic", new Color(0.2f, 0.3f, 0.2f));
+            makeGenericButton = UIFactory.CreateButton(topRow, "MakeGenericButton", Localizer.Get("BTN_CONSTRUCT_GENERIC", "Construct Generic"), new Color(0.2f, 0.3f, 0.2f));
             UIFactory.SetLayoutElement(makeGenericButton.GameObject, minWidth: 140, minHeight: 25);
             makeGenericButton.OnClick += OnMakeGenericClicked;
             makeGenericButton.GameObject.SetActive(false);
 
-            ButtonRef copyButton = UIFactory.CreateButton(topRow, "CopyButton", "Copy to Clipboard", new Color(0.2f, 0.2f, 0.2f, 1));
+            ButtonRef copyButton = UIFactory.CreateButton(topRow, "CopyButton", Localizer.Get("BTN_COPY_TO_CLIPBOARD", "Copy to Clipboard"), new Color(0.2f, 0.2f, 0.2f, 1));
             copyButton.ButtonText.color = Color.yellow;
             UIFactory.SetLayoutElement(copyButton.Component.gameObject, minHeight: 25, minWidth: 120, flexibleWidth: 0);
             copyButton.OnClick += OnCopyClicked;
@@ -456,7 +457,7 @@ namespace UnityExplorer.Inspectors
             assemblyText = UIFactory.CreateLabel(asmRow, "AssemblyLabel", "not set", TextAnchor.MiddleLeft);
             UIFactory.SetLayoutElement(assemblyText.gameObject, minHeight: 25, flexibleWidth: 9999);
 
-            dnSpyButton = UIFactory.CreateButton(asmRow, "DnSpyButton", "View in dnSpy");
+            dnSpyButton = UIFactory.CreateButton(asmRow, "DnSpyButton", Localizer.Get("BTN_VIEW_IN_DNSPY", "View in dnSpy"));
             UIFactory.SetLayoutElement(dnSpyButton.GameObject, minWidth: 120, minHeight: 25);
             dnSpyButton.OnClick += OnDnSpyButtonClicked;
 
@@ -497,7 +498,7 @@ namespace UnityExplorer.Inspectors
             UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(rowObj, true, true, true, true, 5, 2, 2, 2, 2);
             UIFactory.SetLayoutElement(rowObj, minHeight: 25, flexibleHeight: 0, flexibleWidth: 9999);
 
-            Text nameLabel = UIFactory.CreateLabel(rowObj, "NameFilterLabel", "Filter names:", TextAnchor.MiddleLeft, Color.grey);
+            Text nameLabel = UIFactory.CreateLabel(rowObj, "NameFilterLabel", Localizer.Get("LBL_FILTER_NAMES", "Filter names:"), TextAnchor.MiddleLeft, Color.grey);
             UIFactory.SetLayoutElement(nameLabel.gameObject, minHeight: 25, minWidth: 90, flexibleWidth: 0);
 
             filterInputField = UIFactory.CreateInputField(rowObj, "NameFilterInput", "...");
@@ -509,14 +510,14 @@ namespace UnityExplorer.Inspectors
 
             // Update button and toggle
 
-            ButtonRef updateButton = UIFactory.CreateButton(rowObj, "UpdateButton", "Update displayed values", new Color(0.22f, 0.28f, 0.22f));
+            ButtonRef updateButton = UIFactory.CreateButton(rowObj, "UpdateButton", Localizer.Get("BTN_UPDATE_DISPLAYED", "Update displayed values"), new Color(0.22f, 0.28f, 0.22f));
             UIFactory.SetLayoutElement(updateButton.Component.gameObject, minHeight: 25, minWidth: 175, flexibleWidth: 0);
             updateButton.OnClick += OnUpdateClicked;
 
             GameObject toggleObj = UIFactory.CreateToggle(rowObj, "AutoUpdateToggle", out autoUpdateToggle, out Text toggleText);
             UIFactory.SetLayoutElement(toggleObj, minWidth: 125, minHeight: 25);
             autoUpdateToggle.isOn = false;
-            toggleText.text = "Auto-update";
+            toggleText.text = Localizer.Get("LBL_AUTO_UPDATE", "Auto-update");
         }
 
         // Second row
@@ -529,7 +530,7 @@ namespace UnityExplorer.Inspectors
 
             // Scope buttons
 
-            Text scopeLabel = UIFactory.CreateLabel(rowObj, "ScopeLabel", "Scope:", TextAnchor.MiddleLeft, Color.grey);
+            Text scopeLabel = UIFactory.CreateLabel(rowObj, "ScopeLabel", Localizer.Get("LBL_SCOPE", "Scope:"), TextAnchor.MiddleLeft, Color.grey);
             UIFactory.SetLayoutElement(scopeLabel.gameObject, minHeight: 25, minWidth: 60, flexibleWidth: 0);
             AddScopeFilterButton(rowObj, BindingFlags.Default, true);
             AddScopeFilterButton(rowObj, BindingFlags.Instance);
@@ -548,7 +549,7 @@ namespace UnityExplorer.Inspectors
 
         void AddScopeFilterButton(GameObject parent, BindingFlags flags, bool setAsActive = false)
         {
-            string lbl = flags == BindingFlags.Default ? "All" : flags.ToString();
+            string lbl = flags == BindingFlags.Default ? Localizer.Get("SCOPE_ALL", "All") : Localizer.Get("SCOPE_" + flags.ToString().ToUpper(), flags.ToString());
             Color color = setAsActive ? enabledButtonColor : disabledButtonColor;
 
             ButtonRef button = UIFactory.CreateButton(parent, "Filter_" + flags, lbl, color);
@@ -570,7 +571,9 @@ namespace UnityExplorer.Inspectors
                 MemberTypes.Constructor => SignatureHighlighter.CLASS_INSTANCE,
                 _ => throw new NotImplementedException()
             };
-            toggleText.text = $"<color={color}>{type}</color>";
+            string typeStr = type.ToString();
+            string typeTrans = Localizer.Get("MEMBER_TYPE_" + typeStr.ToUpper(), typeStr);
+            toggleText.text = $"<color={color}>{typeTrans}</color>";
 
             toggle.graphic.TryCast<Image>().color = color.ToColor() * 0.65f;
 

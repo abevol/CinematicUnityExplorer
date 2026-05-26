@@ -13,6 +13,7 @@ namespace UnityExplorer.Config
         public static ConfigHandler Handler { get; private set; }
 
         // Actual CUE Settings
+        public static ConfigElement<Language> LanguageSetting;
         public static ConfigElement<KeyCode> Master_Toggle;
         public static ConfigElement<bool> Hide_On_Startup;
         public static ConfigElement<float> Startup_Delay_Time;
@@ -66,6 +67,12 @@ namespace UnityExplorer.Config
         public static ConfigElement<string> Custom_Components_To_Disable;
         public static ConfigElement<string> Preferred_Target_Camera;
 
+        public enum Language
+        {
+            English,
+            Chinese
+        }
+
         // internal configs
         internal static InternalConfigHandler InternalHandler { get; private set; }
         internal static readonly Dictionary<UIManager.Panels, ConfigElement<string>> PanelSaveData = new();
@@ -91,8 +98,7 @@ namespace UnityExplorer.Config
             InternalHandler.LoadConfig();
 
 #if STANDALONE
-            if (Loader.Standalone.ExplorerEditorBehaviour.Instance)
-                Loader.Standalone.ExplorerEditorBehaviour.Instance.LoadConfigs();
+            Loader.Standalone.ExplorerEditorBehaviour.Instance?.LoadConfigs();
 #endif
         }
 
@@ -112,6 +118,10 @@ namespace UnityExplorer.Config
 
         private static void CreateConfigElements()
         {
+            LanguageSetting = new("Language",
+                "The language used by UnityExplorer. Requires restart to fully take effect.",
+                Language.English);
+
             Master_Toggle = new("CinematicUnityExplorer Toggle",
                 "The key to enable or disable CinematicUnityExplorer's menu and features.",
                 KeyCode.F7);
@@ -195,7 +205,7 @@ namespace UnityExplorer.Config
             Reset_Camera_Transform = new("Reset Camera transform on freecam disable",
                 "Reset the camera position and rotation between freecam sessions, so the freecam always starts from the gameplay position and rotation.",
                 true);
-            
+
             Arrow_Size = new("Visualizers arrows size",
                 "Cam Paths nodes and Lights Manager lights visualizers' arrow size (must be positive) (needs visualizer toggled to reflect changes).",
                 1f);

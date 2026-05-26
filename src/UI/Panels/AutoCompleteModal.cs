@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.UI.Widgets.AutoComplete;
+using UnityExplorer.Localization;
 using UniverseLib.Input;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -322,7 +323,7 @@ namespace UnityExplorer.UI.Panels
 
             navigationTipRow = UIFactory.CreateHorizontalGroup(this.ContentRoot, "BottomRow", true, true, true, true, 0, new Vector4(2, 2, 2, 2));
             UIFactory.SetLayoutElement(navigationTipRow, minHeight: 20, flexibleWidth: 9999);
-            UIFactory.CreateLabel(navigationTipRow, "HelpText", "Up/Down to select, Enter to use, Esc to close",
+            UIFactory.CreateLabel(navigationTipRow, "HelpText", Localizer.Get("LBL_AUTOCOMPLETE_HELP", "Up/Down to select, Enter to use, Esc to close"),
                 TextAnchor.MiddleLeft, Color.grey, false, 13);
 
             UIRoot.SetActive(false);

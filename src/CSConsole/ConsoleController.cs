@@ -3,6 +3,7 @@ using System.Collections;
 using System.Text;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
+using UnityExplorer.Localization;
 using UniverseLib.Input;
 using UniverseLib.UI.Models;
 
@@ -135,7 +136,7 @@ namespace UnityExplorer.CSConsole
                 AddUsing(use);
 
             if (logSuccess)
-                ExplorerCore.Log($"C# Console reset");//. Using directives:\r\n{Evaluator.GetUsing()}");
+                ExplorerCore.Log($"C# Console reset");
         }
 
         public static void AddUsing(string assemblyName)
@@ -646,11 +647,11 @@ Doorstop example:
         {
             Dropdown drop = Panel.HelpDropdown;
 
-            helpDict.Add("Help", "");
-            helpDict.Add("Usings", HELP_USINGS);
-            helpDict.Add("REPL", HELP_REPL);
-            helpDict.Add("Classes", HELP_CLASSES);
-            helpDict.Add("Coroutines", HELP_COROUTINES);
+            helpDict.Add(Localizer.Get("HELP_OPT_HELP", "Help"), "");
+            helpDict.Add(Localizer.Get("HELP_OPT_USINGS", "Usings"), HELP_USINGS);
+            helpDict.Add(Localizer.Get("HELP_OPT_REPL", "REPL"), HELP_REPL);
+            helpDict.Add(Localizer.Get("HELP_OPT_CLASSES", "Classes"), HELP_CLASSES);
+            helpDict.Add(Localizer.Get("HELP_OPT_COROUTINES", "Coroutines"), HELP_COROUTINES);
 
             foreach (KeyValuePair<string, string> opt in helpDict)
                 drop.options.Add(new Dropdown.OptionData(opt.Key));
@@ -669,21 +670,21 @@ Doorstop example:
         }
 
 
-        internal const string STARTUP_TEXT = @"<color=#5d8556>// Welcome to the UnityExplorer C# Console!
+        internal static string STARTUP_TEXT => Localizer.Get("CS_STARTUP_TEXT", @"<color=#5d8556>// Welcome to the UnityExplorer C# Console!
 
 // It is recommended to use the Log panel (or a console log window) while using this tool.
 // Use the Help dropdown to see detailed examples of how to use the console.
 
-// To execute a script automatically on startup, put the script at 'CinematicUnityExplorer\Scripts\startup.cs'</color>";
+// To execute a script automatically on startup, put the script at 'CinematicUnityExplorer\Scripts\startup.cs'</color>");
 
-        internal const string HELP_USINGS = @"// You can add a using directive to any namespace, but you must compile for it to take effect.
+        internal static string HELP_USINGS => Localizer.Get("HELP_VAL_USINGS", @"// You can add a using directive to any namespace, but you must compile for it to take effect.
 // It will remain in effect until you Reset the console.
 using UnityEngine.UI;
 
 // To see your current usings, use the ""GetUsing();"" helper.
-// Note: You cannot add usings and evaluate REPL at the same time.";
+// Note: You cannot add usings and evaluate REPL at the same time.");
 
-        internal const string HELP_REPL = @"/* REPL (Read-Evaluate-Print-Loop) is a way to execute code immediately.
+        internal static string HELP_REPL => Localizer.Get("HELP_VAL_REPL", @"/* REPL (Read-Evaluate-Print-Loop) is a way to execute code immediately.
  * REPL code cannot contain any using directives or classes.
  * The return value of the last line of your REPL will be printed to the log.
  * Variables defined in REPL will exist until you Reset the console.
@@ -708,9 +709,9 @@ var x = 5;
  * GetVars();         - prints the names and values of the REPL variables you have defined
  * GetClasses();      - prints the names and members of the classes you have defined
  * help;              - the default REPL help command, contains additional helpers.
-*/";
+*/");
 
-        internal const string HELP_CLASSES = @"// Classes you compile will exist until the application closes.
+        internal static string HELP_CLASSES => Localizer.Get("HELP_VAL_CLASSES", @"// Classes you compile will exist until the application closes.
 // You can soft-overwrite a class by compiling it again with the same name. The old class will still technically exist in memory.
 
 // Compiled classes can be accessed from both inside and outside this console.
@@ -727,9 +728,9 @@ public class HelloWorld
 // In REPL, you could call the example method above with ""HelloWorld.Main();""
 // Note: The compiler does not allow you to run REPL code and define classes at the same time.
 
-// In REPL, use the ""GetClasses();"" helper to see the classes you have defined since the last Reset.";
+// In REPL, use the ""GetClasses();"" helper to see the classes you have defined since the last Reset.");
 
-        internal const string HELP_COROUTINES = @"// To start a Coroutine directly, use ""Start(SomeCoroutine());"" in REPL mode.
+        internal static string HELP_COROUTINES => Localizer.Get("HELP_VAL_COROUTINES", @"// To start a Coroutine directly, use ""Start(SomeCoroutine());"" in REPL mode.
 
 // To declare a coroutine, you will need to compile it separately. For example:
 public class MyCoro
@@ -740,7 +741,7 @@ public class MyCoro
         UnityExplorer.ExplorerCore.Log(""Hello, world after one frame!"");
     }
 }
-// To run this Coroutine in REPL, it would look like ""Start(MyCoro.Main());""";
+// To run this Coroutine in REPL, it would look like ""Start(MyCoro.Main());""");
 
         #endregion
     }
