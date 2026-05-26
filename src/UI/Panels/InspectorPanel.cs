@@ -1,5 +1,6 @@
 ﻿using UnityExplorer.Inspectors;
 using UnityExplorer.Localization;
+using UnityExplorer.UI.Widgets;
 using UniverseLib.UI;
 
 namespace UnityExplorer.UI.Panels
@@ -21,6 +22,7 @@ namespace UnityExplorer.UI.Panels
         public Dropdown MouseInspectDropdown;
         public GameObject ContentHolder;
         public RectTransform ContentRect;
+        private Text statusLabel;
 
         public static float CurrentPanelWidth => Instance.Rect.rect.width;
         public static float CurrentPanelHeight => Instance.Rect.rect.height;
@@ -33,6 +35,7 @@ namespace UnityExplorer.UI.Panels
         public override void Update()
         {
             InspectorManager.Update();
+            UpdateStatus();
         }
 
         public override void OnFinishResize()
@@ -79,7 +82,17 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(ContentHolder, flexibleHeight: 9999);
             ContentRect = ContentHolder.GetComponent<RectTransform>();
 
+            statusLabel = UEUI.CreateStatus(ContentRoot, "InspectorStatus", Localizer.Get("STATUS_INSPECTOR_READY", "Inspector ready."));
+
             this.SetActive(false);
+        }
+
+        private void UpdateStatus()
+        {
+            if (!statusLabel)
+                return;
+
+            statusLabel.text = string.Format(Localizer.Get("STATUS_INSPECTOR_TABS", "{0} inspector tab(s)."), InspectorManager.Inspectors.Count);
         }
     }
 }

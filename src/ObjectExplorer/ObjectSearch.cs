@@ -49,7 +49,7 @@ namespace UnityExplorer.ObjectExplorer
         public void DoSearch()
         {
             cachedCellTexts.Clear();
-            SetStatus("Searching...");
+            SetStatus(Localizer.Get("STATUS_SEARCHING", "Searching..."));
 
             try
             {
@@ -77,7 +77,9 @@ namespace UnityExplorer.ObjectExplorer
 
                 string mode = context.ToString();
                 resultsLabel.text = string.Format(Localizer.Get("LBL_RESULTS_COUNT", "{0} results"), currentResults.Count);
-                SetStatus(currentResults.Count == 0 ? $"No {mode} results matched the current filters." : $"{mode}: {currentResults.Count} result(s)");
+                SetStatus(currentResults.Count == 0
+                    ? string.Format(Localizer.Get("STATUS_SEARCH_EMPTY", "No {0} results matched the current filters."), mode)
+                    : string.Format(Localizer.Get("STATUS_SEARCH_RESULTS", "{0}: {1} result(s)"), mode, currentResults.Count));
             }
             catch (Exception ex)
             {
@@ -85,7 +87,7 @@ namespace UnityExplorer.ObjectExplorer
                 dataHandler.RefreshData();
                 resultsScrollPool.Refresh(true, true);
                 resultsLabel.text = string.Format(Localizer.Get("LBL_RESULTS_COUNT", "{0} results"), 0);
-                SetStatus($"Search failed: {ex.GetInnerMostException().Message}");
+                SetStatus(string.Format(Localizer.Get("STATUS_SEARCH_FAILED", "Search failed: {0}"), ex.GetInnerMostException().Message));
             }
         }
 
@@ -128,7 +130,7 @@ namespace UnityExplorer.ObjectExplorer
                     _ => "Class filter..."
                 };
 
-            SetStatus($"Mode: {context}");
+            SetStatus(string.Format(Localizer.Get("STATUS_SEARCH_MODE", "Mode: {0}"), context));
         }
 
         private void OnSceneFilterDropChanged(int value) => sceneFilter = (SceneFilter)value;
@@ -225,7 +227,7 @@ namespace UnityExplorer.ObjectExplorer
             resultsLabel = UIFactory.CreateLabel(searchRow, "ResultsLabel", string.Format(Localizer.Get("LBL_RESULTS_COUNT", "{0} results"), 0), TextAnchor.MiddleLeft);
             UIFactory.SetLayoutElement(resultsLabel.gameObject, minHeight: 25, flexibleWidth: 9999);
 
-            statusLabel = UEUI.CreateStatus(uiRoot, "SearchStatus", "Mode: GameObject");
+            statusLabel = UEUI.CreateStatus(uiRoot, "SearchStatus", string.Format(Localizer.Get("STATUS_SEARCH_MODE", "Mode: {0}"), SearchContext.GameObject));
 
             resultsScrollPool = UIFactory.CreateScrollPool<ButtonCell>(uiRoot, "ResultsList", out GameObject scrollObj, out GameObject scrollContent);
             dataHandler = new ButtonListHandler<object, ButtonCell>(resultsScrollPool, GetEntries, SetCell, ShouldDisplayCell, OnCellClicked);

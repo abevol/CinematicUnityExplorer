@@ -86,12 +86,12 @@ namespace UnityExplorer.UI.Panels
             ButtonRef compileButton = UIFactory.CreateButton(toolsRow, "CompileButton", Localizer.Get("BTN_COMPILE", "Compile"), new Color(0.33f, 0.5f, 0.33f));
             UIFactory.SetLayoutElement(compileButton.Component.gameObject, minHeight: 28, minWidth: 130, flexibleHeight: 0);
             compileButton.ButtonText.fontSize = 15;
-            compileButton.OnClick += () => { SetStatus("Compile requested."); OnCompileClicked?.Invoke(); };
+            compileButton.OnClick += () => { SetStatus(Localizer.Get("STATUS_CONSOLE_COMPILE_REQUESTED", "Compile requested.")); OnCompileClicked?.Invoke(); };
 
             ButtonRef resetButton = UIFactory.CreateButton(toolsRow, "ResetButton", Localizer.Get("BTN_RESET", "Reset"), new Color(0.33f, 0.33f, 0.33f));
             UIFactory.SetLayoutElement(resetButton.Component.gameObject, minHeight: 28, minWidth: 80, flexibleHeight: 0);
             resetButton.ButtonText.fontSize = 15;
-            resetButton.OnClick += () => { SetStatus("Console reset requested."); OnResetClicked?.Invoke(); };
+            resetButton.OnClick += () => { SetStatus(Localizer.Get("STATUS_CONSOLE_RESET_REQUESTED", "Console reset requested.")); OnResetClicked?.Invoke(); };
 
             // Help dropdown
 
@@ -124,7 +124,7 @@ namespace UnityExplorer.UI.Panels
             autoIndentToggleText.text = Localizer.Get("LBL_AUTO_INDENT", "Auto-indent");
             AutoIndentToggle.onValueChanged.AddListener((bool val) => { OnAutoIndentToggled?.Invoke(val); });
 
-            statusLabel = UEUI.CreateStatus(ContentRoot, "ConsoleStatus", "Mode: REPL / Script / Class input. Compile with button or Ctrl+R when enabled.");
+            statusLabel = UEUI.CreateStatus(ContentRoot, "ConsoleStatus", Localizer.Get("STATUS_CONSOLE_READY", "Mode: REPL / Script / Class input. Compile with button or Ctrl+R when enabled."));
 
             // Console Input
 

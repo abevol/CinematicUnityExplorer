@@ -9,7 +9,7 @@ using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets.ScrollView;
 
 using UnityExplorer.Localization;
-
+using UnityExplorer.UI.Widgets;
 
 
 namespace UnityExplorer.UI.Panels
@@ -69,7 +69,7 @@ namespace UnityExplorer.UI.Panels
 
 
         private static ScrollPool<ConsoleLogCell> logScrollPool;
-
+        private static Text statusLabel;
 
 
         public LogPanel(UIBase owner) : base(owner)
@@ -177,6 +177,7 @@ namespace UnityExplorer.UI.Panels
 
                 logScrollPool.Refresh(true, false);
 
+            SetStatus(string.Format(Localizer.Get("STATUS_LOG_READY", "{0} log entries."), Logs.Count));
         }
 
 
@@ -188,7 +189,7 @@ namespace UnityExplorer.UI.Panels
             Logs.Clear();
 
             logScrollPool.Refresh(true, true);
-
+            SetStatus(Localizer.Get("STATUS_LOG_CLEARED", "Log cleared."));
         }
 
 
@@ -200,10 +201,16 @@ namespace UnityExplorer.UI.Panels
             if (File.Exists(CurrentStreamPath))
 
                 Process.Start(CurrentStreamPath);
-
+            SetStatus(string.Format(Localizer.Get("STATUS_LOG_FILE", "Log file: {0}"), CurrentStreamPath));
         }
 
 
+
+        private static void SetStatus(string text)
+        {
+            if (statusLabel)
+                statusLabel.text = text ?? "";
+        }
 
         // Cell pool
 
@@ -341,6 +348,7 @@ namespace UnityExplorer.UI.Panels
 
             toggle.onValueChanged.AddListener((bool val) => ConfigManager.Log_Unity_Debug.Value = val);
 
+            statusLabel = UEUI.CreateStatus(ContentRoot, "LogStatus", string.Format(Localizer.Get("STATUS_LOG_READY", "{0} log entries."), Logs.Count));
         }
 
     }

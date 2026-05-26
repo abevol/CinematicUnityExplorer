@@ -2,6 +2,7 @@
 using UnityExplorer.Config;
 using UnityExplorer.Localization;
 using UnityExplorer.McpBridge.Paralives;
+using UnityExplorer.UI.Widgets;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets;
@@ -76,9 +77,7 @@ namespace UnityExplorer.UI.Panels
             CreateTabButton(tabRow, Tab.Saves, "Saves");
             CreateTabButton(tabRow, Tab.Settings, "Settings");
 
-            statusLabel = UIFactory.CreateLabel(ContentRoot, "Status", "", TextAnchor.MiddleLeft);
-            statusLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
-            UIFactory.SetLayoutElement(statusLabel.gameObject, minHeight: 24, flexibleHeight: 0, flexibleWidth: 9999);
+            statusLabel = UEUI.CreateStatus(ContentRoot, "Status", "");
 
             UIFactory.CreateScrollView(ContentRoot, "ParalivesScroll", out scrollContent, out AutoSliderScrollbar _, new Color(0.12f, 0.12f, 0.12f, 1f));
             BuildActiveTab();

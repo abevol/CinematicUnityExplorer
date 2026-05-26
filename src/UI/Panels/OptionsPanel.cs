@@ -2,6 +2,7 @@ using UnityExplorer.CacheObject;
 using UnityExplorer.CacheObject.Views;
 using UnityExplorer.Config;
 using UnityExplorer.Localization;
+using UnityExplorer.UI.Widgets;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets.ScrollView;
@@ -41,6 +42,7 @@ namespace UnityExplorer.UI.Panels
         private InputFieldRef searchInput;
         private Dropdown categoryDropdown;
         private Text resultLabel;
+        private Text statusLabel;
 
         public CacheObjectBase ParentCacheObject => null;
         public object Target => null;
@@ -90,9 +92,13 @@ namespace UnityExplorer.UI.Panels
 
             ButtonRef saveBtn = UIFactory.CreateButton(actionRow, "Save", Localizer.Get("BTN_SAVE_OPTIONS", "Save Options"), new Color(0.2f, 0.3f, 0.2f));
             UIFactory.SetLayoutElement(saveBtn.Component.gameObject, minWidth: 130, minHeight: 25, flexibleWidth: 0, flexibleHeight: 0);
-            saveBtn.OnClick += ConfigManager.Handler.SaveConfig;
+            saveBtn.OnClick += () =>
+            {
+                ConfigManager.Handler.SaveConfig();
+                SetStatus(Localizer.Get("STATUS_OPTIONS_SAVED", "Options saved."));
+            };
 
-            ButtonRef resetBtn = UIFactory.CreateButton(actionRow, "ResetDefaults", "Reset to Default", new Color(0.25f, 0.2f, 0.12f));
+            ButtonRef resetBtn = UIFactory.CreateButton(actionRow, "ResetDefaults", Localizer.Get("BTN_RESET_DEFAULTS", "Reset to Default"), new Color(0.25f, 0.2f, 0.12f));
             UIFactory.SetLayoutElement(resetBtn.Component.gameObject, minWidth: 130, minHeight: 25, flexibleWidth: 0, flexibleHeight: 0);
             resetBtn.OnClick += ResetVisibleToDefault;
 
@@ -102,12 +108,14 @@ namespace UnityExplorer.UI.Panels
             GameObject filterRow = UIFactory.CreateHorizontalGroup(ContentRoot, "FilterRow", false, false, true, true, 5, default, default, TextAnchor.MiddleLeft);
             UIFactory.SetLayoutElement(filterRow, minHeight: 30, flexibleHeight: 0, flexibleWidth: 9999);
 
-            searchInput = UIFactory.CreateInputField(filterRow, "Search", "Search options...");
+            searchInput = UIFactory.CreateInputField(filterRow, "Search", Localizer.Get("TXT_SEARCH_OPTIONS", "Search options..."));
             UIFactory.SetLayoutElement(searchInput.UIRoot, minWidth: 260, minHeight: 25, flexibleWidth: 9999, flexibleHeight: 0);
             searchInput.OnValueChanged += _ => RefreshFilteredEntries();
 
-            UIFactory.CreateDropdown(filterRow, "Category", out categoryDropdown, "All", 14, _ => RefreshFilteredEntries(), CategoryOptions);
+            UIFactory.CreateDropdown(filterRow, "Category", out categoryDropdown, Localizer.Get("CATEGORY_ALL", "All"), 14, _ => RefreshFilteredEntries(), CategoryOptions);
             UIFactory.SetLayoutElement(categoryDropdown.gameObject, minWidth: 150, minHeight: 25, flexibleWidth: 0, flexibleHeight: 0);
+
+            statusLabel = UEUI.CreateStatus(ContentRoot, "OptionsStatus", "");
 
             scrollPool = UIFactory.CreateScrollPool<ConfigEntryCell>(
                 ContentRoot,
@@ -125,6 +133,7 @@ namespace UnityExplorer.UI.Panels
                 entry.RefConfigElement.RevertToDefaultValue();
 
             RefreshFilteredEntries(false);
+            SetStatus(Localizer.Get("STATUS_OPTIONS_RESET", "Visible options reset to defaults."));
         }
 
         private void RefreshFilteredEntries(bool jumpToTop = true)
@@ -149,7 +158,9 @@ namespace UnityExplorer.UI.Panels
             }
 
             if (resultLabel)
-                resultLabel.text = $"{configEntries.Count} option(s)";
+                resultLabel.text = string.Format(Localizer.Get("STATUS_OPTIONS_COUNT", "{0} option(s)"), configEntries.Count);
+
+            SetStatus(string.Format(Localizer.Get("STATUS_OPTIONS_FILTERED", "{0} option(s) shown."), configEntries.Count));
 
             scrollPool?.Refresh(true, jumpToTop);
         }
@@ -170,6 +181,12 @@ namespace UnityExplorer.UI.Panels
             }
 
             return CategoryOptions.Length;
+        }
+
+        private void SetStatus(string text)
+        {
+            if (statusLabel)
+                statusLabel.text = text ?? "";
         }
     }
 }

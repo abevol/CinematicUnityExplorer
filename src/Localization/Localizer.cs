@@ -62,7 +62,12 @@ namespace UnityExplorer.Localization
             { "LBL_CHILD_FILTER", "子级过滤:" },
             { "LBL_SCENE_FILTER", "场景过滤:" },
             { "LBL_NAME_CONTAINS", "名称包含:" },
-            { "LBL_RESULTS_COUNT", "共 {0} 个结果" },
+            { "LBL_RESULTS_COUNT", "共 {0} 个结果" },
+            { "STATUS_SEARCHING", "正在搜索..." },
+            { "STATUS_SEARCH_EMPTY", "没有找到匹配当前过滤器的 {0} 结果。" },
+            { "STATUS_SEARCH_RESULTS", "{0}: {1} 个结果" },
+            { "STATUS_SEARCH_FAILED", "搜索失败: {0}" },
+            { "STATUS_SEARCH_MODE", "模式: {0}" },
             { "CONTEXT_UNITYOBJECT", "Unity 对象" },
 
             { "CONTEXT_GAMEOBJECT", "GameObject" },
@@ -72,7 +77,11 @@ namespace UnityExplorer.Localization
             { "CONTEXT_CLASS", "类型 (Class)" },
 
             { "CONTEXT_STATICCLASS", "静态类 (Static Class)" },
-            { "FILTER_ANY", "任意" },
+            { "FILTER_ANY", "任意" },
+            { "FILTER_ROOTOBJECT", "仅根级" },
+            { "FILTER_HASPARENT", "仅子级" },
+            { "FILTER_ACTIVELYLOADED", "已加载场景" },
+            { "FILTER_HIDEANDDONTSAVE", "HideAndDontSave" },
             { "FILTER_ROOTONLY", "仅根级" },
             { "FILTER_CHILDONLY", "仅子级" },
             { "FILTER_ACTIVE", "仅活跃" },
@@ -124,7 +133,10 @@ namespace UnityExplorer.Localization
             { "LBL_HELP", "帮助" },
             { "LBL_COMPILE_CTRL_R", "按 Ctrl+R 编译" },
             { "LBL_SUGGESTIONS", "代码建议" },
-            { "LBL_AUTO_INDENT", "自动缩进" },
+            { "LBL_AUTO_INDENT", "自动缩进" },
+            { "STATUS_CONSOLE_COMPILE_REQUESTED", "已请求编译。" },
+            { "STATUS_CONSOLE_RESET_REQUESTED", "已请求重置控制台。" },
+            { "STATUS_CONSOLE_READY", "模式: REPL / 脚本 / 类输入。可使用按钮或启用 Ctrl+R 后编译。" },
             { "CS_STARTUP_TEXT", @"<color=#5d8556>// 欢迎使用 UnityExplorer C# 控制台！
 //
 // 建议在使用此工具时开启日志面板（或游戏控制台日志窗口）。
@@ -208,7 +220,9 @@ public class MyCoro
             { "MSG_COPIED", "已复制！" },
             { "MSG_PASTED", "已粘贴！" },
             { "MSG_CANNOT_ASSIGN", "无法将类型“{0}”赋值给“{1}”！" },
-            { "MSG_CANNOT_INSPECT_NULL", "无法检查 null 或已销毁的对象！" },
+            { "MSG_CANNOT_INSPECT_NULL", "无法检查 null 或已销毁的对象！" },
+            { "STATUS_INSPECTOR_READY", "检查器就绪。" },
+            { "STATUS_INSPECTOR_TABS", "{0} 个检查器标签页。" },
 
             // GameObject Inspector Buttons & Labels
             { "LBL_CHILDREN", "子物体" },
@@ -267,7 +281,20 @@ public class MyCoro
             { "BTN_EVALUATE", "求值/调用" },
 
             // AutoCompleteModal Specific
-            { "LBL_AUTOCOMPLETE_HELP", "↑/↓ 键选择，Enter 键使用，Esc 键关闭" },
+            { "LBL_AUTOCOMPLETE_HELP", "↑/↓ 键选择，Enter 键使用，Esc 键关闭" },
+            { "BTN_OPEN_LOG_FILE", "打开日志文件" },
+            { "LBL_LOG_UNITY_DEBUG", "记录 Unity 调试日志" },
+            { "STATUS_LOG_READY", "{0} 条日志。" },
+            { "STATUS_LOG_CLEARED", "日志已清除。" },
+            { "STATUS_LOG_FILE", "日志文件: {0}" },
+            { "BTN_SAVE_OPTIONS", "保存设置" },
+            { "BTN_RESET_DEFAULTS", "重置为默认值" },
+            { "TXT_SEARCH_OPTIONS", "搜索设置..." },
+            { "CATEGORY_ALL", "全部" },
+            { "STATUS_OPTIONS_SAVED", "设置已保存。" },
+            { "STATUS_OPTIONS_RESET", "当前显示的设置已重置为默认值。" },
+            { "STATUS_OPTIONS_COUNT", "{0} 个设置项" },
+            { "STATUS_OPTIONS_FILTERED", "显示 {0} 个设置项。" },
 
             // Config settings name and description
             { "Language", "语言设置 (Language)" },
