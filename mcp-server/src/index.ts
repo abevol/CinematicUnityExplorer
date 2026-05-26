@@ -127,6 +127,45 @@ const paralivesSetNeedValueSchema = {
   required: ["characterGuid", "needGuid", "value"],
 } as const;
 
+const paralivesInvokeMainMenuActionSchema = {
+  type: "object",
+  properties: {
+    action: {
+      type: "string",
+      enum: ["continue_game", "new_game", "load_game_menu", "mod_editor", "options"],
+    },
+    dryRun: { type: "boolean", default: true },
+    confirm: { type: "string" },
+  },
+  required: ["action"],
+} as const;
+
+const paralivesListSavedGamesSchema = {
+  type: "object",
+  properties: {
+    limit: { type: "integer", minimum: 1, maximum: 100, default: 50 },
+  },
+} as const;
+
+const paralivesLoadSavedGameSchema = {
+  type: "object",
+  properties: {
+    saveId: { type: "string" },
+    saveName: { type: "string" },
+    savePath: { type: "string" },
+    dryRun: { type: "boolean", default: true },
+    confirm: { type: "string" },
+  },
+} as const;
+
+const paralivesStartNewGameSchema = {
+  type: "object",
+  properties: {
+    dryRun: { type: "boolean", default: true },
+    confirm: { type: "string" },
+  },
+} as const;
+
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -152,6 +191,41 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
     {
       name: "Paralives:get_type_index",
       description: "Read the ParalivesBridge availability and Mono.Cecil type index summary.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_game_state",
+      description: "Read current Paralives scene/UI/loading state and manager availability.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:list_main_menu_actions",
+      description: "List whitelisted Paralives main menu actions and whether their UI buttons are available.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:invoke_main_menu_action",
+      description: "Invoke a whitelisted Paralives main menu UI button. Defaults to dry-run and requires confirmation.",
+      inputSchema: paralivesInvokeMainMenuActionSchema,
+    },
+    {
+      name: "Paralives:list_saved_games",
+      description: "List bounded saved-game candidates from SavedGameManager and likely save directories.",
+      inputSchema: paralivesListSavedGamesSchema,
+    },
+    {
+      name: "Paralives:load_saved_game",
+      description: "Load a saved game through a supported SavedGameManager method when available. Defaults to dry-run and requires confirmation.",
+      inputSchema: paralivesLoadSavedGameSchema,
+    },
+    {
+      name: "Paralives:start_new_game",
+      description: "Start a new game via the whitelisted main menu New Game button. Defaults to dry-run and requires confirmation.",
+      inputSchema: paralivesStartNewGameSchema,
+    },
+    {
+      name: "Paralives:get_loading_state",
+      description: "Read GameLoadingManager state and current active scene.",
       inputSchema: { type: "object", properties: {} },
     },
     {
@@ -306,6 +380,20 @@ function toolNameToAction(name: string): string | null {
       return "call_component_method";
     case "Paralives:get_type_index":
       return "paralives_get_type_index";
+    case "Paralives:get_game_state":
+      return "paralives_get_game_state";
+    case "Paralives:list_main_menu_actions":
+      return "paralives_list_main_menu_actions";
+    case "Paralives:invoke_main_menu_action":
+      return "paralives_invoke_main_menu_action";
+    case "Paralives:list_saved_games":
+      return "paralives_list_saved_games";
+    case "Paralives:load_saved_game":
+      return "paralives_load_saved_game";
+    case "Paralives:start_new_game":
+      return "paralives_start_new_game";
+    case "Paralives:get_loading_state":
+      return "paralives_get_loading_state";
     case "Paralives:list_content_mods":
       return "paralives_list_content_mods";
     case "Paralives:inspect_content_mod":

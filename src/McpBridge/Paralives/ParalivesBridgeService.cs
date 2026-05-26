@@ -9,6 +9,15 @@ namespace UnityExplorer.McpBridge.Paralives
     {
         private const string ConfirmPhrase = "CONFIRM_PARALIVES_WRITE";
         private const int MaxListedFiles = 200;
+        private const int MaxListedSavedGames = 100;
+        private static readonly Dictionary<string, string> mainMenuActionButtons = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["continue_game"] = "ButtonContinueGame",
+            ["new_game"] = "ButtonNewGame",
+            ["load_game_menu"] = "ButtonLoadGame",
+            ["mod_editor"] = "ButtonModEditor",
+            ["options"] = "ButtonOptions"
+        };
         private static readonly HashSet<string> allowedCheats = new(StringComparer.OrdinalIgnoreCase)
         {
             "UNITYOBJECTCOUNT",
@@ -40,6 +49,13 @@ namespace UnityExplorer.McpBridge.Paralives
             return action switch
             {
                 "paralives_get_type_index" => GetTypeIndex(),
+                "paralives_get_game_state" => GetGameState(),
+                "paralives_list_main_menu_actions" => ListMainMenuActions(),
+                "paralives_invoke_main_menu_action" => InvokeMainMenuAction(parameters),
+                "paralives_list_saved_games" => ListSavedGames(parameters),
+                "paralives_load_saved_game" => LoadSavedGame(parameters),
+                "paralives_start_new_game" => StartNewGame(parameters),
+                "paralives_get_loading_state" => GetLoadingState(),
                 "paralives_list_content_mods" => ListContentMods(),
                 "paralives_inspect_content_mod" => InspectContentMod(parameters),
                 "paralives_create_content_mod" => CreateContentMod(parameters),
@@ -75,6 +91,171 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["mainModPath"] = mainModPath,
                 ["index"] = typeIndex.ToSummary()
             };
+        }
+
+        private static object GetGameState()
+        {
+            GameObject mainMenu = FindMainMenuRoot();
+            Dictionary<string, object> loadingState = BuildLoadingState();
+            List<object> scenes = new();
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+            {
+                UnityEngine.SceneManagement.Scene scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+                scenes.Add(new Dictionary<string, object>
+                {
+                    ["name"] = scene.name,
+                    ["path"] = scene.path,
+                    ["isLoaded"] = scene.isLoaded,
+                    ["rootCount"] = scene.IsValid() ? RuntimeHelper.GetRootCount(scene) : 0
+                });
+            }
+
+            bool isMainMenu = mainMenu && mainMenu.activeInHierarchy;
+            bool isLoading = loadingState.TryGetValue("isLoadingInferred", out object loadingValue) && loadingValue is bool loadingBool && loadingBool;
+            string inferredMode = isLoading ? "loading" : isMainMenu ? "main_menu" : "in_game_or_editor";
+
+            return new Dictionary<string, object>
+            {
+                ["mode"] = inferredMode,
+                ["isMainMenu"] = isMainMenu,
+                ["mainMenu"] = mainMenu ? SummarizeGameObject(mainMenu) : null,
+                ["scenes"] = scenes,
+                ["activeUiRoots"] = GetActiveUiRoots(30),
+                ["loading"] = loadingState,
+                ["savedGameManager"] = SummarizeManager("SavedGameManager", new[] { "CurrentSavedGame", "CurrentSave", "LoadedGame", "IsGameLoaded", "HasLoadedGame" }),
+                ["gameLoadingManager"] = SummarizeManager("GameLoadingManager", new[] { "State", "CurrentState", "IsLoading", "Progress" })
+            };
+        }
+
+        private static object ListMainMenuActions()
+        {
+            List<object> actions = new();
+            foreach (KeyValuePair<string, string> pair in mainMenuActionButtons)
+                actions.Add(SummarizeMainMenuAction(pair.Key, pair.Value));
+
+            return new Dictionary<string, object>
+            {
+                ["mainMenu"] = FindMainMenuRoot() is GameObject menu ? SummarizeGameObject(menu) : null,
+                ["actions"] = actions
+            };
+        }
+
+        private static object InvokeMainMenuAction(Dictionary<string, object> parameters)
+        {
+            string action = GetRequiredString(parameters, "action");
+            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            bool confirmed = IsConfirmed(parameters);
+
+            if (!mainMenuActionButtons.TryGetValue(action, out string buttonName))
+                throw new McpBridgeException("validation_failed", $"Main menu action '{action}' is not whitelisted.");
+
+            Button button = FindButtonByName(buttonName);
+            Dictionary<string, object> result = new()
+            {
+                ["operation"] = "invoke_main_menu_action",
+                ["action"] = action,
+                ["buttonName"] = buttonName,
+                ["dryRun"] = dryRun,
+                ["confirmed"] = confirmed,
+                ["button"] = button ? SummarizeGameObject(button.gameObject) : null,
+                ["available"] = button && button.gameObject.activeInHierarchy,
+                ["interactable"] = button && button.interactable
+            };
+
+            if (!button)
+                throw new McpBridgeException("not_available", $"Main menu button '{buttonName}' was not found.");
+            if (!button.gameObject.activeInHierarchy)
+                throw new McpBridgeException("not_available", $"Main menu button '{buttonName}' is inactive.");
+            if (!button.interactable)
+                throw new McpBridgeException("validation_failed", $"Main menu button '{buttonName}' is not interactable.");
+
+            if (dryRun || !confirmed)
+            {
+                result["requiredConfirm"] = ConfirmPhrase;
+                return result;
+            }
+
+            button.onClick.Invoke();
+            result["invoked"] = true;
+            return result;
+        }
+
+        private static object StartNewGame(Dictionary<string, object> parameters)
+        {
+            Dictionary<string, object> actionParameters = new(parameters)
+            {
+                ["action"] = "new_game"
+            };
+            return InvokeMainMenuAction(actionParameters);
+        }
+
+        private static object GetLoadingState()
+        {
+            return BuildLoadingState();
+        }
+
+        private static object ListSavedGames(Dictionary<string, object> parameters)
+        {
+            int limit = Clamp(GetOptionalInt(parameters, "limit", 50), 1, MaxListedSavedGames);
+            List<object> managerItems = TryListSavedGamesFromManager(limit);
+            List<object> files = ListSavedGameFiles(limit);
+
+            return new Dictionary<string, object>
+            {
+                ["manager"] = SummarizeManager("SavedGameManager", new[] { "CurrentSavedGame", "CurrentSave", "LoadedGame", "IsGameLoaded", "HasLoadedGame" }),
+                ["managerItems"] = managerItems,
+                ["files"] = files,
+                ["limit"] = limit,
+                ["truncated"] = managerItems.Count >= limit || files.Count >= limit,
+                ["persistentDataPath"] = Application.persistentDataPath
+            };
+        }
+
+        private static object LoadSavedGame(Dictionary<string, object> parameters)
+        {
+            string savePath = GetOptionalString(parameters, "savePath");
+            string saveName = GetOptionalString(parameters, "saveName");
+            string saveId = GetOptionalString(parameters, "saveId");
+            string saveArgument = savePath ?? saveName ?? saveId;
+            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            bool confirmed = IsConfirmed(parameters);
+
+            if (string.IsNullOrEmpty(saveArgument))
+                throw new McpBridgeException("invalid_request", "One of 'savePath', 'saveName', or 'saveId' is required.");
+
+            Type managerType = ReflectionUtility.GetTypeByName("SavedGameManager");
+            object manager = GetSingletonInstance(managerType);
+            List<object> candidateMethods = ListLoadSavedGameMethods(managerType, saveArgument);
+
+            Dictionary<string, object> result = new()
+            {
+                ["operation"] = "load_saved_game",
+                ["saveArgument"] = saveArgument,
+                ["dryRun"] = dryRun,
+                ["confirmed"] = confirmed,
+                ["managerAvailable"] = manager != null,
+                ["candidateMethods"] = candidateMethods
+            };
+
+            if (dryRun || !confirmed)
+            {
+                result["requiredConfirm"] = ConfirmPhrase;
+                return result;
+            }
+
+            if (managerType == null)
+                throw new McpBridgeException("not_available", "SavedGameManager type is not available.");
+
+            MethodInfo method = ResolveSavedGameLoadMethod(managerType, saveArgument, out object[] arguments);
+            if (method == null)
+                throw new McpBridgeException("method_not_found", "No supported SavedGameManager load method was found. Use Paralives:invoke_main_menu_action with load_game_menu as a UI fallback.");
+            if (!method.IsStatic && manager == null)
+                throw new McpBridgeException("not_available", "SavedGameManager singleton is not available.");
+
+            method.Invoke(method.IsStatic ? null : manager, arguments);
+            result["invoked"] = true;
+            result["method"] = method.Name;
+            return result;
         }
 
         private static object ListContentMods()
@@ -380,6 +561,445 @@ namespace UnityExplorer.McpBridge.Paralives
                 typeIndex = new ParalivesTypeIndex();
                 ExplorerCore.LogWarning($"ParalivesBridge failed to index Paralives.dll: {ex}");
             }
+        }
+
+        private static GameObject FindMainMenuRoot()
+        {
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
+            {
+                GameObject go = obj.TryCast<GameObject>();
+                if (!go)
+                    continue;
+
+                if (go.name == "UIMainMenu" || go.name == "UIMainMenu(Clone)")
+                    return go;
+            }
+
+            return null;
+        }
+
+        private static Button FindButtonByName(string buttonName)
+        {
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
+            {
+                GameObject go = obj.TryCast<GameObject>();
+                if (!go || go.name != buttonName)
+                    continue;
+
+                Button button = go.GetComponent<Button>();
+                if (button)
+                    return button;
+
+                button = go.GetComponentInChildren<Button>(true);
+                if (button)
+                    return button;
+            }
+
+            return null;
+        }
+
+        private static Dictionary<string, object> SummarizeMainMenuAction(string action, string buttonName)
+        {
+            Button button = FindButtonByName(buttonName);
+            return new Dictionary<string, object>
+            {
+                ["action"] = action,
+                ["buttonName"] = buttonName,
+                ["available"] = button && button.gameObject.activeInHierarchy,
+                ["interactable"] = button && button.interactable,
+                ["button"] = button ? SummarizeGameObject(button.gameObject) : null
+            };
+        }
+
+        private static Dictionary<string, object> BuildLoadingState()
+        {
+            Dictionary<string, object> result = SummarizeManager("GameLoadingManager", new[]
+            {
+                "State",
+                "CurrentState",
+                "LoadingState",
+                "IsLoading",
+                "Loading",
+                "Progress",
+                "CurrentStep",
+                "CurrentLoadingStep"
+            });
+
+            bool isLoading = false;
+            if (result.TryGetValue("selectedMembers", out object selectedObj) && selectedObj is Dictionary<string, object> selected)
+            {
+                foreach (KeyValuePair<string, object> pair in selected)
+                {
+                    if ((pair.Key == "IsLoading" || pair.Key == "Loading") && pair.Value is bool boolValue && boolValue)
+                        isLoading = true;
+
+                    string text = pair.Value?.ToString();
+                    if (!string.IsNullOrEmpty(text) && text.IndexOf("loading", StringComparison.OrdinalIgnoreCase) >= 0)
+                        isLoading = true;
+                }
+            }
+
+            result["isLoadingInferred"] = isLoading;
+            result["activeScene"] = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            return result;
+        }
+
+        private static Dictionary<string, object> SummarizeManager(string managerTypeName, string[] memberNames)
+        {
+            Type type = ReflectionUtility.GetTypeByName(managerTypeName);
+            object manager = GetSingletonInstance(type);
+            Dictionary<string, object> members = new();
+
+            if (type != null && manager != null)
+            {
+                foreach (string memberName in memberNames)
+                {
+                    if (TryReadMember(manager, type, memberName, out object value))
+                        members[memberName] = FormatRuntimeValue(value);
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["type"] = type?.FullName,
+                ["available"] = manager != null,
+                ["display"] = manager?.ToString(),
+                ["selectedMembers"] = members
+            };
+        }
+
+        private static List<object> GetActiveUiRoots(int limit)
+        {
+            List<object> results = new();
+            HashSet<int> seen = new();
+
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
+            {
+                GameObject go = obj.TryCast<GameObject>();
+                if (!go || !go.activeInHierarchy)
+                    continue;
+
+                string path = GetPath(go);
+                bool looksLikeUi = go.name.StartsWith("UI", StringComparison.OrdinalIgnoreCase)
+                    || go.name.IndexOf("Menu", StringComparison.OrdinalIgnoreCase) >= 0
+                    || path.IndexOf("/UI", StringComparison.OrdinalIgnoreCase) >= 0;
+
+                if (!looksLikeUi || !seen.Add(go.GetInstanceID()))
+                    continue;
+
+                results.Add(SummarizeGameObject(go));
+                if (results.Count >= limit)
+                    break;
+            }
+
+            return results;
+        }
+
+        private static List<object> TryListSavedGamesFromManager(int limit)
+        {
+            List<object> items = new();
+            Type managerType = ReflectionUtility.GetTypeByName("SavedGameManager");
+            object manager = GetSingletonInstance(managerType);
+            if (managerType == null || manager == null)
+                return items;
+
+            foreach (string memberName in new[] { "SavedGames", "AllSavedGames", "SaveGames", "Saves", "SavedGameList", "SaveList", "SavedGameMetas", "savedGames" })
+            {
+                if (!TryReadMember(manager, managerType, memberName, out object collection) || collection == null)
+                    continue;
+
+                if (collection is System.Collections.IEnumerable enumerable && !(collection is string))
+                {
+                    foreach (object item in enumerable)
+                    {
+                        if (item == null)
+                            continue;
+
+                        items.Add(SummarizeDomainObject(item));
+                        if (items.Count >= limit)
+                            return items;
+                    }
+                }
+            }
+
+            return items;
+        }
+
+        private static List<object> ListSavedGameFiles(int limit)
+        {
+            List<object> files = new();
+            HashSet<string> candidateDirectories = new(StringComparer.OrdinalIgnoreCase);
+            AddExistingDirectory(candidateDirectories, Application.persistentDataPath);
+            AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "Saves"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "SaveGames"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "SavedGames"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "Saved Games"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(rootPath, "Saves"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(rootPath, "SaveGames"));
+
+            foreach (string directory in candidateDirectories.ToList())
+            {
+                try
+                {
+                    foreach (string child in Directory.GetDirectories(directory, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        string name = Path.GetFileName(child);
+                        if (name.IndexOf("save", StringComparison.OrdinalIgnoreCase) >= 0)
+                            AddExistingDirectory(candidateDirectories, child);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            HashSet<string> seen = new(StringComparer.OrdinalIgnoreCase);
+            foreach (string directory in candidateDirectories)
+            {
+                try
+                {
+                    foreach (string file in Directory.GetFiles(directory, "*", SearchOption.TopDirectoryOnly))
+                    {
+                        if (!IsLikelySavedGameFile(file) || !seen.Add(file))
+                            continue;
+
+                        files.Add(SummarizeFile(file));
+                        if (files.Count >= limit)
+                            return files;
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return files;
+        }
+
+        private static bool IsLikelySavedGameFile(string file)
+        {
+            string extension = Path.GetExtension(file).ToLowerInvariant();
+            string name = Path.GetFileName(file);
+            return extension == ".save"
+                || extension == ".sav"
+                || extension == ".savedgame"
+                || extension == ".json" && name.IndexOf("save", StringComparison.OrdinalIgnoreCase) >= 0
+                || extension == ".bytes" && name.IndexOf("save", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static Dictionary<string, object> SummarizeFile(string file)
+        {
+            FileInfo info = new(file);
+            return new Dictionary<string, object>
+            {
+                ["path"] = file,
+                ["name"] = info.Name,
+                ["extension"] = info.Extension,
+                ["length"] = info.Length,
+                ["lastWriteTimeUtc"] = info.LastWriteTimeUtc.ToString("o", CultureInfo.InvariantCulture)
+            };
+        }
+
+        private static List<object> ListLoadSavedGameMethods(Type managerType, string saveArgument)
+        {
+            List<object> methods = new();
+            if (managerType == null)
+                return methods;
+
+            foreach (MethodInfo method in managerType.GetMethods(ReflectionUtility.FLAGS))
+            {
+                if (!LooksLikeSavedGameLoadMethod(method) || !CanBuildSingleArgument(method, saveArgument))
+                    continue;
+
+                methods.Add(new Dictionary<string, object>
+                {
+                    ["name"] = method.Name,
+                    ["isStatic"] = method.IsStatic,
+                    ["parameters"] = method.GetParameters()
+                        .Select(parameter => new Dictionary<string, object>
+                        {
+                            ["name"] = parameter.Name,
+                            ["type"] = parameter.ParameterType.FullName
+                        })
+                        .Cast<object>()
+                        .ToList()
+                });
+
+                if (methods.Count >= 20)
+                    break;
+            }
+
+            return methods;
+        }
+
+        private static MethodInfo ResolveSavedGameLoadMethod(Type managerType, string saveArgument, out object[] arguments)
+        {
+            arguments = null;
+            foreach (MethodInfo method in managerType.GetMethods(ReflectionUtility.FLAGS))
+            {
+                if (!LooksLikeSavedGameLoadMethod(method) || !TryBuildSingleArgument(method, saveArgument, out object[] parsedArguments))
+                    continue;
+
+                arguments = parsedArguments;
+                return method;
+            }
+
+            return null;
+        }
+
+        private static bool LooksLikeSavedGameLoadMethod(MethodInfo method)
+        {
+            if (method.IsGenericMethod || method.ContainsGenericParameters)
+                return false;
+
+            string name = method.Name;
+            return name == "LoadGame"
+                || name == "LoadSavedGame"
+                || name == "LoadSave"
+                || name == "Load"
+                || name.IndexOf("Load", StringComparison.OrdinalIgnoreCase) >= 0 && name.IndexOf("Save", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        private static bool CanBuildSingleArgument(MethodInfo method, string argument)
+        {
+            return TryBuildSingleArgument(method, argument, out _);
+        }
+
+        private static bool TryBuildSingleArgument(MethodInfo method, string argument, out object[] arguments)
+        {
+            arguments = null;
+            ParameterInfo[] parameters = method.GetParameters();
+            if (parameters.Length != 1)
+                return false;
+
+            Type parameterType = parameters[0].ParameterType;
+            object parsed = null;
+            if (parameterType == typeof(string))
+                parsed = argument;
+            else if (parameterType == typeof(ulong) && ulong.TryParse(argument, NumberStyles.Integer, CultureInfo.InvariantCulture, out ulong ulongValue))
+                parsed = ulongValue;
+            else if (parameterType == typeof(long) && long.TryParse(argument, NumberStyles.Integer, CultureInfo.InvariantCulture, out long longValue))
+                parsed = longValue;
+            else if (parameterType == typeof(uint) && uint.TryParse(argument, NumberStyles.Integer, CultureInfo.InvariantCulture, out uint uintValue))
+                parsed = uintValue;
+            else if (parameterType == typeof(int) && int.TryParse(argument, NumberStyles.Integer, CultureInfo.InvariantCulture, out int intValue))
+                parsed = intValue;
+            else if (parameterType == typeof(FileInfo))
+                parsed = new FileInfo(argument);
+            else
+                return false;
+
+            arguments = new[] { parsed };
+            return true;
+        }
+
+        private static void AddExistingDirectory(HashSet<string> directories, string directory)
+        {
+            try
+            {
+                if (!string.IsNullOrEmpty(directory) && Directory.Exists(directory))
+                    directories.Add(Path.GetFullPath(directory));
+            }
+            catch
+            {
+            }
+        }
+
+        private static bool TryReadMember(object owner, Type type, string memberName, out object value)
+        {
+            value = null;
+            if (type == null)
+                return false;
+
+            try
+            {
+                PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    value = property.GetValue(owner, null);
+                    return true;
+                }
+
+                FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
+                if (field != null)
+                {
+                    value = field.GetValue(owner);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        private static Dictionary<string, object> SummarizeGameObject(GameObject go)
+        {
+            UnityEngine.SceneManagement.Scene scene = go.scene;
+            return new Dictionary<string, object>
+            {
+                ["instanceId"] = go.GetInstanceID(),
+                ["name"] = go.name,
+                ["path"] = GetPath(go),
+                ["tag"] = GetTag(go),
+                ["activeSelf"] = go.activeSelf,
+                ["activeInHierarchy"] = go.activeInHierarchy,
+                ["sceneName"] = scene.IsValid() ? scene.name : "",
+                ["childCount"] = go.transform.childCount
+            };
+        }
+
+        private static string GetPath(GameObject go)
+        {
+            List<string> names = new();
+            Transform current = go.transform;
+            while (current)
+            {
+                names.Add(current.name);
+                current = current.parent;
+            }
+            names.Reverse();
+            return string.Join("/", names.ToArray());
+        }
+
+        private static string GetTag(GameObject go)
+        {
+            try
+            {
+                return go.tag;
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private static object FormatRuntimeValue(object value)
+        {
+            if (value == null)
+                return null;
+
+            Type type = value.GetType();
+            if (type.IsPrimitive || value is string || value is decimal || type.IsEnum)
+                return value;
+
+            if (value is UnityEngine.Object unityObject)
+            {
+                if (!unityObject)
+                    return null;
+
+                GameObject gameObject = unityObject as GameObject;
+                if (!gameObject)
+                {
+                    Component component = unityObject.TryCast<Component>();
+                    gameObject = component ? component.gameObject : null;
+                }
+
+                return gameObject ? SummarizeGameObject(gameObject) : unityObject.ToString();
+            }
+
+            return value.ToString();
         }
 
         private static Dictionary<string, object> SummarizeDomainObject(object obj)

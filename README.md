@@ -373,7 +373,15 @@ The inspector is used to see detailed information on objects of any type and man
 
 1. Run the `build.ps1` powershell script to build CinematicUnityExplorer. Releases are found in the `Release` folder.
 
-Building individual configurations from your IDE is fine, though note that the intial build process builds into `Release/<version>/...` instead of the subfolders that the powershell script uses. Batch building is not currently supported with the project.
+For targeted validation, build the solution with the solution-level `Release_*` configuration names, for example:
+
+```powershell
+dotnet build src/UnityExplorer.sln -c Release_BIE6_Mono
+```
+
+Do not validate by calling `UnityExplorer.csproj` directly with a project configuration such as `BIE6_Mono`; the `.sln` maps each `Release_*` configuration to the matching UnityExplorer and UniverseLib project configurations. Bypassing that mapping can produce misleading restore or framework errors.
+
+Building individual configurations from your IDE is fine, though note that the initial build process builds into `Release/<version>/...` instead of the subfolders that the powershell script uses. For scripted batch validation, use `build.ps1` or `build-configs.ps1` so the solution configuration mapping is preserved.
 
 # Showcase
 

@@ -39,6 +39,13 @@ The server exposes four tools:
 It also exposes Paralives-specific tools when the bridge is running inside Paralives:
 
 - `Paralives:get_type_index`
+- `Paralives:get_game_state`
+- `Paralives:list_main_menu_actions`
+- `Paralives:invoke_main_menu_action`
+- `Paralives:list_saved_games`
+- `Paralives:load_saved_game`
+- `Paralives:start_new_game`
+- `Paralives:get_loading_state`
 - `Paralives:list_content_mods`
 - `Paralives:inspect_content_mod`
 - `Paralives:create_content_mod`
