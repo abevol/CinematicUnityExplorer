@@ -468,7 +468,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       ],
     };
   } catch (error) {
-    return toolError("not_connected", error instanceof Error ? error.message : String(error));
+    return toolError(classifyBridgeError(error), error instanceof Error ? error.message : String(error));
   }
 });
 
@@ -654,16 +654,80 @@ function toolNameToAction(name: string): string | null {
   }
 }
 
+function classifyBridgeError(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const lower = message.toLowerCase();
+
+  if (lower.includes("timed out") || lower.includes("timeout")) {
+    return "timeout";
+  }
+
+  if (lower.includes("econnrefused") || lower.includes("not connected") || lower.includes("disconnected") || lower.includes("closed")) {
+    return "not_connected";
+  }
+
+  return "execution_failed";
+}
+
 function toolError(code: string, message: string) {
+  const details = errorDetails(code);
+
   return {
     isError: true,
     content: [
       {
         type: "text" as const,
-        text: JSON.stringify({ error: { code, message } }, null, 2),
+        text: JSON.stringify(
+          {
+            error: {
+              code,
+              message,
+              retryable: details.retryable,
+              hint: details.hint,
+            },
+          },
+          null,
+          2,
+        ),
       },
     ],
   };
+}
+
+function errorDetails(code: string): { retryable: boolean; hint: string } {
+  switch (code) {
+    case "timeout":
+      return {
+        retryable: true,
+        hint: "Retry once after checking Unity is responsive; if it repeats, increase UNITY_EXPLORER_MCP_TIMEOUT_MS or reduce the request size.",
+      };
+    case "not_connected":
+      return {
+        retryable: true,
+        hint: "Start the target game with UnityExplorer loaded, enable the MCP bridge, and verify UNITY_EXPLORER_MCP_HOST/PORT.",
+      };
+    case "rate_limited":
+      return {
+        retryable: true,
+        hint: "Wait briefly before retrying the same Unity method call.",
+      };
+    case "invalid_request":
+    case "validation_failed":
+    case "parse_failed":
+    case "member_not_found":
+    case "method_not_found":
+    case "component_not_found":
+    case "object_not_found":
+      return {
+        retryable: false,
+        hint: "Inspect the tool schema and current Unity object state, then retry with corrected arguments.",
+      };
+    default:
+      return {
+        retryable: false,
+        hint: "Read the message, inspect runtime status/logs, and retry only after changing the failing precondition.",
+      };
+  }
 }
 
 async function readBridgeResource(uri: string, action: string, params: Record<string, unknown>) {
