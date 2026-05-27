@@ -87,6 +87,18 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static void TryExtractNeedDetails(GameObject go, Dictionary<string, object> needInfo)
         {
+            // 检查是否被忽略（通过 LabelIgnored 对象的可见性）
+            bool isIgnored = false;
+            foreach (Transform child in go.transform)
+            {
+                if (child.name == "LabelIgnored")
+                {
+                    isIgnored = child.gameObject.activeInHierarchy;
+                    break;
+                }
+            }
+            needInfo["isIgnored"] = isIgnored;
+
             foreach (Component component in go.GetComponentsInChildren<Component>(true))
             {
                 if (!component)
@@ -108,7 +120,8 @@ namespace UnityExplorer.McpBridge.Paralives
                         if (!string.IsNullOrEmpty(key))
                         {
                             needInfo["translationKey"] = key;
-                            if (!needInfo.ContainsKey("needType"))
+                            // 只在没有从 Tooltip 获取到 needType 时才推断
+                            if (!needInfo.ContainsKey("needType") || needInfo["needType"].ToString() == "UINeeds_NeedIgnored")
                                 needInfo["needType"] = InferNeedTypeFromKey(key);
                         }
                     }
@@ -126,17 +139,72 @@ namespace UnityExplorer.McpBridge.Paralives
 
                 if (type.Name == "Image")
                 {
-                    if (UnityReflectionUtility.TryReadMember(component, type, "fillAmount", out object fillValue))
+                    // 只读取 FillIcon 中的 Image 的 fillAmount
+                    string componentPath = UnityObjectSummary.GetPath(component.gameObject);
+                    if (componentPath.Contains("FillIcon"))
                     {
-                        float fill = Convert.ToSingle(fillValue);
-                        if (fill > 0 && fill <= 1)
+                        if (UnityReflectionUtility.TryReadMember(component, type, "fillAmount", out object fillValue))
                         {
-                            needInfo["fillAmount"] = Math.Round(fill, 2);
-                            needInfo["fillPercent"] = Math.Round(fill * 100, 0);
+                            float fill = Convert.ToSingle(fillValue);
+                            if (fill >= 0 && fill <= 1)
+                            {
+                                needInfo["fillAmount"] = Math.Round(fill, 2);
+                                needInfo["fillPercent"] = Math.Round(fill * 100, 0);
+                            }
                         }
                     }
                 }
             }
+
+            // 计算需求状态
+            CalculateNeedStatus(needInfo);
+        }
+
+        private static void CalculateNeedStatus(Dictionary<string, object> needInfo)
+        {
+            bool isIgnored = needInfo.ContainsKey("isIgnored") && (bool)needInfo["isIgnored"];
+            float fillPercent = needInfo.ContainsKey("fillPercent") ? Convert.ToSingle(needInfo["fillPercent"]) : -1;
+            float maxValue = needInfo.ContainsKey("maxValue") ? Convert.ToSingle(needInfo["maxValue"]) : 0;
+
+            // 需求状态判断
+            string status;
+            if (isIgnored)
+            {
+                status = "ignored";
+            }
+            else if (fillPercent < 0)
+            {
+                status = "unknown";
+            }
+            else if (fillPercent <= 20)
+            {
+                status = "critical";  // 危险
+            }
+            else if (fillPercent <= 50)
+            {
+                status = "low";       // 低
+            }
+            else if (fillPercent <= 80)
+            {
+                status = "medium";    // 中等
+            }
+            else
+            {
+                status = "good";      // 良好
+            }
+
+            needInfo["status"] = status;
+
+            // 添加人类可读的状态描述
+            needInfo["statusText"] = status switch
+            {
+                "ignored" => "被忽略",
+                "critical" => "危险",
+                "low" => "偏低",
+                "medium" => "中等",
+                "good" => "良好",
+                _ => "未知"
+            };
         }
 
         private static void TryApplyTooltipText(Component component, Type type, Dictionary<string, object> needInfo)
@@ -156,13 +224,34 @@ namespace UnityExplorer.McpBridge.Paralives
             needInfo["displayText"] = title;
             needInfo["tooltipSource"] = type.Name;
             needInfo["tooltipText"] = tooltipText.Length > 300 ? tooltipText.Substring(0, 300) : tooltipText;
-            needInfo["needType"] = InferNeedTypeFromKey(title);
+            
+            // 从标题推断需求类型
+            string inferredType = InferNeedTypeFromKey(title);
+            if (!string.IsNullOrEmpty(inferredType) && inferredType != title)
+                needInfo["needType"] = inferredType;
         }
 
         private static void TryExtractNeedData(Component component, Type type, Dictionary<string, object> needInfo)
         {
+            // 读取最大值
             if (UnityReflectionUtility.TryReadMember(component, type, "_max", out object maxValue) && maxValue != null)
                 needInfo["maxValue"] = Convert.ToSingle(maxValue);
+
+            // 读取当前值（如果存在）
+            if (UnityReflectionUtility.TryReadMember(component, type, "_value", out object currentValue) && currentValue != null)
+                needInfo["currentValue"] = Convert.ToSingle(currentValue);
+
+            // 读取是否被忽略
+            if (UnityReflectionUtility.TryReadMember(component, type, "_isIgnored", out object isIgnoredObj))
+                needInfo["isIgnoredFromComponent"] = Convert.ToBoolean(isIgnoredObj);
+
+            // 读取需求 GUID
+            if (UnityReflectionUtility.TryReadMember(component, type, "_needGUID", out object needGuidObj))
+                needInfo["needGUID"] = needGuidObj?.ToString();
+
+            // 读取需求名称键
+            if (UnityReflectionUtility.TryReadMember(component, type, "_needNameKey", out object needNameKeyObj))
+                needInfo["needNameKey"] = needNameKeyObj?.ToString();
         }
 
         private static string ExtractTooltipTitle(string tooltipText)
