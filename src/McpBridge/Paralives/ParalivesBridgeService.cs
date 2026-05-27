@@ -160,14 +160,29 @@ namespace UnityExplorer.McpBridge.Paralives
                 });
             }
 
-            bool isMainMenu = mainMenu && mainMenu.activeInHierarchy;
-            bool isLoading = loadingState.TryGetValue("isLoadingInferred", out object loadingValue) && loadingValue is bool loadingBool && loadingBool;
-            string inferredMode = isLoading ? "loading" : isMainMenu ? "main_menu" : "in_game_or_editor";
+            // 使用新的模式检测逻辑
+            string inferredMode = InferGameModeFromState(loadingState);
+            bool isLoading = inferredMode == "loading";
+            
+            // 检查主菜单是否可见（不只是存在）
+            bool isMainMenuVisible = false;
+            if (mainMenu)
+            {
+                Component mainMenuComponent = FindComponentByName(mainMenu, "UIMainMenu");
+                if (mainMenuComponent != null)
+                {
+                    Type type = mainMenuComponent.GetActualType();
+                    isMainMenuVisible = TryReadMember(mainMenuComponent, type, "IsVisible", out object isVisibleValue) 
+                        ? (bool)isVisibleValue 
+                        : false;
+                }
+            }
 
             return new Dictionary<string, object>
             {
                 ["mode"] = inferredMode,
-                ["isMainMenu"] = isMainMenu,
+                ["isMainMenu"] = isMainMenuVisible,
+                ["isMainMenuObjectPresent"] = mainMenu && mainMenu.activeInHierarchy,
                 ["mainMenu"] = mainMenu ? SummarizeGameObject(mainMenu) : null,
                 ["scenes"] = scenes,
                 ["activeUiRoots"] = GetActiveUiRoots(30),
@@ -175,6 +190,51 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["savedGameManager"] = SummarizeManager("SavedGameManager", new[] { "CurrentSavedGame", "CurrentSave", "LoadedGame", "IsGameLoaded", "HasLoadedGame" }),
                 ["gameLoadingManager"] = SummarizeManager("GameLoadingManager", new[] { "State", "CurrentState", "IsLoading", "Progress" })
             };
+        }
+
+        /// <summary>
+        /// 根据 GameLoadingManager.State 推断游戏模式
+        /// </summary>
+        private static string InferGameModeFromState(Dictionary<string, object> loadingState)
+        {
+            // 优先检查 GameLoadingManager.State
+            if (loadingState.TryGetValue("selectedMembers", out object membersObj) 
+                && membersObj is Dictionary<string, object> members)
+            {
+                if (members.TryGetValue("State", out object stateValue))
+                {
+                    string state = stateValue?.ToString();
+                    if (state == "Loading" || state == "LoadingGame" || state == "LoadingScene")
+                        return "loading";
+                    if (state == "MainMenu")
+                        return "main_menu";
+                    if (state == "Game")
+                        return "game";
+                }
+            }
+
+            // 备用检查
+            bool isLoading = loadingState.TryGetValue("isLoadingInferred", out object loadingValue) 
+                && loadingValue is bool loadingBool 
+                && loadingBool;
+            
+            if (isLoading)
+                return "loading";
+
+            return "unknown";
+        }
+
+        private static Component FindComponentByName(GameObject go, string componentName)
+        {
+            foreach (Component component in go.GetComponents<Component>())
+            {
+                if (!component)
+                    continue;
+                Type type = component.GetActualType();
+                if (type.Name == componentName || type.FullName == componentName)
+                    return component;
+            }
+            return null;
         }
 
         private static object ListMainMenuActions()
