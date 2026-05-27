@@ -79,6 +79,10 @@ namespace UnityExplorer.Config
         public static ConfigElement<int> McpBridge_Port;
         public static ConfigElement<int> McpBridge_RequestTimeoutMs;
 
+        public static ConfigElement<int> McpBridge_MaxRequestsPerFrame;
+
+        public static ConfigElement<int> McpBridge_MaxFrameBudgetMs;
+
         public static ConfigElement<ParalivesSafeActionMode> Paralives_SafeActionMode;
 
         public static ConfigElement<int> Paralives_SavedGameListLimit;
@@ -175,6 +179,16 @@ DetectDefaultLanguage(),
             McpBridge_RequestTimeoutMs = new("MCP Bridge Request Timeout Ms",
                 "How long the bridge waits for Unity main-thread MCP commands before timing out.",
                 5000,
+                category: "MCP");
+
+            McpBridge_MaxRequestsPerFrame = new("MCP Bridge Max Requests Per Frame",
+                "Maximum MCP bridge requests to execute on the Unity main thread in one frame.",
+                2,
+                category: "MCP");
+
+            McpBridge_MaxFrameBudgetMs = new("MCP Bridge Max Frame Budget Ms",
+                "Maximum MCP bridge main-thread time budget per frame. A single request is allowed to finish even if it exceeds this budget.",
+                2,
                 category: "MCP");
 
             Paralives_SafeActionMode = new("Paralives Safe Action Mode",

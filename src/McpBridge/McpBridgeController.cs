@@ -28,6 +28,8 @@ namespace UnityExplorer.McpBridge
         private static string lastAction;
         private static DateTime? lastRequestTime;
         private static long lastDurationMs;
+        private static int processedThisFrame;
+        private static long lastFrameDurationMs;
 
         public static void Init()
         {
@@ -71,6 +73,11 @@ namespace UnityExplorer.McpBridge
                     ["listening"] = listening,
                     ["port"] = Config.ConfigManager.McpBridge_Port.Value,
                     ["pendingRequests"] = pending,
+                    ["processedThisFrame"] = processedThisFrame,
+                    ["maxRequestsPerFrame"] = GetMaxRequestsPerFrame(),
+                    ["frameBudgetMs"] = GetFrameBudgetMs(),
+                    ["lastRequestDurationMs"] = lastDurationMs,
+                    ["lastFrameDurationMs"] = lastFrameDurationMs,
                     ["lastAction"] = lastAction,
                     ["lastError"] = lastError,
                     ["lastRequestTime"] = lastRequestTime?.ToString("HH:mm:ss") ?? "",
@@ -93,18 +100,29 @@ namespace UnityExplorer.McpBridge
 
         public static void Update()
         {
-            while (true)
+            processedThisFrame = 0;
+            lastFrameDurationMs = 0;
+            int maxRequests = GetMaxRequestsPerFrame();
+            int frameBudgetMs = GetFrameBudgetMs();
+            System.Diagnostics.Stopwatch frameSw = System.Diagnostics.Stopwatch.StartNew();
+
+            while (processedThisFrame < maxRequests)
             {
                 PendingRequest request = null;
                 lock (pendingRequests)
                 {
                     if (pendingRequests.Count == 0)
-                        return;
+                        break;
                     request = pendingRequests.Dequeue();
                 }
 
                 request.Response = HandlePayload(request.Payload);
                 request.Complete.Set();
+                processedThisFrame++;
+                lastFrameDurationMs = frameSw.ElapsedMilliseconds;
+
+                if (lastFrameDurationMs >= frameBudgetMs)
+                    break;
             }
         }
 
@@ -216,6 +234,16 @@ namespace UnityExplorer.McpBridge
                 return parameters;
 
             throw new McpBridgeException("invalid_request", "'params' must be a JSON object.");
+        }
+
+        private static int GetMaxRequestsPerFrame()
+        {
+            return Math.Max(1, Config.ConfigManager.McpBridge_MaxRequestsPerFrame.Value);
+        }
+
+        private static int GetFrameBudgetMs()
+        {
+            return Math.Max(1, Config.ConfigManager.McpBridge_MaxFrameBudgetMs.Value);
         }
     }
 }

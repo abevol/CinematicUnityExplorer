@@ -231,6 +231,8 @@ namespace UnityExplorer.UI.Panels
             CreateBoolToggle(scrollContent, "MCP bridge enabled", ConfigManager.McpBridge_Enabled);
             CreateIntInput(scrollContent, "MCP bridge port", ConfigManager.McpBridge_Port, 1, 65535);
             CreateIntInput(scrollContent, "MCP request timeout ms", ConfigManager.McpBridge_RequestTimeoutMs, 1000, 300000);
+            CreateIntInput(scrollContent, "MCP max requests per frame", ConfigManager.McpBridge_MaxRequestsPerFrame, 1, 50);
+            CreateIntInput(scrollContent, "MCP frame budget ms", ConfigManager.McpBridge_MaxFrameBudgetMs, 1, 100);
 
             ButtonRef save = UIFactory.CreateButton(scrollContent, "SaveSettings", "Save Options");
             UIFactory.SetLayoutElement(save.Component.gameObject, minWidth: 130, minHeight: 25, flexibleWidth: 0, flexibleHeight: 0);

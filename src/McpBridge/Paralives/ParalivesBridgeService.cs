@@ -33,6 +33,27 @@ namespace UnityExplorer.McpBridge.Paralives
         private static string mainModPath;
         private static string paralivesAssemblyPath;
         private static ParalivesTypeIndex typeIndex;
+        private static readonly Dictionary<string, Func<Dictionary<string, object>, object>> actionHandlers = new()
+        {
+            ["paralives_get_type_index"] = _ => GetTypeIndex(),
+            ["paralives_get_game_state"] = _ => GetGameState(),
+            ["paralives_list_main_menu_actions"] = _ => ListMainMenuActions(),
+            ["paralives_invoke_main_menu_action"] = InvokeMainMenuAction,
+            ["paralives_list_saved_games"] = ListSavedGames,
+            ["paralives_load_saved_game"] = LoadSavedGame,
+            ["paralives_start_new_game"] = StartNewGame,
+            ["paralives_get_loading_state"] = _ => GetLoadingState(),
+            ["paralives_list_content_mods"] = _ => ListContentMods(),
+            ["paralives_inspect_content_mod"] = InspectContentMod,
+            ["paralives_create_content_mod"] = CreateContentMod,
+            ["paralives_import_asset_to_mod"] = ImportAssetToMod,
+            ["paralives_list_characters"] = _ => ListManagerCollection("CharacterManager", "Characters"),
+            ["paralives_list_households"] = _ => ListManagerCollection("HouseholdManager", "AllHouseholds"),
+            ["paralives_list_lots"] = _ => ListManagerCollection("LotManager", "Lots"),
+            ["paralives_set_need_value"] = SetNeedValue,
+            ["paralives_list_cheat_commands"] = _ => ListCheatCommands(),
+            ["paralives_run_whitelisted_cheat"] = RunWhitelistedCheat
+        };
 
         public static bool IsAvailable
         {
@@ -46,28 +67,10 @@ namespace UnityExplorer.McpBridge.Paralives
         public static object Handle(string action, Dictionary<string, object> parameters)
         {
             EnsureAvailable();
-            return action switch
-            {
-                "paralives_get_type_index" => GetTypeIndex(),
-                "paralives_get_game_state" => GetGameState(),
-                "paralives_list_main_menu_actions" => ListMainMenuActions(),
-                "paralives_invoke_main_menu_action" => InvokeMainMenuAction(parameters),
-                "paralives_list_saved_games" => ListSavedGames(parameters),
-                "paralives_load_saved_game" => LoadSavedGame(parameters),
-                "paralives_start_new_game" => StartNewGame(parameters),
-                "paralives_get_loading_state" => GetLoadingState(),
-                "paralives_list_content_mods" => ListContentMods(),
-                "paralives_inspect_content_mod" => InspectContentMod(parameters),
-                "paralives_create_content_mod" => CreateContentMod(parameters),
-                "paralives_import_asset_to_mod" => ImportAssetToMod(parameters),
-                "paralives_list_characters" => ListManagerCollection("CharacterManager", "Characters"),
-                "paralives_list_households" => ListManagerCollection("HouseholdManager", "AllHouseholds"),
-                "paralives_list_lots" => ListManagerCollection("LotManager", "Lots"),
-                "paralives_set_need_value" => SetNeedValue(parameters),
-                "paralives_list_cheat_commands" => ListCheatCommands(),
-                "paralives_run_whitelisted_cheat" => RunWhitelistedCheat(parameters),
-                _ => throw new McpBridgeException("invalid_request", $"Unknown Paralives bridge action '{action}'.")
-            };
+            if (actionHandlers.TryGetValue(action, out Func<Dictionary<string, object>, object> handler))
+                return handler(parameters);
+
+            throw new McpBridgeException("invalid_request", $"Unknown Paralives bridge action '{action}'.");
         }
 
         public static object ReadResource(string uri, Dictionary<string, object> parameters)

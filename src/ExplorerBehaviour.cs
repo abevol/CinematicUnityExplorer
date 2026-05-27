@@ -63,6 +63,9 @@ namespace UnityExplorer
             if (quitting) return;
             quitting = true;
             McpBridgeController.Shutdown();
+#if MONO
+            ParalivesProfilerService.Shutdown();
+#endif
 
             TryDestroy(UIManager.UIRoot?.transform.root.gameObject);
 

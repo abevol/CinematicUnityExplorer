@@ -18,6 +18,19 @@ namespace UnityExplorer.McpBridge.Paralives
         // 日志订阅
         private static readonly Dictionary<string, LogSubscription> subscriptions = new();
         private static bool isLogCallbackRegistered;
+        private static readonly Dictionary<string, Func<Dictionary<string, object>, object>> actionHandlers = new()
+        {
+            ["paralives_get_runtime_summary"] = _ => GetRuntimeSummary(),
+            ["paralives_get_game_time"] = _ => GetGameTime(),
+            ["paralives_get_economy"] = _ => GetEconomy(),
+            ["paralives_get_selection"] = _ => GetSelection(),
+            ["paralives_get_active_context"] = _ => GetActiveContext(),
+            ["paralives_get_character_needs"] = GetCharacterNeeds,
+            ["paralives_get_character_actions"] = GetCharacterActions,
+            ["get_game_logs"] = GetGameLogs,
+            ["subscribe_logs"] = SubscribeLogs,
+            ["poll_logs"] = PollLogs
+        };
 
         // 日志条目结构
         private class LogEntry
@@ -45,20 +58,10 @@ namespace UnityExplorer.McpBridge.Paralives
         /// </summary>
         public static object Handle(string action, Dictionary<string, object> parameters)
         {
-            return action switch
-            {
-                "paralives_get_runtime_summary" => GetRuntimeSummary(),
-                "paralives_get_game_time" => GetGameTime(),
-                "paralives_get_economy" => GetEconomy(),
-                "paralives_get_selection" => GetSelection(),
-                "paralives_get_active_context" => GetActiveContext(),
-                "paralives_get_character_needs" => GetCharacterNeeds(parameters),
-                "paralives_get_character_actions" => GetCharacterActions(parameters),
-                "get_game_logs" => GetGameLogs(parameters),
-                "subscribe_logs" => SubscribeLogs(parameters),
-                "poll_logs" => PollLogs(parameters),
-                _ => throw new McpBridgeException("invalid_request", $"Unknown runtime action '{action}'.")
-            };
+            if (actionHandlers.TryGetValue(action, out Func<Dictionary<string, object>, object> handler))
+                return handler(parameters);
+
+            throw new McpBridgeException("invalid_request", $"Unknown runtime action '{action}'.");
         }
 
         /// <summary>

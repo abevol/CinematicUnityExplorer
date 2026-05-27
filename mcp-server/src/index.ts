@@ -10,6 +10,21 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { UnityBridgeClient } from "./unity-bridge-client.js";
 
+type JsonSchema = {
+  type: "object";
+  properties: Record<string, unknown>;
+  required?: readonly string[];
+};
+
+type ToolDefinition = {
+  name: string;
+  action: string;
+  description: string;
+  inputSchema: JsonSchema;
+  group: "diagnostics/read-only" | "performance" | "game-control/write" | "filesystem/mod";
+  risk: "read-only" | "write-confirmed" | "filesystem-confirmed";
+};
+
 const bridge = new UnityBridgeClient({
   host: process.env.UNITY_EXPLORER_MCP_HOST ?? "127.0.0.1",
   port: Number.parseInt(process.env.UNITY_EXPLORER_MCP_PORT ?? "8765", 10),
@@ -17,18 +32,11 @@ const bridge = new UnityBridgeClient({
 });
 
 const server = new Server(
-  {
-    name: "unity-explorer-mcp",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
-      resources: {},
-    },
-  },
+  { name: "unity-explorer-mcp", version: "1.0.0" },
+  { capabilities: { tools: {}, resources: {} } },
 );
 
+const emptySchema = { type: "object", properties: {} } as const;
 const findGameObjectsSchema = {
   type: "object",
   properties: {
@@ -38,34 +46,16 @@ const findGameObjectsSchema = {
     limit: { type: "integer", minimum: 1, maximum: 200, default: 50 },
   },
 } as const;
-
-const instanceIdSchema = {
-  type: "object",
-  properties: {
-    instanceId: { type: "integer" },
-  },
-  required: ["instanceId"],
-} as const;
-
-const recentLogsSchema = {
-  type: "object",
-  properties: {
-    limit: { type: "integer", minimum: 1, maximum: 200, default: 50 },
-  },
-} as const;
-
+const instanceIdSchema = { type: "object", properties: { instanceId: { type: "integer" } }, required: ["instanceId"] } as const;
+const recentLogsSchema = { type: "object", properties: { limit: { type: "integer", minimum: 1, maximum: 200, default: 50 } } } as const;
 const listConfigSchema = {
   type: "object",
   properties: {
-    category: {
-      type: "string",
-      enum: ["General", "UI", "MCP", "Paralives", "Console", "Inspector", "Export", "Advanced"],
-    },
+    category: { type: "string", enum: ["General", "UI", "MCP", "Paralives", "Console", "Inspector", "Export", "Advanced"] },
     includeAdvanced: { type: "boolean", default: true },
     limit: { type: "integer", minimum: 1, maximum: 200, default: 200 },
   },
 } as const;
-
 const setComponentPropertySchema = {
   type: "object",
   properties: {
@@ -76,41 +66,26 @@ const setComponentPropertySchema = {
   },
   required: ["instanceId", "componentName", "propertyPath", "value"],
 } as const;
-
 const callComponentMethodSchema = {
   type: "object",
   properties: {
     instanceId: { type: "integer" },
     componentName: { type: "string" },
     methodName: { type: "string" },
-    arguments: {
-      type: "array",
-      items: { type: "string" },
-      default: [],
-    },
+    arguments: { type: "array", items: { type: "string" }, default: [] },
   },
   required: ["instanceId", "componentName", "methodName"],
 } as const;
-
 const paralivesModPathSchema = {
   type: "object",
-  properties: {
-    modPath: { type: "string" },
-    limit: { type: "integer", minimum: 1, maximum: 200, default: 100 },
-  },
+  properties: { modPath: { type: "string" }, limit: { type: "integer", minimum: 1, maximum: 200, default: 100 } },
   required: ["modPath"],
 } as const;
-
 const paralivesCreateContentModSchema = {
   type: "object",
-  properties: {
-    modName: { type: "string" },
-    dryRun: { type: "boolean", default: true },
-    confirm: { type: "string" },
-  },
+  properties: { modName: { type: "string" }, dryRun: { type: "boolean", default: true }, confirm: { type: "string" } },
   required: ["modName"],
 } as const;
-
 const paralivesImportAssetSchema = {
   type: "object",
   properties: {
@@ -122,17 +97,11 @@ const paralivesImportAssetSchema = {
   },
   required: ["sourcePath", "modPath"],
 } as const;
-
 const paralivesRunCheatSchema = {
   type: "object",
-  properties: {
-    command: { type: "string" },
-    dryRun: { type: "boolean", default: true },
-    confirm: { type: "string" },
-  },
+  properties: { command: { type: "string" }, dryRun: { type: "boolean", default: true }, confirm: { type: "string" } },
   required: ["command"],
 } as const;
-
 const paralivesSetNeedValueSchema = {
   type: "object",
   properties: {
@@ -145,27 +114,19 @@ const paralivesSetNeedValueSchema = {
   },
   required: ["characterGuid", "needGuid", "value"],
 } as const;
-
 const paralivesInvokeMainMenuActionSchema = {
   type: "object",
   properties: {
-    action: {
-      type: "string",
-      enum: ["continue_game", "new_game", "load_game_menu", "mod_editor", "options"],
-    },
+    action: { type: "string", enum: ["continue_game", "new_game", "load_game_menu", "mod_editor", "options"] },
     dryRun: { type: "boolean", default: true },
     confirm: { type: "string" },
   },
   required: ["action"],
 } as const;
-
 const paralivesListSavedGamesSchema = {
   type: "object",
-  properties: {
-    limit: { type: "integer", minimum: 1, maximum: 100, default: 50 },
-  },
+  properties: { limit: { type: "integer", minimum: 1, maximum: 100, default: 50 } },
 } as const;
-
 const paralivesLoadSavedGameSchema = {
   type: "object",
   properties: {
@@ -176,16 +137,6 @@ const paralivesLoadSavedGameSchema = {
     confirm: { type: "string" },
   },
 } as const;
-
-const paralivesStartNewGameSchema = {
-  type: "object",
-  properties: {
-    dryRun: { type: "boolean", default: true },
-    confirm: { type: "string" },
-  },
-} as const;
-
-// ===== 日志工具 Schema =====
 const getGameLogsSchema = {
   type: "object",
   properties: {
@@ -194,19 +145,13 @@ const getGameLogsSchema = {
     includeCollapsed: { type: "boolean", default: true },
   },
 } as const;
-
 const subscribeLogsSchema = {
   type: "object",
   properties: {
     bufferSize: { type: "integer", minimum: 10, maximum: 1000, default: 100 },
-    types: {
-      type: "array",
-      items: { type: "string", enum: ["log", "warning", "exception"] },
-      default: ["log", "warning", "exception"],
-    },
+    types: { type: "array", items: { type: "string", enum: ["log", "warning", "exception"] }, default: ["log", "warning", "exception"] },
   },
 } as const;
-
 const pollLogsSchema = {
   type: "object",
   properties: {
@@ -216,239 +161,105 @@ const pollLogsSchema = {
   },
   required: ["subscriptionId"],
 } as const;
-
-// ===== 新增工具 Schema =====
-const getCharacterNeedsSchema = {
+const characterGuidSchema = {
   type: "object",
-  properties: {
-    characterGuid: { type: "string", description: "Character GUID. If omitted, uses currently selected character." },
-  },
+  properties: { characterGuid: { type: "string", description: "Character GUID. If omitted, uses currently selected character." } },
 } as const;
-
-const getCharacterActionsSchema = {
-  type: "object",
-  properties: {
-    characterGuid: { type: "string", description: "Character GUID. If omitted, uses currently selected character." },
-  },
-} as const;
-
 const getPerformanceHistorySchema = {
   type: "object",
+  properties: { limit: { type: "integer", minimum: 1, maximum: 100, default: 50 } },
+} as const;
+const getSceneStatsSchema = {
+  type: "object",
+  properties: { forceRefresh: { type: "boolean", default: false, description: "Force a scene-wide object scan; otherwise cached stats are returned." } },
+} as const;
+const listProfilerCountersSchema = {
+  type: "object",
   properties: {
-    limit: { type: "integer", minimum: 1, maximum: 100, default: 50, description: "Number of history samples to return" },
+    query: { type: "string" },
+    category: { type: "string" },
+    limit: { type: "integer", minimum: 1, maximum: 500, default: 100 },
   },
 } as const;
+const getProfilerCounterSamplesSchema = {
+  type: "object",
+  properties: {
+    counters: {
+      type: "array",
+      items: {
+        oneOf: [
+          { type: "string", description: "Counter name, or Category/Counter Name." },
+          {
+            type: "object",
+            properties: { name: { type: "string" }, category: { type: "string" } },
+            required: ["name"],
+          },
+        ],
+      },
+      minItems: 1,
+    },
+  },
+  required: ["counters"],
+} as const;
+
+const toolDefinitions: ToolDefinition[] = [
+  tool("UnityExplorer:find_game_objects", "find_game_objects", "Find Unity GameObjects by name/path substring or tag. Risk: read-only diagnostics.", findGameObjectsSchema),
+  tool("UnityExplorer:get_object_detail", "get_object_detail", "Read a GameObject summary, direct children, components, and parseable component members. Risk: read-only diagnostics.", instanceIdSchema),
+  tool("UnityExplorer:set_component_property", "set_component_property", "Set a parseable component field/property. Risk: writes game state; use only with intent.", setComponentPropertySchema, "game-control/write", "write-confirmed"),
+  tool("UnityExplorer:call_component_method", "call_component_method", "Call a bounded component method with parseable string arguments and rate limiting. Risk: writes or triggers gameplay depending on method.", callComponentMethodSchema, "game-control/write", "write-confirmed"),
+  tool("UnityExplorer:get_runtime_status", "get_runtime_status", "Read UnityExplorer runtime diagnostics including bridge status and MCP request budget.", emptySchema),
+  tool("UnityExplorer:get_recent_logs", "get_recent_logs", "Read recent UnityExplorer log entries and the current log file path. Risk: read-only diagnostics.", recentLogsSchema),
+  tool("UnityExplorer:list_config", "list_config", "Read UnityExplorer config entries. Risk: read-only diagnostics.", listConfigSchema),
+  tool("UnityExplorer:get_mcp_status", "get_mcp_status", "Read MCP bridge diagnostics including pending requests, per-frame budget, and recent request durations. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_type_index", "paralives_get_type_index", "Read ParalivesBridge availability and Mono.Cecil type index summary. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_game_state", "paralives_get_game_state", "Read current Paralives scene/UI/loading state and manager availability. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:list_main_menu_actions", "paralives_list_main_menu_actions", "List whitelisted Paralives main menu actions and button availability. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:invoke_main_menu_action", "paralives_invoke_main_menu_action", "Invoke a whitelisted Paralives main menu UI button. Defaults to dry-run and requires confirmation. Risk: game-control/write.", paralivesInvokeMainMenuActionSchema, "game-control/write", "write-confirmed"),
+  tool("Paralives:list_saved_games", "paralives_list_saved_games", "List bounded saved-game candidates from manager and likely save directories. Risk: read-only diagnostics.", paralivesListSavedGamesSchema),
+  tool("Paralives:load_saved_game", "paralives_load_saved_game", "Load a saved game when supported. Defaults to dry-run and requires confirmation. Risk: game-control/write.", paralivesLoadSavedGameSchema, "game-control/write", "write-confirmed"),
+  tool("Paralives:start_new_game", "paralives_start_new_game", "Start a new game via whitelisted UI action. Defaults to dry-run and requires confirmation. Risk: game-control/write.", { ...emptySchema, properties: { dryRun: { type: "boolean", default: true }, confirm: { type: "string" } } }, "game-control/write", "write-confirmed"),
+  tool("Paralives:get_loading_state", "paralives_get_loading_state", "Read GameLoadingManager state and active scene. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:list_content_mods", "paralives_list_content_mods", "List Paralives .mod folders and metadata. Risk: filesystem read.", emptySchema, "filesystem/mod"),
+  tool("Paralives:inspect_content_mod", "paralives_inspect_content_mod", "Inspect files and .meta data inside a content mod folder. Risk: filesystem read.", paralivesModPathSchema, "filesystem/mod"),
+  tool("Paralives:create_content_mod", "paralives_create_content_mod", "Create a new content mod folder and .mod.meta file. Defaults to dry-run. Risk: filesystem write.", paralivesCreateContentModSchema, "filesystem/mod", "filesystem-confirmed"),
+  tool("Paralives:import_asset_to_mod", "paralives_import_asset_to_mod", "Copy an asset into a content mod and create schema-aware metadata. Defaults to dry-run. Risk: filesystem write.", paralivesImportAssetSchema, "filesystem/mod", "filesystem-confirmed"),
+  tool("Paralives:list_characters", "paralives_list_characters", "List loaded Paralives characters through the whitelisted manager collection. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:list_households", "paralives_list_households", "List loaded Paralives households through the whitelisted manager collection. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:list_lots", "paralives_list_lots", "List loaded Paralives lots through the whitelisted manager collection. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:set_need_value", "paralives_set_need_value", "Set a character need value. Defaults to dry-run and requires confirmation. Risk: game-control/write.", paralivesSetNeedValueSchema, "game-control/write", "write-confirmed"),
+  tool("Paralives:list_cheat_commands", "paralives_list_cheat_commands", "List whitelisted diagnostic cheat commands. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:run_whitelisted_cheat", "paralives_run_whitelisted_cheat", "Run a whitelisted diagnostic cheat command. Defaults to dry-run and requires confirmation. Risk: game-control/write.", paralivesRunCheatSchema, "game-control/write", "write-confirmed"),
+  tool("Paralives:get_runtime_summary", "paralives_get_runtime_summary", "Read current Paralives runtime summary: time, funds, mode, selection, and family. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_game_time", "paralives_get_game_time", "Read game pause/speed/formatted time state. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_economy", "paralives_get_economy", "Read household funds and economic state. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_selection", "paralives_get_selection", "Read currently selected object/character. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_active_context", "paralives_get_active_context", "Read active household, character, and lot. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_character_needs", "paralives_get_character_needs", "Read character needs/status. Risk: read-only diagnostics.", characterGuidSchema),
+  tool("Paralives:get_character_actions", "paralives_get_character_actions", "Read current and queued actions for a character. Risk: read-only diagnostics.", characterGuidSchema),
+  tool("Paralives:get_performance_stats", "paralives_get_performance_stats", "Read lightweight performance counters: FPS, managed heap, GC, cached scene stats. Does not force scene-wide scans. Risk: read-only performance.", emptySchema, "performance"),
+  tool("Paralives:get_performance_history", "paralives_get_performance_history", "Read recent FPS counter history. Risk: read-only performance.", getPerformanceHistorySchema, "performance"),
+  tool("Paralives:get_memory_stats", "paralives_get_memory_stats", "Read managed heap and GC counters. Risk: read-only performance.", emptySchema, "performance"),
+  tool("Paralives:get_scene_stats", "paralives_get_scene_stats", "Read cached scene object/component counts; forceRefresh triggers a bounded-on-demand scene scan. Risk: read-only performance.", getSceneStatsSchema, "performance"),
+  tool("Paralives:get_frame_timing", "paralives_get_frame_timing", "Read Unity FrameTimingManager samples when available; safely returns supported:false on unsupported runtimes. Risk: read-only performance.", emptySchema, "performance"),
+  tool("Paralives:list_profiler_counters", "paralives_list_profiler_counters", "List Unity ProfilerRecorder counters by reflection with optional query/category filtering. Risk: read-only performance.", listProfilerCountersSchema, "performance"),
+  tool("Paralives:get_profiler_counter_samples", "paralives_get_profiler_counter_samples", "Read latest values from cached Unity ProfilerRecorders; first call can return warmingUp. Risk: read-only performance.", getProfilerCounterSamplesSchema, "performance"),
+  tool("UnityExplorer:get_game_logs", "get_game_logs", "Read game console logs from Unity log callback. Risk: read-only diagnostics.", getGameLogsSchema),
+  tool("UnityExplorer:subscribe_logs", "subscribe_logs", "Subscribe to Unity log callback for real-time logs. Risk: read-only diagnostics.", subscribeLogsSchema),
+  tool("UnityExplorer:poll_logs", "poll_logs", "Poll a subscribed log stream. Risk: read-only diagnostics.", pollLogsSchema),
+];
+
+const toolActionByName = new Map(toolDefinitions.map((definition) => [definition.name, definition.action]));
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: "UnityExplorer:find_game_objects",
-      description: "Find Unity GameObjects by name/path substring or tag. Returns bounded summaries with instance IDs.",
-      inputSchema: findGameObjectsSchema,
-    },
-    {
-      name: "UnityExplorer:get_object_detail",
-      description: "Read a GameObject summary, direct children, components, and parseable component members.",
-      inputSchema: instanceIdSchema,
-    },
-    {
-      name: "UnityExplorer:set_component_property",
-      description: "Set a parseable field or property on a component, including simple nested paths like position.x.",
-      inputSchema: setComponentPropertySchema,
-    },
-    {
-      name: "UnityExplorer:call_component_method",
-      description: "Call a safe, non-generic component method with parseable string arguments and built-in rate limiting.",
-      inputSchema: callComponentMethodSchema,
-    },
-    {
-      name: "UnityExplorer:get_runtime_status",
-      description: "Read UnityExplorer runtime diagnostics including Unity version, active scene, panels, and bridge status.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "UnityExplorer:get_recent_logs",
-      description: "Read recent UnityExplorer log entries and the current log file path.",
-      inputSchema: recentLogsSchema,
-    },
-    {
-      name: "UnityExplorer:list_config",
-      description: "Read UnityExplorer config entries with category, type, value, default, restart, and advanced metadata.",
-      inputSchema: listConfigSchema,
-    },
-    {
-      name: "UnityExplorer:get_mcp_status",
-      description: "Read MCP bridge diagnostics including listening state, timeout, pending requests, and recent request log.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_type_index",
-      description: "Read the ParalivesBridge availability and Mono.Cecil type index summary.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_game_state",
-      description: "Read current Paralives scene/UI/loading state and manager availability.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:list_main_menu_actions",
-      description: "List whitelisted Paralives main menu actions and whether their UI buttons are available.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:invoke_main_menu_action",
-      description: "Invoke a whitelisted Paralives main menu UI button. Defaults to dry-run and requires confirmation.",
-      inputSchema: paralivesInvokeMainMenuActionSchema,
-    },
-    {
-      name: "Paralives:list_saved_games",
-      description: "List bounded saved-game candidates from SavedGameManager and likely save directories.",
-      inputSchema: paralivesListSavedGamesSchema,
-    },
-    {
-      name: "Paralives:load_saved_game",
-      description: "Load a saved game through a supported SavedGameManager method when available. Defaults to dry-run and requires confirmation.",
-      inputSchema: paralivesLoadSavedGameSchema,
-    },
-    {
-      name: "Paralives:start_new_game",
-      description: "Start a new game via the whitelisted main menu New Game button. Defaults to dry-run and requires confirmation.",
-      inputSchema: paralivesStartNewGameSchema,
-    },
-    {
-      name: "Paralives:get_loading_state",
-      description: "Read GameLoadingManager state and current active scene.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:list_content_mods",
-      description: "List Paralives .mod folders and their .mod.meta metadata.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:inspect_content_mod",
-      description: "Inspect files and .meta data inside a Paralives content mod folder.",
-      inputSchema: paralivesModPathSchema,
-    },
-    {
-      name: "Paralives:create_content_mod",
-      description: "Create a new Paralives content mod folder and .mod.meta file. Defaults to dry-run.",
-      inputSchema: paralivesCreateContentModSchema,
-    },
-    {
-      name: "Paralives:import_asset_to_mod",
-      description: "Copy an asset into a Paralives content mod and create a schema-aware .meta file. Defaults to dry-run.",
-      inputSchema: paralivesImportAssetSchema,
-    },
-    {
-      name: "Paralives:list_characters",
-      description: "List loaded Paralives characters through the whitelisted CharacterManager collection.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:list_households",
-      description: "List loaded Paralives households through the whitelisted HouseholdManager collection.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:list_lots",
-      description: "List loaded Paralives lots through the whitelisted LotManager collection.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:set_need_value",
-      description: "Set a character need value through NeedManager.SetNeedToValue. Defaults to dry-run and requires confirmation.",
-      inputSchema: paralivesSetNeedValueSchema,
-    },
-    {
-      name: "Paralives:list_cheat_commands",
-      description: "List read-only diagnostic cheat commands whitelisted for MCP use.",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:run_whitelisted_cheat",
-      description: "Run a whitelisted read-only diagnostic Paralives cheat command. Defaults to dry-run and requires confirmation.",
-      inputSchema: paralivesRunCheatSchema,
-    },
-    // ===== 运行时状态工具 =====
-    {
-      name: "Paralives:get_runtime_summary",
-      description: "Get comprehensive runtime state: time, funds, mode, selection, and current family. USE WHEN: user asks 'what's happening now', 'current state', or needs quick overview. TRIGGERS: '游戏状态', '当前状态', '现在怎样'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_game_time",
-      description: "Get game time state: pause status, speed, and formatted time. USE WHEN: user asks about time, 'is it paused?', or time speed. TRIGGERS: '时间', '几点了', '暂停了吗'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_economy",
-      description: "Get household funds and economic state. USE WHEN: user asks about money, funds, or finances. TRIGGERS: '钱', '资金', '多少钱'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_selection",
-      description: "Get currently selected object/character. USE WHEN: user asks 'what did I select?', 'what's selected?'. TRIGGERS: '选中了什么', '选择了谁'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_active_context",
-      description: "Get current active household, character, and lot in one call. USE WHEN: user asks 'who am I playing?', 'where am I?', 'current family'. TRIGGERS: '当前家庭', '主控角色', '在哪个地段'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_character_needs",
-      description: "Get character needs/status (hunger, hygiene, etc). USE WHEN: user asks about character needs, mood, or status. TRIGGERS: '需求', '饥饿', '心情', '角色状态'",
-      inputSchema: getCharacterNeedsSchema,
-    },
-    {
-      name: "Paralives:get_character_actions",
-      description: "Get current and queued actions for a character. USE WHEN: user asks 'what is character doing?', 'action queue'. TRIGGERS: '在做什么', '动作队列'",
-      inputSchema: getCharacterActionsSchema,
-    },
-    // ===== 性能分析工具 =====
-    {
-      name: "Paralives:get_performance_stats",
-      description: "Get comprehensive performance stats: FPS, memory, GC, scene objects. USE WHEN: user asks about performance, FPS, memory usage. TRIGGERS: '性能', '帧率', '内存', '卡顿'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_performance_history",
-      description: "Get performance history with FPS and memory samples. USE WHEN: user wants to analyze performance trends. TRIGGERS: '性能历史', '帧率曲线'",
-      inputSchema: getPerformanceHistorySchema,
-    },
-    {
-      name: "Paralives:get_memory_stats",
-      description: "Get detailed memory statistics including Unity and managed heap. USE WHEN: user asks about memory leaks or allocation. TRIGGERS: '内存详情', 'GC'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    {
-      name: "Paralives:get_scene_stats",
-      description: "Get scene statistics: game objects, components, loaded scenes. USE WHEN: user asks about scene complexity. TRIGGERS: '场景统计', '对象数量'",
-      inputSchema: { type: "object", properties: {} },
-    },
-    // ===== 日志工具 =====
-    {
-      name: "UnityExplorer:get_game_logs",
-      description: "Read game console logs from Unity log callback. USE WHEN: user asks about logs, errors, warnings, or 'what went wrong?'. TRIGGERS: '日志', '错误', '警告', '有什么问题'",
-      inputSchema: getGameLogsSchema,
-    },
-    {
-      name: "UnityExplorer:subscribe_logs",
-      description: "Subscribe to Unity log callback for real-time logs. USE WHEN: user wants to monitor logs continuously. TRIGGERS: '监控日志', '实时日志'",
-      inputSchema: subscribeLogsSchema,
-    },
-    {
-      name: "UnityExplorer:poll_logs",
-      description: "Poll subscribed log stream for new entries. USE WHEN: user has active subscription and wants latest logs. TRIGGERS: '新日志', '获取日志'",
-      inputSchema: pollLogsSchema,
-    },
-  ],
+  tools: toolDefinitions.map(({ name, description, inputSchema, group, risk }) => ({
+    name,
+    description: `${description} Group: ${group}; risk: ${risk}.`,
+    inputSchema,
+  })),
 }));
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const action = toolNameToAction(request.params.name);
+  const action = toolActionByName.get(request.params.name);
   if (!action) {
     return toolError("invalid_request", `Unknown tool '${request.params.name}'.`);
   }
@@ -459,14 +270,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       return toolError(response.error.code, response.error.message);
     }
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(response.result, null, 2),
-        },
-      ],
-    };
+    return { content: [{ type: "text" as const, text: JSON.stringify(response.result, null, 2) }] };
   } catch (error) {
     return toolError(classifyBridgeError(error), error instanceof Error ? error.message : String(error));
   }
@@ -474,89 +278,35 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
 server.setRequestHandler(ListResourcesRequestSchema, async () => ({
   resources: [
-    {
-      uri: "unity://scene/hierarchy",
-      name: "Unity Scene Hierarchy",
-      description: "Current Unity scene hierarchy, bounded to roots and shallow children.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "unity://runtime/status",
-      name: "UnityExplorer Runtime Status",
-      description: "Runtime diagnostics including Unity version, active scene, panels, and bridge status.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "unity://config/options",
-      name: "UnityExplorer Config Options",
-      description: "UnityExplorer config entries with categories and current values.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "unity://mcp/status",
-      name: "UnityExplorer MCP Status",
-      description: "MCP bridge listening state and recent request diagnostics.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "paralives://types/managers",
-      name: "Paralives Manager Types",
-      description: "Mono.Cecil index of Paralives manager-like types.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "paralives://types/settings",
-      name: "Paralives Setting Types",
-      description: "Mono.Cecil index of Paralives setting data types.",
-      mimeType: "application/json",
-    },
-    {
-      uri: "paralives://types/cheats",
-      name: "Paralives Cheat Types",
-      description: "Mono.Cecil index of Paralives cheat-related types.",
-      mimeType: "application/json",
-    },
+    { uri: "unity://scene/hierarchy", name: "Unity Scene Hierarchy", description: "Current Unity scene hierarchy, bounded to roots and shallow children.", mimeType: "application/json" },
+    { uri: "unity://runtime/status", name: "UnityExplorer Runtime Status", description: "Runtime diagnostics including Unity version, active scene, panels, and bridge status.", mimeType: "application/json" },
+    { uri: "unity://config/options", name: "UnityExplorer Config Options", description: "UnityExplorer config entries with categories and current values.", mimeType: "application/json" },
+    { uri: "unity://mcp/status", name: "UnityExplorer MCP Status", description: "MCP bridge listening state, per-frame budget, and recent request diagnostics.", mimeType: "application/json" },
+    { uri: "paralives://types/managers", name: "Paralives Manager Types", description: "Mono.Cecil index of Paralives manager-like types.", mimeType: "application/json" },
+    { uri: "paralives://types/settings", name: "Paralives Setting Types", description: "Mono.Cecil index of Paralives setting data types.", mimeType: "application/json" },
+    { uri: "paralives://types/cheats", name: "Paralives Cheat Types", description: "Mono.Cecil index of Paralives cheat-related types.", mimeType: "application/json" },
   ],
 }));
 
 server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
   resourceTemplates: [
-    {
-      uriTemplate: "unity://object/{instance_id}/components",
-      name: "Unity GameObject Components",
-      description: "Component and parseable member summary for a Unity GameObject instance ID.",
-      mimeType: "application/json",
-    },
+    { uriTemplate: "unity://object/{instance_id}/components", name: "Unity GameObject Components", description: "Component and parseable member summary for a Unity GameObject instance ID.", mimeType: "application/json" },
   ],
 }));
 
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
   const uri = request.params.uri;
 
-  if (uri === "unity://scene/hierarchy") {
-    return readBridgeResource(uri, "get_scene_hierarchy", {});
-  }
-
-  if (uri === "unity://runtime/status") {
-    return readBridgeResource(uri, "get_runtime_status", {});
-  }
-
-  if (uri === "unity://config/options") {
-    return readBridgeResource(uri, "list_config", {});
-  }
-
-  if (uri === "unity://mcp/status") {
-    return readBridgeResource(uri, "get_mcp_status", {});
-  }
-
+  if (uri === "unity://scene/hierarchy") return readBridgeResource(uri, "get_scene_hierarchy", {});
+  if (uri === "unity://runtime/status") return readBridgeResource(uri, "get_runtime_status", {});
+  if (uri === "unity://config/options") return readBridgeResource(uri, "list_config", {});
+  if (uri === "unity://mcp/status") return readBridgeResource(uri, "get_mcp_status", {});
   if (uri === "paralives://types/managers" || uri === "paralives://types/settings" || uri === "paralives://types/cheats") {
     return readBridgeResource(uri, "paralives_read_resource", { uri });
   }
 
   const match = /^unity:\/\/object\/(-?\d+)\/components$/.exec(uri);
-  if (match) {
-    return readBridgeResource(uri, "get_object_components", { instanceId: Number.parseInt(match[1], 10) });
-  }
+  if (match) return readBridgeResource(uri, "get_object_components", { instanceId: Number.parseInt(match[1], 10) });
 
   throw new Error(`Unknown Unity resource '${uri}'.`);
 });
@@ -564,153 +314,41 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 const transport = new StdioServerTransport();
 await server.connect(transport);
 
-function toolNameToAction(name: string): string | null {
-  switch (name) {
-    case "UnityExplorer:find_game_objects":
-      return "find_game_objects";
-    case "UnityExplorer:get_object_detail":
-      return "get_object_detail";
-    case "UnityExplorer:set_component_property":
-      return "set_component_property";
-    case "UnityExplorer:call_component_method":
-      return "call_component_method";
-    case "UnityExplorer:get_runtime_status":
-      return "get_runtime_status";
-    case "UnityExplorer:get_recent_logs":
-      return "get_recent_logs";
-    case "UnityExplorer:list_config":
-      return "list_config";
-    case "UnityExplorer:get_mcp_status":
-      return "get_mcp_status";
-    case "Paralives:get_type_index":
-      return "paralives_get_type_index";
-    case "Paralives:get_game_state":
-      return "paralives_get_game_state";
-    case "Paralives:list_main_menu_actions":
-      return "paralives_list_main_menu_actions";
-    case "Paralives:invoke_main_menu_action":
-      return "paralives_invoke_main_menu_action";
-    case "Paralives:list_saved_games":
-      return "paralives_list_saved_games";
-    case "Paralives:load_saved_game":
-      return "paralives_load_saved_game";
-    case "Paralives:start_new_game":
-      return "paralives_start_new_game";
-    case "Paralives:get_loading_state":
-      return "paralives_get_loading_state";
-    case "Paralives:list_content_mods":
-      return "paralives_list_content_mods";
-    case "Paralives:inspect_content_mod":
-      return "paralives_inspect_content_mod";
-    case "Paralives:create_content_mod":
-      return "paralives_create_content_mod";
-    case "Paralives:import_asset_to_mod":
-      return "paralives_import_asset_to_mod";
-    case "Paralives:list_characters":
-      return "paralives_list_characters";
-    case "Paralives:list_households":
-      return "paralives_list_households";
-    case "Paralives:list_lots":
-      return "paralives_list_lots";
-    case "Paralives:set_need_value":
-      return "paralives_set_need_value";
-    case "Paralives:list_cheat_commands":
-      return "paralives_list_cheat_commands";
-    case "Paralives:run_whitelisted_cheat":
-      return "paralives_run_whitelisted_cheat";
-    // ===== 运行时状态工具 =====
-    case "Paralives:get_runtime_summary":
-      return "paralives_get_runtime_summary";
-    case "Paralives:get_game_time":
-      return "paralives_get_game_time";
-    case "Paralives:get_economy":
-      return "paralives_get_economy";
-    case "Paralives:get_selection":
-      return "paralives_get_selection";
-    case "Paralives:get_active_context":
-      return "paralives_get_active_context";
-    case "Paralives:get_character_needs":
-      return "paralives_get_character_needs";
-    case "Paralives:get_character_actions":
-      return "paralives_get_character_actions";
-    // ===== 性能分析工具 =====
-    case "Paralives:get_performance_stats":
-      return "paralives_get_performance_stats";
-    case "Paralives:get_performance_history":
-      return "paralives_get_performance_history";
-    case "Paralives:get_memory_stats":
-      return "paralives_get_memory_stats";
-    case "Paralives:get_scene_stats":
-      return "paralives_get_scene_stats";
-    // ===== 日志工具 =====
-    case "UnityExplorer:get_game_logs":
-      return "get_game_logs";
-    case "UnityExplorer:subscribe_logs":
-      return "subscribe_logs";
-    case "UnityExplorer:poll_logs":
-      return "poll_logs";
-    default:
-      return null;
-  }
+function tool(
+  name: string,
+  action: string,
+  description: string,
+  inputSchema: JsonSchema,
+  group: ToolDefinition["group"] = "diagnostics/read-only",
+  risk: ToolDefinition["risk"] = "read-only",
+): ToolDefinition {
+  return { name, action, description, inputSchema, group, risk };
 }
 
 function classifyBridgeError(error: unknown): string {
   const message = error instanceof Error ? error.message : String(error);
   const lower = message.toLowerCase();
-
-  if (lower.includes("timed out") || lower.includes("timeout")) {
-    return "timeout";
-  }
-
-  if (lower.includes("econnrefused") || lower.includes("not connected") || lower.includes("disconnected") || lower.includes("closed")) {
-    return "not_connected";
-  }
-
+  if (lower.includes("timed out") || lower.includes("timeout")) return "timeout";
+  if (lower.includes("econnrefused") || lower.includes("not connected") || lower.includes("disconnected") || lower.includes("closed")) return "not_connected";
   return "execution_failed";
 }
 
 function toolError(code: string, message: string) {
   const details = errorDetails(code);
-
   return {
     isError: true,
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(
-          {
-            error: {
-              code,
-              message,
-              retryable: details.retryable,
-              hint: details.hint,
-            },
-          },
-          null,
-          2,
-        ),
-      },
-    ],
+    content: [{ type: "text" as const, text: JSON.stringify({ error: { code, message, retryable: details.retryable, hint: details.hint } }, null, 2) }],
   };
 }
 
 function errorDetails(code: string): { retryable: boolean; hint: string } {
   switch (code) {
     case "timeout":
-      return {
-        retryable: true,
-        hint: "Retry once after checking Unity is responsive; if it repeats, increase UNITY_EXPLORER_MCP_TIMEOUT_MS or reduce the request size.",
-      };
+      return { retryable: true, hint: "Retry once after checking Unity is responsive; if it repeats, increase UNITY_EXPLORER_MCP_TIMEOUT_MS or reduce the request size." };
     case "not_connected":
-      return {
-        retryable: true,
-        hint: "Start the target game with UnityExplorer loaded, enable the MCP bridge, and verify UNITY_EXPLORER_MCP_HOST/PORT.",
-      };
+      return { retryable: true, hint: "Start the target game with UnityExplorer loaded, enable the MCP bridge, and verify UNITY_EXPLORER_MCP_HOST/PORT." };
     case "rate_limited":
-      return {
-        retryable: true,
-        hint: "Wait briefly before retrying the same Unity method call.",
-      };
+      return { retryable: true, hint: "Wait briefly before retrying the same Unity method call." };
     case "invalid_request":
     case "validation_failed":
     case "parse_failed":
@@ -718,15 +356,9 @@ function errorDetails(code: string): { retryable: boolean; hint: string } {
     case "method_not_found":
     case "component_not_found":
     case "object_not_found":
-      return {
-        retryable: false,
-        hint: "Inspect the tool schema and current Unity object state, then retry with corrected arguments.",
-      };
+      return { retryable: false, hint: "Inspect the tool schema and current Unity object state, then retry with corrected arguments." };
     default:
-      return {
-        retryable: false,
-        hint: "Read the message, inspect runtime status/logs, and retry only after changing the failing precondition.",
-      };
+      return { retryable: false, hint: "Read the message, inspect runtime status/logs, and retry only after changing the failing precondition." };
   }
 }
 
@@ -736,13 +368,5 @@ async function readBridgeResource(uri: string, action: string, params: Record<st
     throw new Error(`${response.error.code}: ${response.error.message}`);
   }
 
-  return {
-    contents: [
-      {
-        uri,
-        mimeType: "application/json",
-        text: JSON.stringify(response.result, null, 2),
-      },
-    ],
-  };
+  return { contents: [{ uri, mimeType: "application/json", text: JSON.stringify(response.result, null, 2) }] };
 }

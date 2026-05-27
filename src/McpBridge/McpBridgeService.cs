@@ -25,15 +25,28 @@ namespace UnityExplorer.McpBridge
             "Start"
         };
 
+        private static readonly Dictionary<string, Func<Dictionary<string, object>, object>> actionHandlers = new()
+        {
+            ["find_game_objects"] = FindGameObjects,
+            ["get_object_detail"] = GetObjectDetail,
+            ["set_component_property"] = SetComponentProperty,
+            ["call_component_method"] = CallComponentMethod,
+            ["get_scene_hierarchy"] = GetSceneHierarchy,
+            ["get_object_components"] = GetObjectComponents,
+            ["get_runtime_status"] = GetRuntimeStatus,
+            ["get_recent_logs"] = GetRecentLogs,
+            ["list_config"] = ListConfig,
+            ["get_mcp_status"] = GetMcpStatus
+        };
+
         public static object Handle(string action, Dictionary<string, object> parameters)
         {
 #if MONO
             if (action.StartsWith("paralives_", StringComparison.Ordinal))
             {
                 if (action == "paralives_read_resource")
-                    return Paralives.ParalivesBridgeService.ReadResource(GetRequiredString(parameters, "uri"), parameters);
+                    return Paralives.ParalivesBridgeService.ReadResource(McpParameters.RequiredString(parameters, "uri"), parameters);
                 
-                // 运行时状态工具
                 if (action == "paralives_get_runtime_summary" 
                     || action == "paralives_get_game_time"
                     || action == "paralives_get_economy" 
@@ -43,11 +56,13 @@ namespace UnityExplorer.McpBridge
                     || action == "paralives_get_character_actions")
                     return Paralives.ParalivesRuntimeService.Handle(action, parameters);
                 
-                // 性能分析工具
                 if (action == "paralives_get_performance_stats"
                     || action == "paralives_get_performance_history"
                     || action == "paralives_get_memory_stats"
-                    || action == "paralives_get_scene_stats")
+                    || action == "paralives_get_scene_stats"
+                    || action == "paralives_get_frame_timing"
+                    || action == "paralives_list_profiler_counters"
+                    || action == "paralives_get_profiler_counter_samples")
                     return Paralives.ParalivesProfilerService.Handle(action, parameters);
                 
                 return Paralives.ParalivesBridgeService.Handle(action, parameters);
@@ -57,20 +72,10 @@ namespace UnityExplorer.McpBridge
             if (action == "get_game_logs" || action == "subscribe_logs" || action == "poll_logs")
                 return Paralives.ParalivesRuntimeService.Handle(action, parameters);
 #endif
-            return action switch
-            {
-                "find_game_objects" => FindGameObjects(parameters),
-                "get_object_detail" => GetObjectDetail(parameters),
-                "set_component_property" => SetComponentProperty(parameters),
-                "call_component_method" => CallComponentMethod(parameters),
-                "get_scene_hierarchy" => GetSceneHierarchy(parameters),
-                "get_object_components" => GetObjectComponents(parameters),
-                "get_runtime_status" => GetRuntimeStatus(parameters),
-                "get_recent_logs" => GetRecentLogs(parameters),
-                "list_config" => ListConfig(parameters),
-                "get_mcp_status" => GetMcpStatus(parameters),
-                _ => throw new McpBridgeException("invalid_request", $"Unknown MCP bridge action '{action}'.")
-            };
+            if (actionHandlers.TryGetValue(action, out Func<Dictionary<string, object>, object> handler))
+                return handler(parameters);
+
+            throw new McpBridgeException("invalid_request", $"Unknown MCP bridge action '{action}'.");
         }
 
         private static object FindGameObjects(Dictionary<string, object> parameters)
