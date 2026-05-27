@@ -29,12 +29,16 @@ Optional environment variables:
 - `UNITY_EXPLORER_MCP_PORT`, default `8765`
 - `UNITY_EXPLORER_MCP_TIMEOUT_MS`, default `5000`
 
-The server exposes four tools:
+The server exposes UnityExplorer tools:
 
 - `UnityExplorer:find_game_objects`
 - `UnityExplorer:get_object_detail`
 - `UnityExplorer:set_component_property`
 - `UnityExplorer:call_component_method`
+- `UnityExplorer:get_runtime_status`
+- `UnityExplorer:get_recent_logs`
+- `UnityExplorer:list_config`
+- `UnityExplorer:get_mcp_status`
 
 It also exposes Paralives-specific tools when the bridge is running inside Paralives:
 
@@ -63,6 +67,9 @@ Resources:
 
 - `unity://scene/hierarchy`
 - `unity://object/{instance_id}/components`
+- `unity://runtime/status`
+- `unity://config/options`
+- `unity://mcp/status`
 - `paralives://types/managers`
 - `paralives://types/settings`
 - `paralives://types/cheats`

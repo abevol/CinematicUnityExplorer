@@ -112,7 +112,7 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(searchInput.UIRoot, minWidth: 260, minHeight: 25, flexibleWidth: 9999, flexibleHeight: 0);
             searchInput.OnValueChanged += _ => RefreshFilteredEntries();
 
-            UIFactory.CreateDropdown(filterRow, "Category", out categoryDropdown, Localizer.Get("CATEGORY_ALL", "All"), 14, _ => RefreshFilteredEntries(), CategoryOptions);
+            UIFactory.CreateDropdown(filterRow, "Category", out categoryDropdown, Localizer.Get("CATEGORY_ALL", "All"), 14, _ => RefreshFilteredEntries(), GetLocalizedCategoryOptions());
             UIFactory.SetLayoutElement(categoryDropdown.gameObject, minWidth: 150, minHeight: 25, flexibleWidth: 0, flexibleHeight: 0);
 
             statusLabel = UEUI.CreateStatus(ContentRoot, "OptionsStatus", "");
@@ -181,6 +181,13 @@ namespace UnityExplorer.UI.Panels
             }
 
             return CategoryOptions.Length;
+        }
+
+        private static string[] GetLocalizedCategoryOptions()
+        {
+            return CategoryOptions
+                .Select(category => Localizer.Get("CATEGORY_" + category.ToUpperInvariant(), category))
+                .ToArray();
         }
 
         private void SetStatus(string text)

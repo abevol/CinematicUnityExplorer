@@ -11,11 +11,12 @@ namespace UnityExplorer.CacheObject
             RefConfigElement = configElement;
             FallbackType = configElement.ElementType;
 
-            string badges = $"<color=#9fb8d8>{configElement.Category}</color>";
+            string category = Localizer.Get("CATEGORY_" + configElement.Category.ToUpperInvariant(), configElement.Category);
+            string badges = $"<color=#9fb8d8>{category}</color>";
             if (configElement.RequiresRestart)
-                badges += "  <color=#d8b26a>Restart</color>";
+                badges += $"  <color=#d8b26a>{Localizer.Get("BADGE_RESTART", "Restart")}</color>";
             if (configElement.Advanced)
-                badges += "  <color=#b0b0b0>Advanced</color>";
+                badges += $"  <color=#b0b0b0>{Localizer.Get("BADGE_ADVANCED", "Advanced")}</color>";
 
             NameLabelText = $"<color=cyan>{Localizer.Get(configElement.Name, configElement.Name)}</color>  {badges}" +
                 $"\r\n<color=grey><i>{Localizer.Get(configElement.Description, configElement.Description)}</i></color>";

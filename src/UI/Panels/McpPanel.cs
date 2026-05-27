@@ -52,27 +52,29 @@ namespace UnityExplorer.UI.Panels
             bool enabled = GetBool(status, "enabled");
             bool listening = GetBool(status, "listening");
             statusLabel.text = enabled
-                ? listening ? $"Listening on ws://127.0.0.1:{GetText(status, "port")}" : "Enabled, not listening. Restart may be required."
-                : "MCP bridge disabled.";
+                ? listening
+                    ? string.Format(Localizer.Get("STATUS_MCP_LISTENING", "Listening on ws://127.0.0.1:{0}"), GetText(status, "port"))
+                    : Localizer.Get("STATUS_MCP_RESTART_REQUIRED", "Enabled, not listening. Restart may be required.")
+                : Localizer.Get("STATUS_MCP_DISABLED", "MCP bridge disabled.");
 
-            GameObject summary = UEUI.CreateSection(content, "Summary", "Bridge");
-            UEUI.AddInfoRow(summary, "Enabled", enabled.ToString());
-            UEUI.AddInfoRow(summary, "Listening", listening.ToString());
-            UEUI.AddInfoRow(summary, "Port", GetText(status, "port"));
-            UEUI.AddInfoRow(summary, "Timeout", $"{ConfigManager.McpBridge_RequestTimeoutMs.Value} ms");
-            UEUI.AddInfoRow(summary, "Last action", GetText(status, "lastAction"));
-            UEUI.AddInfoRow(summary, "Last error", GetText(status, "lastError"));
-            UEUI.AddInfoRow(summary, "Last duration", $"{GetText(status, "lastDurationMs")} ms");
+            GameObject summary = UEUI.CreateSection(content, "Summary", Localizer.Get("LBL_MCP_BRIDGE", "Bridge"));
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_ENABLED", "Enabled"), enabled.ToString());
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_LISTENING", "Listening"), listening.ToString());
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_PORT", "Port"), GetText(status, "port"));
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_TIMEOUT", "Timeout"), $"{ConfigManager.McpBridge_RequestTimeoutMs.Value} ms");
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_LAST_ACTION", "Last action"), GetText(status, "lastAction"));
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_LAST_ERROR", "Last error"), GetText(status, "lastError"));
+            UEUI.AddInfoRow(summary, Localizer.Get("LBL_MCP_LAST_DURATION", "Last duration"), $"{GetText(status, "lastDurationMs")} ms");
 
-            GameObject tools = UEUI.CreateSection(content, "Tools", "Tool Groups");
-            UEUI.AddInfoRow(tools, "UnityExplorer", "find_game_objects, get_object_detail, set_component_property, call_component_method, get_scene_hierarchy, get_object_components");
-            UEUI.AddInfoRow(tools, "Paralives", "Available in Paralives only; write tools keep dry-run/confirm policy.");
+            GameObject tools = UEUI.CreateSection(content, "Tools", Localizer.Get("LBL_MCP_TOOL_GROUPS", "Tool Groups"));
+            UEUI.AddInfoRow(tools, "UnityExplorer", "find_game_objects, get_object_detail, set_component_property, call_component_method, get_scene_hierarchy, get_object_components, get_runtime_status, get_recent_logs, list_config, get_mcp_status");
+            UEUI.AddInfoRow(tools, "Paralives", Localizer.Get("TXT_MCP_PARALIVES_TOOLS", "Available in Paralives only; write tools keep dry-run/confirm policy."));
 
-            GameObject requests = UEUI.CreateSection(content, "RequestLog", "Recent Requests");
+            GameObject requests = UEUI.CreateSection(content, "RequestLog", Localizer.Get("LBL_MCP_RECENT_REQUESTS", "Recent Requests"));
             List<object> logs = GetList(status, "requests");
             if (logs.Count == 0)
             {
-                Text empty = UIFactory.CreateLabel(requests, "Empty", "No MCP requests recorded yet.", TextAnchor.MiddleLeft, color: Color.grey);
+                Text empty = UIFactory.CreateLabel(requests, "Empty", Localizer.Get("TXT_MCP_NO_REQUESTS", "No MCP requests recorded yet."), TextAnchor.MiddleLeft, color: Color.grey);
                 UIFactory.SetLayoutElement(empty.gameObject, minHeight: 24, flexibleWidth: 9999);
                 return;
             }

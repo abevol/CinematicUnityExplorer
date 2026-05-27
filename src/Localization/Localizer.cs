@@ -291,10 +291,34 @@ public class MyCoro
             { "BTN_RESET_DEFAULTS", "重置为默认值" },
             { "TXT_SEARCH_OPTIONS", "搜索设置..." },
             { "CATEGORY_ALL", "全部" },
+            { "CATEGORY_GENERAL", "通用" },
+            { "CATEGORY_UI", "界面" },
+            { "CATEGORY_MCP", "MCP" },
+            { "CATEGORY_PARALIVES", "Paralives" },
+            { "CATEGORY_CONSOLE", "控制台" },
+            { "CATEGORY_INSPECTOR", "检查器" },
+            { "CATEGORY_EXPORT", "导出" },
+            { "CATEGORY_ADVANCED", "高级" },
+            { "BADGE_RESTART", "需重启" },
+            { "BADGE_ADVANCED", "高级" },
             { "STATUS_OPTIONS_SAVED", "设置已保存。" },
             { "STATUS_OPTIONS_RESET", "当前显示的设置已重置为默认值。" },
             { "STATUS_OPTIONS_COUNT", "{0} 个设置项" },
             { "STATUS_OPTIONS_FILTERED", "显示 {0} 个设置项。" },
+            { "STATUS_MCP_LISTENING", "正在监听 ws://127.0.0.1:{0}" },
+            { "STATUS_MCP_RESTART_REQUIRED", "已启用但未监听，可能需要重启。" },
+            { "STATUS_MCP_DISABLED", "MCP 桥接已禁用。" },
+            { "LBL_MCP_BRIDGE", "桥接状态" },
+            { "LBL_MCP_LISTENING", "监听中" },
+            { "LBL_MCP_PORT", "端口" },
+            { "LBL_MCP_TIMEOUT", "超时" },
+            { "LBL_MCP_LAST_ACTION", "上次动作" },
+            { "LBL_MCP_LAST_ERROR", "上次错误" },
+            { "LBL_MCP_LAST_DURATION", "上次耗时" },
+            { "LBL_MCP_TOOL_GROUPS", "工具分组" },
+            { "LBL_MCP_RECENT_REQUESTS", "最近请求" },
+            { "TXT_MCP_PARALIVES_TOOLS", "仅在 Paralives 中可用；写入工具保留 dry-run/确认策略。" },
+            { "TXT_MCP_NO_REQUESTS", "尚无 MCP 请求记录。" },
 
             // Config settings name and description
             { "Language", "语言设置 (Language)" },
@@ -303,7 +327,35 @@ public class MyCoro
             { "The key to enable or disable UnityExplorer's menu and features.", "开启或关闭 UnityExplorer 的菜单和功能的快捷键。" },
             { "Hide On Startup", "启动时隐藏" },
             { "Should UnityExplorer be hidden on startup?", "UnityExplorer 是否在游戏启动时自动隐藏？" },
-            { "Startup Delay Time", "启动延迟秒数" },
+            { "MCP Bridge Enabled", "启用 MCP 桥接" },
+
+            { "Expose a local WebSocket bridge for Model Context Protocol tooling.", "为 Model Context Protocol 工具开放本地 WebSocket 桥接。" },
+
+            { "MCP Bridge Port", "MCP 桥接端口" },
+
+            { "The localhost WebSocket port used by the UnityExplorer MCP bridge.", "UnityExplorer MCP 桥接使用的本机 WebSocket 端口。" },
+
+            { "MCP Bridge Request Timeout Ms", "MCP 请求超时毫秒数" },
+
+            { "How long the bridge waits for Unity main-thread MCP commands before timing out.", "桥接等待 Unity 主线程 MCP 命令完成的超时时间。" },
+
+            { "Paralives Safe Action Mode", "Paralives 安全操作模式" },
+
+            { "Controls whether game-side Paralives UI actions require a second click confirmation. MCP writes still require dryRun false and the confirmation phrase.", "控制游戏内 Paralives UI 操作是否需要二次点击确认。MCP 写入仍需要 dryRun=false 和确认短语。" },
+
+            { "Paralives Saved Game List Limit", "Paralives 存档列表上限" },
+
+            { "Maximum saved games to display in the Paralives panel.", "Paralives 面板中最多显示的存档数量。" },
+
+            { "Paralives Loading Wait Timeout Ms", "Paralives 加载等待超时毫秒数" },
+
+            { "Maximum time to wait for Paralives loading actions before treating them as timed out.", "Paralives 加载操作被视为超时前的最长等待时间。" },
+
+            { "Paralives Prefer UI Flow For Save Load", "Paralives 存读档优先使用 UI 流程" },
+
+            { "Prefer visible Paralives UI flows for save loading when available; fallback methods are shown before execution.", "可用时优先使用可见的 Paralives UI 流程加载存档；执行前会显示备用方法。" },
+
+            { "Startup Delay Time", "启动延迟秒数" },
             { "The delay on startup before the UI is created.", "游戏加载后，UI 创建前的延迟秒数。" },
             { "Target Display", "目标显示器" },
             { "The monitor index for UnityExplorer to use, if you have multiple. 0 is the default display, 1 is secondary, etc. Restart recommended when changing this setting. Make sure your extra monitors are the same resolution as your primary monitor.", "多显示器时 UnityExplorer 渲染的屏幕索引。0 为主显示器，1 为第二显示器等。更改此设置建议重启。并确保多显示器的分辨率一致。" },
@@ -313,7 +365,15 @@ public class MyCoro
             { "The keybind to toggle the 'Force Unlock Mouse' setting. Only usable when UnityExplorer is open.", "切换“强制解锁鼠标”设置的快捷键。仅在 UnityExplorer 打开时可用。" },
             { "Disable EventSystem override", "禁用事件系统覆盖" },
             { "If enabled, UnityExplorer will not override the EventSystem from the game.\n<b>May require restart to take effect.</b>", "如果启用，UnityExplorer 将不会覆盖游戏自身的 EventSystem。<b>可能需要重启才能生效。</b>" },
-            { "Default Output Path", "默认输出路径" },
+            { "Disable Setup Force Reload ManagedAssemblies", "禁用启动时强制重载 ManagedAssemblies" },
+
+            { "If enabled, UnityExplorer will not reload ManagedAssemblies on setup. Currently only Mono is supported.\n<b>May require restart to take effect.</b>", "如果启用，UnityExplorer 在初始化时不会重载 ManagedAssemblies。目前仅支持 Mono。<b>可能需要重启才能生效。</b>" },
+
+            { "Bypass UniverseLib ICall", "绕过 UniverseLib ICall" },
+
+            { "If enabled, UnityExplorer will bypass UniverseLib's ICall reflection system. This may help with compatibility in some games.\n<b>May require restart to take effect.</b>", "如果启用，UnityExplorer 将绕过 UniverseLib 的 ICall 反射系统。这可能改善部分游戏的兼容性。<b>可能需要重启才能生效。</b>" },
+
+            { "Default Output Path", "默认输出路径" },
             { "The default output path when exporting things from UnityExplorer.", "从 UnityExplorer 导出文件时的默认路径。" },
             { "dnSpy Path", "dnSpy.exe 路径" },
             { "The full path to dnSpy.exe (64-bit).", "dnSpy.exe (64位) 软件的完整物理路径。" },
@@ -321,11 +381,35 @@ public class MyCoro
             { "The vertical anchor of the main UnityExplorer Navbar, in case you want to move it.", "UnityExplorer 主导航栏的垂直对齐方向（可以贴靠在屏幕顶部或底部）。" },
             { "Log Unity Debug", "记录 Unity 调试日志" },
             { "Should UnityEngine.Debug.Log messages be printed to UnityExplorer's log?", "是否将 UnityEngine.Debug.Log 的常规输出也打印到 UnityExplorer 日志面板中？" },
-            { "World Mouse-Inspect Keybind", "世界模式鼠标检查快捷键" },
+            { "Log To Disk", "保存日志到磁盘" },
+
+            { "Should UnityExplorer save log files to the disk?", "UnityExplorer 是否将日志文件保存到磁盘？" },
+
+            { "World Mouse-Inspect Keybind", "世界模式鼠标检查快捷键" },
             { "Optional keybind to being a World-mode Mouse Inspect.", "用于开始游戏世界模式下鼠标悬停检查的快捷键。" },
             { "UI Mouse-Inspect Keybind", "UI 模式鼠标检查快捷键" },
             { "Optional keybind to begin a UI-mode Mouse Inspect.", "用于开始 UI 模式下鼠标悬停检查的快捷键。" },
-            { "CSharp Console Assembly Blacklist", "C# 控制台引用黑名单" },
+            { "TimeScale Toggle Keybind", "时间倍率锁定切换快捷键" },
+
+            { "Optional keybind to lock or unlock Time.timeScale.", "用于锁定或解锁 Time.timeScale 的可选快捷键。" },
+
+            { "TimeScale Zero Keybind", "时间倍率归零快捷键" },
+
+            { "Optional keybind to lock Time.timeScale to 0.0.", "用于将 Time.timeScale 锁定为 0.0 的可选快捷键。" },
+
+            { "TimeScale Normal Keybind", "时间倍率恢复正常快捷键" },
+
+            { "Optional keybind to lock Time.timeScale to 1.0.", "用于将 Time.timeScale 锁定为 1.0 的可选快捷键。" },
+
+            { "TimeScale Half Keybind", "时间倍率减半快捷键" },
+
+            { "Optional keybind to halve and lock the current Time.timeScale target.", "用于将当前 Time.timeScale 目标减半并锁定的可选快捷键。" },
+
+            { "TimeScale Double Keybind", "时间倍率加倍快捷键" },
+
+            { "Optional keybind to double and lock the current Time.timeScale target.", "用于将当前 Time.timeScale 目标加倍并锁定的可选快捷键。" },
+
+            { "CSharp Console Assembly Blacklist", "C# 控制台引用黑名单" },
             { "Use this to blacklist Assembly names from being referenced by the C# Console. Requires a Reset of the C# Console.\nSeparate each Assembly with a semicolon ';'.For example, to blacklist Assembly-CSharp, you would add 'Assembly-CSharp;'", "阻止 C# 控制台引用的程序集名称黑名单。更改后需要重置 C# 控制台。使用分号“;”分隔各个程序集名。" },
             { "Member Signature Blacklist", "类成员签名黑名单" },
             { "Use this to blacklist certain member signatures if they are known to cause a crash or other issues.\r\nSeperate signatures with a semicolon ';'.\r\nFor example, to blacklist Camera.main, you would add 'UnityEngine.Camera.main;'", "过滤掉某些可能会引起崩溃的成员签名。使用分号“;”分隔。例如：'UnityEngine.Camera.main;'" },

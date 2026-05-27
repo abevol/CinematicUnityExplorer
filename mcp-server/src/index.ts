@@ -47,6 +47,25 @@ const instanceIdSchema = {
   required: ["instanceId"],
 } as const;
 
+const recentLogsSchema = {
+  type: "object",
+  properties: {
+    limit: { type: "integer", minimum: 1, maximum: 200, default: 50 },
+  },
+} as const;
+
+const listConfigSchema = {
+  type: "object",
+  properties: {
+    category: {
+      type: "string",
+      enum: ["General", "UI", "MCP", "Paralives", "Console", "Inspector", "Export", "Advanced"],
+    },
+    includeAdvanced: { type: "boolean", default: true },
+    limit: { type: "integer", minimum: 1, maximum: 200, default: 200 },
+  },
+} as const;
+
 const setComponentPropertySchema = {
   type: "object",
   properties: {
@@ -189,6 +208,26 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       inputSchema: callComponentMethodSchema,
     },
     {
+      name: "UnityExplorer:get_runtime_status",
+      description: "Read UnityExplorer runtime diagnostics including Unity version, active scene, panels, and bridge status.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "UnityExplorer:get_recent_logs",
+      description: "Read recent UnityExplorer log entries and the current log file path.",
+      inputSchema: recentLogsSchema,
+    },
+    {
+      name: "UnityExplorer:list_config",
+      description: "Read UnityExplorer config entries with category, type, value, default, restart, and advanced metadata.",
+      inputSchema: listConfigSchema,
+    },
+    {
+      name: "UnityExplorer:get_mcp_status",
+      description: "Read MCP bridge diagnostics including listening state, timeout, pending requests, and recent request log.",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
       name: "Paralives:get_type_index",
       description: "Read the ParalivesBridge availability and Mono.Cecil type index summary.",
       inputSchema: { type: "object", properties: {} },
@@ -315,6 +354,24 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => ({
       mimeType: "application/json",
     },
     {
+      uri: "unity://runtime/status",
+      name: "UnityExplorer Runtime Status",
+      description: "Runtime diagnostics including Unity version, active scene, panels, and bridge status.",
+      mimeType: "application/json",
+    },
+    {
+      uri: "unity://config/options",
+      name: "UnityExplorer Config Options",
+      description: "UnityExplorer config entries with categories and current values.",
+      mimeType: "application/json",
+    },
+    {
+      uri: "unity://mcp/status",
+      name: "UnityExplorer MCP Status",
+      description: "MCP bridge listening state and recent request diagnostics.",
+      mimeType: "application/json",
+    },
+    {
       uri: "paralives://types/managers",
       name: "Paralives Manager Types",
       description: "Mono.Cecil index of Paralives manager-like types.",
@@ -353,6 +410,18 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
     return readBridgeResource(uri, "get_scene_hierarchy", {});
   }
 
+  if (uri === "unity://runtime/status") {
+    return readBridgeResource(uri, "get_runtime_status", {});
+  }
+
+  if (uri === "unity://config/options") {
+    return readBridgeResource(uri, "list_config", {});
+  }
+
+  if (uri === "unity://mcp/status") {
+    return readBridgeResource(uri, "get_mcp_status", {});
+  }
+
   if (uri === "paralives://types/managers" || uri === "paralives://types/settings" || uri === "paralives://types/cheats") {
     return readBridgeResource(uri, "paralives_read_resource", { uri });
   }
@@ -378,6 +447,14 @@ function toolNameToAction(name: string): string | null {
       return "set_component_property";
     case "UnityExplorer:call_component_method":
       return "call_component_method";
+    case "UnityExplorer:get_runtime_status":
+      return "get_runtime_status";
+    case "UnityExplorer:get_recent_logs":
+      return "get_recent_logs";
+    case "UnityExplorer:list_config":
+      return "list_config";
+    case "UnityExplorer:get_mcp_status":
+      return "get_mcp_status";
     case "Paralives:get_type_index":
       return "paralives_get_type_index";
     case "Paralives:get_game_state":
