@@ -32,7 +32,12 @@ namespace UnityExplorer.McpBridge
             Dictionary<string, Func<Dictionary<string, object>, object>> serviceActions)
         {
             foreach (KeyValuePair<string, Func<Dictionary<string, object>, object>> action in serviceActions)
+            {
+                if (registry.ContainsKey(action.Key))
+                    throw new McpBridgeException("invalid_request", $"Duplicate MCP action registration for '{action.Key}'.");
+
                 registry[action.Key] = action.Value;
+            }
         }
     }
 }

@@ -50,8 +50,8 @@ namespace UnityExplorer.McpBridge.Paralives
         private static object GetRuntimeSummary()
         {
             // 获取游戏状态
-            Dictionary<string, object> gameState = ParalivesBridgeService.GetGameStateSnapshot();
-            Dictionary<string, object> loadingState = ParalivesBridgeService.GetLoadingStateSnapshot();
+            Dictionary<string, object> gameState = ParalivesStateService.GetGameStateSnapshot();
+            Dictionary<string, object> loadingState = ParalivesStateService.GetLoadingStateSnapshot();
 
             // 获取时间状态
             Dictionary<string, object> timeState = GetGameTimeState();
