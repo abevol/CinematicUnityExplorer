@@ -45,7 +45,7 @@ namespace UnityExplorer
             McpBridgeController.Update();
             ExplorerCore.Update();
 #if MONO
-            ParalivesProfilerService.Update();
+            ParalivesPerformanceCountersService.Update();
 #endif
         }
 
@@ -64,7 +64,7 @@ namespace UnityExplorer
             quitting = true;
             McpBridgeController.Shutdown();
 #if MONO
-            ParalivesProfilerService.Shutdown();
+            ParalivesPerformanceCountersService.Shutdown();
 #endif
 
             TryDestroy(UIManager.UIRoot?.transform.root.gameObject);

@@ -18,6 +18,11 @@ namespace UnityExplorer.McpBridge
             return Convert.ToInt32(value, CultureInfo.InvariantCulture);
         }
 
+        public static ulong RequiredUInt64(Dictionary<string, object> parameters, string name)
+        {
+            return ulong.Parse(RequiredString(parameters, name), CultureInfo.InvariantCulture);
+        }
+
         public static string OptionalString(Dictionary<string, object> parameters, string name)
         {
             return parameters.TryGetValue(name, out object value) && value != null ? value.ToString() : null;
@@ -34,6 +39,13 @@ namespace UnityExplorer.McpBridge
         {
             return parameters.TryGetValue(name, out object value) && value != null
                 ? Convert.ToBoolean(value, CultureInfo.InvariantCulture)
+                : fallback;
+        }
+
+        public static float OptionalFloat(Dictionary<string, object> parameters, string name, float fallback)
+        {
+            return parameters.TryGetValue(name, out object value) && value != null
+                ? Convert.ToSingle(value, CultureInfo.InvariantCulture)
                 : fallback;
         }
 

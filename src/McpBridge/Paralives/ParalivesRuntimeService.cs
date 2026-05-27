@@ -10,14 +10,6 @@ namespace UnityExplorer.McpBridge.Paralives
     /// </summary>
     internal static class ParalivesRuntimeService
     {
-        // 日志缓冲区
-        private static readonly List<LogEntry> logBuffer = new();
-        private static readonly object logLock = new();
-        private const int MaxLogBufferSize = 1000;
-
-        // 日志订阅
-        private static readonly Dictionary<string, LogSubscription> subscriptions = new();
-        private static bool isLogCallbackRegistered;
         private static readonly Dictionary<string, Func<Dictionary<string, object>, object>> actionHandlers = new()
         {
             ["paralives_get_runtime_summary"] = _ => GetRuntimeSummary(),
@@ -26,32 +18,9 @@ namespace UnityExplorer.McpBridge.Paralives
             ["paralives_get_selection"] = _ => GetSelection(),
             ["paralives_get_active_context"] = _ => GetActiveContext(),
             ["paralives_get_character_needs"] = GetCharacterNeeds,
-            ["paralives_get_character_actions"] = GetCharacterActions,
-            ["get_game_logs"] = GetGameLogs,
-            ["subscribe_logs"] = SubscribeLogs,
-            ["poll_logs"] = PollLogs
+            ["paralives_get_character_actions"] = GetCharacterActions
         };
-
-        // 日志条目结构
-        private class LogEntry
-        {
-            public int Id;
-            public string Type;
-            public string Message;
-            public string StackTrace;
-            public DateTime Timestamp;
-            public int CollapseCount;
-        }
-
-        // 日志订阅结构
-        private class LogSubscription
-        {
-            public string Id;
-            public HashSet<string> Types;
-            public List<LogEntry> Buffer;
-            public int MaxSize;
-            public DateTime CreatedAt;
-        }
+        public static readonly Dictionary<string, Func<Dictionary<string, object>, object>> Actions = BuildActions();
 
         /// <summary>
         /// 处理运行时状态和日志相关的 action
@@ -62,6 +31,17 @@ namespace UnityExplorer.McpBridge.Paralives
                 return handler(parameters);
 
             throw new McpBridgeException("invalid_request", $"Unknown runtime action '{action}'.");
+        }
+
+        private static Dictionary<string, Func<Dictionary<string, object>, object>> BuildActions()
+        {
+            Dictionary<string, Func<Dictionary<string, object>, object>> actions = new();
+            foreach (string action in actionHandlers.Keys)
+            {
+                string registeredAction = action;
+                actions[registeredAction] = parameters => Handle(registeredAction, parameters);
+            }
+            return actions;
         }
 
         /// <summary>
@@ -142,9 +122,9 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetGameTimeState()
         {
             // 查找 UITime 组件
-            GameObject uiTime = FindGameObjectByName("UITime(Clone)");
+            GameObject uiTime = UnityReflectionUtility.FindGameObjectByName("UITime(Clone)");
             if (uiTime == null)
-                uiTime = FindGameObjectByName("UITime");
+                uiTime = UnityReflectionUtility.FindGameObjectByName("UITime");
 
             bool isPaused = true;
             int timeSpeed = 0;
@@ -152,13 +132,13 @@ namespace UnityExplorer.McpBridge.Paralives
 
             if (uiTime != null)
             {
-                Component timeComponent = FindComponentByName(uiTime, "UITime");
+                Component timeComponent = UnityReflectionUtility.FindComponentByName(uiTime, "UITime");
                 if (timeComponent != null)
                 {
                     Type type = timeComponent.GetActualType();
-                    isPaused = ReadMemberBool(timeComponent, type, "LastIsPaused", true);
-                    timeSpeed = ReadMemberInt(timeComponent, type, "LastTimeSpeed", 0);
-                    minutes = ReadMemberInt(timeComponent, type, "_lastMinute", 0);
+                    isPaused = UnityReflectionUtility.ReadMemberBool(timeComponent, type, "LastIsPaused", true);
+                    timeSpeed = UnityReflectionUtility.ReadMemberInt(timeComponent, type, "LastTimeSpeed", 0);
+                    minutes = UnityReflectionUtility.ReadMemberInt(timeComponent, type, "_lastMinute", 0);
                 }
             }
 
@@ -187,19 +167,19 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetEconomyState()
         {
             // 查找 UIGameBar 组件
-            GameObject uiGameBar = FindGameObjectByName("UIGameBar(Clone)");
+            GameObject uiGameBar = UnityReflectionUtility.FindGameObjectByName("UIGameBar(Clone)");
             if (uiGameBar == null)
-                uiGameBar = FindGameObjectByName("UIGameBar");
+                uiGameBar = UnityReflectionUtility.FindGameObjectByName("UIGameBar");
 
             int funds = 0;
 
             if (uiGameBar != null)
             {
-                Component gameBarComponent = FindComponentByName(uiGameBar, "UIGameBar");
+                Component gameBarComponent = UnityReflectionUtility.FindComponentByName(uiGameBar, "UIGameBar");
                 if (gameBarComponent != null)
                 {
                     Type type = gameBarComponent.GetActualType();
-                    funds = ReadMemberInt(gameBarComponent, type, "LastMoneyBalance", 0);
+                    funds = UnityReflectionUtility.ReadMemberInt(gameBarComponent, type, "LastMoneyBalance", 0);
                 }
             }
 
@@ -216,21 +196,21 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetSelectionState()
         {
             // 查找 UISelected 组件
-            GameObject uiSelected = FindGameObjectByName("UISelected(Clone)");
+            GameObject uiSelected = UnityReflectionUtility.FindGameObjectByName("UISelected(Clone)");
             if (uiSelected == null)
-                uiSelected = FindGameObjectByName("UISelected");
+                uiSelected = UnityReflectionUtility.FindGameObjectByName("UISelected");
 
             bool hasSelection = false;
             int selectedSubEntity = -1;
 
             if (uiSelected != null)
             {
-                Component selectedComponent = FindComponentByName(uiSelected, "UISelected");
+                Component selectedComponent = UnityReflectionUtility.FindComponentByName(uiSelected, "UISelected");
                 if (selectedComponent != null)
                 {
                     Type type = selectedComponent.GetActualType();
-                    hasSelection = ReadMemberBool(selectedComponent, type, "IsVisible", false);
-                    selectedSubEntity = ReadMemberInt(selectedComponent, type, "_selectedSubEntity", -1);
+                    hasSelection = UnityReflectionUtility.ReadMemberBool(selectedComponent, type, "IsVisible", false);
+                    selectedSubEntity = UnityReflectionUtility.ReadMemberInt(selectedComponent, type, "_selectedSubEntity", -1);
                 }
             }
 
@@ -260,7 +240,7 @@ namespace UnityExplorer.McpBridge.Paralives
 
             foreach (string panelName in panelNames)
             {
-                GameObject panel = FindGameObjectByName(panelName);
+                GameObject panel = UnityReflectionUtility.FindGameObjectByName(panelName);
                 if (panel != null && panel.activeInHierarchy)
                 {
                     // 移除 (Clone) 后缀
@@ -272,17 +252,17 @@ namespace UnityExplorer.McpBridge.Paralives
 
             // 检查主菜单是否可见
             bool isMainMenuVisible = false;
-            GameObject mainMenu = FindGameObjectByName("UIMainMenu(Clone)");
+            GameObject mainMenu = UnityReflectionUtility.FindGameObjectByName("UIMainMenu(Clone)");
             if (mainMenu == null)
-                mainMenu = FindGameObjectByName("UIMainMenu");
+                mainMenu = UnityReflectionUtility.FindGameObjectByName("UIMainMenu");
 
             if (mainMenu != null)
             {
-                Component mainMenuComponent = FindComponentByName(mainMenu, "UIMainMenu");
+                Component mainMenuComponent = UnityReflectionUtility.FindComponentByName(mainMenu, "UIMainMenu");
                 if (mainMenuComponent != null)
                 {
                     Type type = mainMenuComponent.GetActualType();
-                    isMainMenuVisible = ReadMemberBool(mainMenuComponent, type, "IsVisible", false);
+                    isMainMenuVisible = UnityReflectionUtility.ReadMemberBool(mainMenuComponent, type, "IsVisible", false);
                 }
             }
 
@@ -302,7 +282,7 @@ namespace UnityExplorer.McpBridge.Paralives
             Type householdManagerType = ReflectionUtility.GetTypeByName("HouseholdManager");
             if (householdManagerType != null)
             {
-                object manager = GetSingletonInstance(householdManagerType);
+                object manager = UnityReflectionUtility.GetSingletonInstance(householdManagerType);
                 if (manager != null)
                 {
                     // 尝试读取当前家庭
@@ -310,17 +290,17 @@ namespace UnityExplorer.McpBridge.Paralives
                     {
                         try
                         {
-                            object household = ReadMemberSafe(manager, householdManagerType, memberName);
+                            object household = UnityReflectionUtility.ReadMemberSafe(manager, householdManagerType, memberName);
                             if (household != null)
                             {
                                 Type householdType = household.GetActualType();
-                                string name = ReadMemberString(household, householdType, "Name", "Unknown");
+                                string name = UnityReflectionUtility.ReadMemberString(household, householdType, "Name", "Unknown");
                                 int memberCount = 0;
 
                                 // 尝试获取成员数量
                                 foreach (string countMember in new[] { "MemberCount", "CharacterCount", "Members" })
                                 {
-                                    object countValue = ReadMemberSafe(household, householdType, countMember);
+                                    object countValue = UnityReflectionUtility.ReadMemberSafe(household, householdType, countMember);
                                     if (countValue is int intCount)
                                     {
                                         memberCount = intCount;
@@ -380,39 +360,39 @@ namespace UnityExplorer.McpBridge.Paralives
                 return "loading";
 
             // 检查主菜单是否可见（不只是存在）
-            GameObject mainMenu = FindGameObjectByName("UIMainMenu(Clone)");
+            GameObject mainMenu = UnityReflectionUtility.FindGameObjectByName("UIMainMenu(Clone)");
             if (mainMenu == null)
-                mainMenu = FindGameObjectByName("UIMainMenu");
+                mainMenu = UnityReflectionUtility.FindGameObjectByName("UIMainMenu");
             
             if (mainMenu != null)
             {
-                Component mainMenuComponent = FindComponentByName(mainMenu, "UIMainMenu");
+                Component mainMenuComponent = UnityReflectionUtility.FindComponentByName(mainMenu, "UIMainMenu");
                 if (mainMenuComponent != null)
                 {
                     Type type = mainMenuComponent.GetActualType();
-                    bool isVisible = ReadMemberBool(mainMenuComponent, type, "IsVisible", false);
+                    bool isVisible = UnityReflectionUtility.ReadMemberBool(mainMenuComponent, type, "IsVisible", false);
                     if (isVisible)
                         return "main_menu";
                 }
             }
 
             // 检查是否在建造模式
-            GameObject buildMode = FindGameObjectByName("UIBuildModeModes(Clone)");
+            GameObject buildMode = UnityReflectionUtility.FindGameObjectByName("UIBuildModeModes(Clone)");
             if (buildMode != null && buildMode.activeInHierarchy)
             {
                 // 检查建造模式 UI 是否可见
-                Component buildComponent = FindComponentByName(buildMode, "UIBuildModeModes");
+                Component buildComponent = UnityReflectionUtility.FindComponentByName(buildMode, "UIBuildModeModes");
                 if (buildComponent != null)
                 {
                     Type type = buildComponent.GetActualType();
-                    bool isVisible = ReadMemberBool(buildComponent, type, "IsVisible", false);
+                    bool isVisible = UnityReflectionUtility.ReadMemberBool(buildComponent, type, "IsVisible", false);
                     if (isVisible)
                         return "build_mode";
                 }
             }
 
             // 检查是否在角色创建
-            GameObject characterCreation = FindGameObjectByName("UICharacterCreation(Clone)");
+            GameObject characterCreation = UnityReflectionUtility.FindGameObjectByName("UICharacterCreation(Clone)");
             if (characterCreation != null && characterCreation.activeInHierarchy)
                 return "character_creation";
 
@@ -466,13 +446,13 @@ namespace UnityExplorer.McpBridge.Paralives
             if (householdManagerType == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "HouseholdManager type not found" };
 
-            object manager = GetSingletonInstance(householdManagerType);
+            object manager = UnityReflectionUtility.GetSingletonInstance(householdManagerType);
             if (manager == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "HouseholdManager instance not found" };
 
-            ulong guid = TryReadMember(manager, householdManagerType, "CurrentHouseholdGUID", out object guidValue) 
+            ulong guid = UnityReflectionUtility.TryReadMember(manager, householdManagerType, "CurrentHouseholdGUID", out object guidValue) 
                 ? Convert.ToUInt64(guidValue) : 0;
-            bool hasHousehold = TryReadMember(manager, householdManagerType, "HasCurrentHousehold", out object hasValue) 
+            bool hasHousehold = UnityReflectionUtility.TryReadMember(manager, householdManagerType, "HasCurrentHousehold", out object hasValue) 
                 && (bool)hasValue;
 
             if (!hasHousehold || guid == 0)
@@ -484,14 +464,14 @@ namespace UnityExplorer.McpBridge.Paralives
             List<object> members = new();
 
             // 从 HouseholdManager 获取当前家庭对象
-            TryReadMember(manager, householdManagerType, "CurrentHousehold", out object householdObj);
+            UnityReflectionUtility.TryReadMember(manager, householdManagerType, "CurrentHousehold", out object householdObj);
             if (householdObj != null)
             {
                 Type householdType = householdObj.GetActualType();
-                name = TryReadMember(householdObj, householdType, "Name", out object nameValue) ? nameValue?.ToString() : "Unknown";
+                name = UnityReflectionUtility.TryReadMember(householdObj, householdType, "Name", out object nameValue) ? nameValue?.ToString() : "Unknown";
                 
                 // 获取成员列表
-                if (TryReadMember(householdObj, householdType, "Members", out object membersObj) && membersObj is System.Collections.IEnumerable enumerable)
+                if (UnityReflectionUtility.TryReadMember(householdObj, householdType, "Members", out object membersObj) && membersObj is System.Collections.IEnumerable enumerable)
                 {
                     foreach (object member in enumerable)
                     {
@@ -502,7 +482,7 @@ namespace UnityExplorer.McpBridge.Paralives
                         {
                             ["type"] = memberType.FullName,
                             ["display"] = member.ToString(),
-                            ["guid"] = TryReadMember(member, memberType, "GUID", out object memberGuid) ? memberGuid?.ToString() : null
+                            ["guid"] = UnityReflectionUtility.TryReadMember(member, memberType, "GUID", out object memberGuid) ? memberGuid?.ToString() : null
                         });
                         if (members.Count >= 10) break;
                     }
@@ -525,9 +505,9 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetActiveCharacterInfo()
         {
             // 从 UICharacters 面板推断当前选中角色
-            GameObject uiCharacters = FindGameObjectByName("UICharacters(Clone)");
+            GameObject uiCharacters = UnityReflectionUtility.FindGameObjectByName("UICharacters(Clone)");
             if (uiCharacters == null)
-                uiCharacters = FindGameObjectByName("UICharacters");
+                uiCharacters = UnityReflectionUtility.FindGameObjectByName("UICharacters");
 
             if (uiCharacters == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UICharacters not found" };
@@ -548,7 +528,7 @@ namespace UnityExplorer.McpBridge.Paralives
                         {
                             ["available"] = true,
                             ["source"] = "UICharacters selection",
-                            ["parentPath"] = GetPath(parent.gameObject)
+                            ["parentPath"] = UnityObjectSummary.GetPath(parent.gameObject)
                         };
                     }
                 }
@@ -583,7 +563,7 @@ namespace UnityExplorer.McpBridge.Paralives
                         ["available"] = true,
                         ["guid"] = lotGuid.ToString(),
                         ["name"] = go.name,
-                        ["path"] = GetPath(go),
+                        ["path"] = UnityObjectSummary.GetPath(go),
                         ["isActive"] = go.activeInHierarchy
                     };
                 }
@@ -601,7 +581,7 @@ namespace UnityExplorer.McpBridge.Paralives
         /// </summary>
         private static object GetCharacterNeeds(Dictionary<string, object> parameters)
         {
-            string characterGuid = GetOptionalString(parameters, "characterGuid");
+            string characterGuid = McpParameters.OptionalString(parameters, "characterGuid");
             
             // 如果没有指定角色，尝试获取当前选中角色
             if (string.IsNullOrEmpty(characterGuid))
@@ -629,9 +609,9 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetNeedsFromUI()
         {
             // 查找 UIThoughts 面板
-            GameObject uiThoughts = FindGameObjectByName("UIThoughts(Clone)");
+            GameObject uiThoughts = UnityReflectionUtility.FindGameObjectByName("UIThoughts(Clone)");
             if (uiThoughts == null)
-                uiThoughts = FindGameObjectByName("UIThoughts");
+                uiThoughts = UnityReflectionUtility.FindGameObjectByName("UIThoughts");
 
             if (uiThoughts == null || !uiThoughts.activeInHierarchy)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UIThoughts not visible" };
@@ -662,7 +642,7 @@ namespace UnityExplorer.McpBridge.Paralives
                     Dictionary<string, object> needInfo = new()
                     {
                         ["name"] = child.name,
-                        ["path"] = GetPath(child.gameObject),
+                        ["path"] = UnityObjectSummary.GetPath(child.gameObject),
                         ["active"] = child.gameObject.activeInHierarchy
                     };
 
@@ -689,7 +669,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 // TranslatedText 组件包含 Key
                 if (type.Name == "TranslatedText")
                 {
-                    if (TryReadMember(component, type, "Key", out object keyValue))
+                    if (UnityReflectionUtility.TryReadMember(component, type, "Key", out object keyValue))
                     {
                         string key = keyValue?.ToString();
                         if (!string.IsNullOrEmpty(key))
@@ -704,7 +684,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 // TextMeshProUGUI 组件包含显示文本
                 if (type.Name == "TextMeshProUGUI")
                 {
-                    if (TryReadMember(component, type, "text", out object textValue))
+                    if (UnityReflectionUtility.TryReadMember(component, type, "text", out object textValue))
                     {
                         string text = textValue?.ToString();
                         if (!string.IsNullOrEmpty(text) && text.Length < 20)
@@ -717,7 +697,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 // Image 组件可能包含 FillAmount（需求值）
                 if (type.Name == "Image")
                 {
-                    if (TryReadMember(component, type, "fillAmount", out object fillValue))
+                    if (UnityReflectionUtility.TryReadMember(component, type, "fillAmount", out object fillValue))
                     {
                         float fill = Convert.ToSingle(fillValue);
                         if (fill > 0 && fill <= 1)
@@ -764,7 +744,7 @@ namespace UnityExplorer.McpBridge.Paralives
             if (needManagerType == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "NeedManager type not found" };
 
-            object needManager = GetSingletonInstance(needManagerType);
+            object needManager = UnityReflectionUtility.GetSingletonInstance(needManagerType);
             if (needManager == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "NeedManager instance not found" };
 
@@ -782,7 +762,7 @@ namespace UnityExplorer.McpBridge.Paralives
         /// </summary>
         private static object GetCharacterActions(Dictionary<string, object> parameters)
         {
-            string characterGuid = GetOptionalString(parameters, "characterGuid");
+            string characterGuid = McpParameters.OptionalString(parameters, "characterGuid");
             
             // 从 UIInteractionQueue 获取动作信息
             return GetActionsFromUI();
@@ -794,9 +774,9 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> GetActionsFromUI()
         {
             // 查找 UIInteractionQueue 面板
-            GameObject uiInteractionQueue = FindGameObjectByName("UIInteractionQueue(Clone)");
+            GameObject uiInteractionQueue = UnityReflectionUtility.FindGameObjectByName("UIInteractionQueue(Clone)");
             if (uiInteractionQueue == null)
-                uiInteractionQueue = FindGameObjectByName("UIInteractionQueue");
+                uiInteractionQueue = UnityReflectionUtility.FindGameObjectByName("UIInteractionQueue");
 
             if (uiInteractionQueue == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UIInteractionQueue not found" };
@@ -827,7 +807,7 @@ namespace UnityExplorer.McpBridge.Paralives
                     Dictionary<string, object> actionInfo = new()
                     {
                         ["name"] = child.name,
-                        ["path"] = GetPath(child.gameObject),
+                        ["path"] = UnityObjectSummary.GetPath(child.gameObject),
                         ["active"] = child.gameObject.activeInHierarchy
                     };
 
@@ -854,13 +834,13 @@ namespace UnityExplorer.McpBridge.Paralives
                 // TextMeshProUGUI 组件包含显示文本
                 if (type.Name == "TextMeshProUGUI")
                 {
-                    if (TryReadMember(component, type, "text", out object textValue))
+                    if (UnityReflectionUtility.TryReadMember(component, type, "text", out object textValue))
                     {
                         string text = textValue?.ToString();
                         if (!string.IsNullOrEmpty(text) && text.Length < 50)
                         {
                             // 检查是否是动作名称
-                            string path = GetPath(component.gameObject);
+                            string path = UnityObjectSummary.GetPath(component.gameObject);
                             if (path.Contains("LabelInteractionName") || path.Contains("LabelName"))
                             {
                                 actionInfo["interactionName"] = text;
@@ -872,7 +852,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 // TranslatedText 组件包含翻译键
                 if (type.Name == "TranslatedText")
                 {
-                    if (TryReadMember(component, type, "Key", out object keyValue))
+                    if (UnityReflectionUtility.TryReadMember(component, type, "Key", out object keyValue))
                     {
                         string key = keyValue?.ToString();
                         if (!string.IsNullOrEmpty(key) && key.Contains("Interaction"))
@@ -908,439 +888,6 @@ namespace UnityExplorer.McpBridge.Paralives
 
         #endregion
 
-        #region 日志功能
-
-        /// <summary>
-        /// 注册 Unity 日志回调
-        /// </summary>
-        private static void EnsureLogCallbackRegistered()
-        {
-            if (isLogCallbackRegistered)
-                return;
-
-            Application.logMessageReceived += OnLogMessageReceived;
-            isLogCallbackRegistered = true;
-            ExplorerCore.Log("ParalivesRuntimeService: Unity log callback registered.");
-        }
-
-        /// <summary>
-        /// Unity 日志回调处理
-        /// </summary>
-        private static void OnLogMessageReceived(string message, string stackTrace, LogType type)
-        {
-            lock (logLock)
-            {
-                string typeStr = type.ToString().ToLower();
-                
-                // 检查是否可以合并（相同消息）
-                if (logBuffer.Count > 0)
-                {
-                    LogEntry lastEntry = logBuffer[logBuffer.Count - 1];
-                    if (lastEntry.Message == message && lastEntry.Type == typeStr)
-                    {
-                        lastEntry.CollapseCount++;
-                        // 推送给订阅者
-                        PushToSubscribers(lastEntry, typeStr);
-                        return;
-                    }
-                }
-
-                LogEntry newEntry = new LogEntry
-                {
-                    Id = logBuffer.Count + 1,
-                    Type = typeStr,
-                    Message = message,
-                    StackTrace = stackTrace,
-                    Timestamp = DateTime.UtcNow,
-                    CollapseCount = 1
-                };
-                
-                logBuffer.Add(newEntry);
-
-                // 限制缓冲区大小
-                while (logBuffer.Count > MaxLogBufferSize)
-                {
-                    logBuffer.RemoveAt(0);
-                }
-
-                // 推送给订阅者
-                PushToSubscribers(newEntry, typeStr);
-            }
-        }
-
-        private static void PushToSubscribers(LogEntry entry, string typeStr)
-        {
-            foreach (LogSubscription subscription in subscriptions.Values)
-            {
-                if (subscription.Types.Contains(typeStr))
-                {
-                    subscription.Buffer.Add(entry);
-                    while (subscription.Buffer.Count > subscription.MaxSize)
-                    {
-                        subscription.Buffer.RemoveAt(0);
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// 获取游戏日志
-        /// </summary>
-        private static object GetGameLogs(Dictionary<string, object> parameters)
-        {
-            EnsureLogCallbackRegistered();
-
-            int limit = GetOptionalInt(parameters, "limit", 50);
-            string type = GetOptionalString(parameters, "type") ?? "all";
-            bool includeCollapsed = GetOptionalBool(parameters, "includeCollapsed", true);
-
-            List<object> logs = new();
-            int logCount = 0;
-            int warningCount = 0;
-            int exceptionCount = 0;
-
-            lock (logLock)
-            {
-                IEnumerable<LogEntry> filteredLogs = type == "all"
-                    ? logBuffer
-                    : logBuffer.Where(l => l.Type == type);
-
-                // .NET 3.5 兼容：手动实现 TakeLast
-                List<LogEntry> logsList = new List<LogEntry>(filteredLogs);
-                int startIndex = Math.Max(0, logsList.Count - limit);
-                for (int i = startIndex; i < logsList.Count; i++)
-                {
-                    LogEntry entry = logsList[i];
-                    logs.Add(new Dictionary<string, object>
-                    {
-                        ["id"] = entry.Id,
-                        ["type"] = entry.Type,
-                        ["message"] = entry.Message,
-                        ["timestamp"] = entry.Timestamp.ToString("O"),
-                        ["collapseCount"] = includeCollapsed ? entry.CollapseCount : 1,
-                        ["stackTrace"] = string.IsNullOrEmpty(entry.StackTrace) ? null : entry.StackTrace
-                    });
-                }
-
-                logCount = logBuffer.Count(l => l.Type == "log");
-                warningCount = logBuffer.Count(l => l.Type == "warning");
-                exceptionCount = logBuffer.Count(l => l.Type == "exception");
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["logs"] = logs,
-                ["totalCount"] = logCount + warningCount + exceptionCount,
-                ["logCount"] = logCount,
-                ["warningCount"] = warningCount,
-                ["exceptionCount"] = exceptionCount,
-                ["limit"] = limit,
-                ["type"] = type
-            };
-        }
-
-        /// <summary>
-        /// 订阅日志
-        /// </summary>
-        private static object SubscribeLogs(Dictionary<string, object> parameters)
-        {
-            EnsureLogCallbackRegistered();
-
-            int bufferSize = GetOptionalInt(parameters, "bufferSize", 100);
-            List<object> typesArray = GetOptionalArray(parameters, "types");
-            HashSet<string> types = new(StringComparer.OrdinalIgnoreCase);
-
-            if (typesArray.Count > 0)
-            {
-                foreach (object typeObj in typesArray)
-                {
-                    if (typeObj != null)
-                        types.Add(typeObj.ToString().ToLower());
-                }
-            }
-            else
-            {
-                types.Add("log");
-                types.Add("warning");
-                types.Add("exception");
-            }
-
-            string subscriptionId = $"sub_{Guid.NewGuid():N}";
-
-            lock (logLock)
-            {
-                subscriptions[subscriptionId] = new LogSubscription
-                {
-                    Id = subscriptionId,
-                    Types = types,
-                    Buffer = new List<LogEntry>(),
-                    MaxSize = bufferSize,
-                    CreatedAt = DateTime.UtcNow
-                };
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["subscriptionId"] = subscriptionId,
-                ["status"] = "active",
-                ["bufferSize"] = bufferSize,
-                ["subscribedTypes"] = types.ToList()
-            };
-        }
-
-        /// <summary>
-        /// 轮询日志
-        /// </summary>
-        private static object PollLogs(Dictionary<string, object> parameters)
-        {
-            string subscriptionId = GetRequiredString(parameters, "subscriptionId");
-            int limit = GetOptionalInt(parameters, "limit", 50);
-
-            LogSubscription subscription;
-            lock (logLock)
-            {
-                if (!subscriptions.TryGetValue(subscriptionId, out subscription))
-                {
-                    throw new McpBridgeException("not_found", $"Subscription '{subscriptionId}' not found.");
-                }
-            }
-
-            List<object> logs = new();
-            bool hasMore = false;
-
-            lock (logLock)
-            {
-                var bufferCopy = subscription.Buffer.ToList();
-                subscription.Buffer.Clear();
-
-                foreach (var entry in bufferCopy.Take(limit))
-                {
-                    logs.Add(new Dictionary<string, object>
-                    {
-                        ["id"] = entry.Id,
-                        ["type"] = entry.Type,
-                        ["message"] = entry.Message,
-                        ["timestamp"] = entry.Timestamp.ToString("O"),
-                        ["collapseCount"] = entry.CollapseCount,
-                        ["stackTrace"] = string.IsNullOrEmpty(entry.StackTrace) ? null : entry.StackTrace
-                    });
-                }
-
-                hasMore = bufferCopy.Count > limit;
-            }
-
-            return new Dictionary<string, object>
-            {
-                ["logs"] = logs,
-                ["hasMore"] = hasMore,
-                ["nextPollToken"] = DateTime.UtcNow.Ticks.ToString()
-            };
-        }
-
-        #endregion
-
-        #region 辅助方法
-
-        private static GameObject FindGameObjectByName(string name)
-        {
-            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
-            {
-                GameObject go = obj.TryCast<GameObject>();
-                if (go && go.name == name)
-                    return go;
-            }
-            return null;
-        }
-
-        private static Component FindComponentByName(GameObject go, string componentName)
-        {
-            foreach (Component component in go.GetComponents<Component>())
-            {
-                if (!component)
-                    continue;
-
-                Type type = component.GetActualType();
-                if (type.Name == componentName || type.FullName == componentName)
-                    return component;
-            }
-            return null;
-        }
-
-        private static bool ReadMemberBool(object owner, Type type, string memberName, bool defaultValue)
-        {
-            try
-            {
-                object value = ReadMemberSafe(owner, type, memberName);
-                if (value is bool boolValue)
-                    return boolValue;
-            }
-            catch
-            {
-            }
-            return defaultValue;
-        }
-
-        private static int ReadMemberInt(object owner, Type type, string memberName, int defaultValue)
-        {
-            try
-            {
-                object value = ReadMemberSafe(owner, type, memberName);
-                if (value is int intValue)
-                    return intValue;
-                if (value != null)
-                    return Convert.ToInt32(value, CultureInfo.InvariantCulture);
-            }
-            catch
-            {
-            }
-            return defaultValue;
-        }
-
-        private static string ReadMemberString(object owner, Type type, string memberName, string defaultValue)
-        {
-            try
-            {
-                object value = ReadMemberSafe(owner, type, memberName);
-                if (value != null)
-                    return value.ToString();
-            }
-            catch
-            {
-            }
-            return defaultValue;
-        }
-
-        private static object ReadMemberSafe(object owner, Type type, string memberName)
-        {
-            PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
-            if (property != null && property.GetIndexParameters().Length == 0)
-                return property.GetValue(owner, null);
-
-            FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
-            if (field != null)
-                return field.GetValue(owner);
-
-            return null;
-        }
-
-        private static object GetSingletonInstance(Type type)
-        {
-            if (type == null)
-                return null;
-
-            foreach (string memberName in new[] { "Instance", "_instance", "instance", "<Instance>k__BackingField" })
-            {
-                try
-                {
-                    object value = ReadMemberSafe(null, type, memberName);
-                    if (value != null)
-                        return value;
-                }
-                catch
-                {
-                }
-            }
-
-            try
-            {
-                object lazy = ReadMemberSafe(null, type, "lazy");
-                if (lazy != null)
-                {
-                    PropertyInfo valueProperty = lazy.GetType().GetProperty("Value", ReflectionUtility.FLAGS);
-                    object value = valueProperty?.GetValue(lazy, null);
-                    if (value != null)
-                        return value;
-                }
-            }
-            catch
-            {
-            }
-
-            return UnityEngine.Object.FindObjectOfType(type);
-        }
-
-        private static string GetRequiredString(Dictionary<string, object> parameters, string name)
-        {
-            if (!parameters.TryGetValue(name, out object value) || value == null)
-                throw new McpBridgeException("invalid_request", $"'{name}' is required.");
-            return value.ToString();
-        }
-
-        private static string GetOptionalString(Dictionary<string, object> parameters, string name)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null ? value.ToString() : null;
-        }
-
-        private static int GetOptionalInt(Dictionary<string, object> parameters, string name, int fallback)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null
-                ? Convert.ToInt32(value, CultureInfo.InvariantCulture)
-                : fallback;
-        }
-
-        private static bool GetOptionalBool(Dictionary<string, object> parameters, string name, bool fallback)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null
-                ? Convert.ToBoolean(value, CultureInfo.InvariantCulture)
-                : fallback;
-        }
-
-        private static List<object> GetOptionalArray(Dictionary<string, object> parameters, string name)
-        {
-            return parameters.TryGetValue(name, out object value) && value is List<object> list
-                ? list
-                : new List<object>();
-        }
-
-        /// <summary>
-        /// 尝试读取成员值
-        /// </summary>
-        private static bool TryReadMember(object owner, Type type, string memberName, out object value)
-        {
-            value = null;
-            if (type == null)
-                return false;
-
-            try
-            {
-                PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
-                if (property != null && property.GetIndexParameters().Length == 0)
-                {
-                    value = property.GetValue(owner, null);
-                    return true;
-                }
-
-                FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
-                if (field != null)
-                {
-                    value = field.GetValue(owner);
-                    return true;
-                }
-            }
-            catch
-            {
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        /// 获取 GameObject 路径
-        /// </summary>
-        private static string GetPath(GameObject go)
-        {
-            List<string> names = new();
-            Transform current = go.transform;
-            while (current)
-            {
-                names.Add(current.name);
-                current = current.parent;
-            }
-            names.Reverse();
-            return string.Join("/", names.ToArray());
-        }
-
-        #endregion
     }
 }
 #endif

@@ -153,7 +153,7 @@ namespace UnityExplorer.McpBridge
                     throw new McpBridgeException("invalid_request", "Request must be a JSON object.");
 
                 request.TryGetValue("id", out id);
-                action = GetRequiredString(request, "action");
+                action = McpParameters.RequiredString(request, "action");
                 Dictionary<string, object> parameters = GetParameters(request);
                 object result = McpBridgeService.Handle(action, parameters);
                 sw.Stop();
@@ -216,13 +216,6 @@ namespace UnityExplorer.McpBridge
                     ["message"] = message
                 }
             });
-        }
-
-        private static string GetRequiredString(Dictionary<string, object> request, string name)
-        {
-            if (!request.TryGetValue(name, out object value) || value == null)
-                throw new McpBridgeException("invalid_request", $"'{name}' is required.");
-            return value.ToString();
         }
 
         private static Dictionary<string, object> GetParameters(Dictionary<string, object> request)

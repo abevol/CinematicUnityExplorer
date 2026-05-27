@@ -8,7 +8,7 @@ namespace UnityExplorer.McpBridge.Paralives
     /// Compatibility facade. Public actions are retained, but the data exposed here is
     /// lightweight runtime counters unless an explicit Unity profiler action is called.
     /// </summary>
-    internal static class ParalivesProfilerService
+    internal static class ParalivesPerformanceCountersService
     {
         private const int MaxFpsSamples = 60;
         private const float FpsUpdateInterval = 0.1f;
@@ -41,6 +41,7 @@ namespace UnityExplorer.McpBridge.Paralives
             ["paralives_list_profiler_counters"] = ListProfilerCounters,
             ["paralives_get_profiler_counter_samples"] = GetProfilerCounterSamples
         };
+        public static readonly Dictionary<string, Func<Dictionary<string, object>, object>> Actions = BuildActions();
 
         public static object Handle(string action, Dictionary<string, object> parameters)
         {
@@ -48,6 +49,17 @@ namespace UnityExplorer.McpBridge.Paralives
                 return handler(parameters);
 
             throw new McpBridgeException("invalid_request", $"Unknown performance action '{action}'.");
+        }
+
+        private static Dictionary<string, Func<Dictionary<string, object>, object>> BuildActions()
+        {
+            Dictionary<string, Func<Dictionary<string, object>, object>> actions = new();
+            foreach (string action in actionHandlers.Keys)
+            {
+                string registeredAction = action;
+                actions[registeredAction] = parameters => Handle(registeredAction, parameters);
+            }
+            return actions;
         }
 
         public static void Update()

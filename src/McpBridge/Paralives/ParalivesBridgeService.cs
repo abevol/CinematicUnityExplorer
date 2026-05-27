@@ -5,7 +5,7 @@ using System.Text;
 
 namespace UnityExplorer.McpBridge.Paralives
 {
-    internal static class ParalivesBridgeService
+    internal static class ParalivesBridgeCore
     {
         internal const string ConfirmPhrase = "CONFIRM_PARALIVES_WRITE";
         private const int MaxListedFiles = 200;
@@ -27,12 +27,6 @@ namespace UnityExplorer.McpBridge.Paralives
             "SHOWANIMATIONSCONTAINERS"
         };
 
-        private static bool initialized;
-        private static string managedPath;
-        private static string rootPath;
-        private static string mainModPath;
-        private static string paralivesAssemblyPath;
-        private static ParalivesTypeIndex typeIndex;
         private static readonly Dictionary<string, Func<Dictionary<string, object>, object>> actionHandlers = new()
         {
             ["paralives_get_type_index"] = _ => GetTypeIndex(),
@@ -54,14 +48,11 @@ namespace UnityExplorer.McpBridge.Paralives
             ["paralives_list_cheat_commands"] = _ => ListCheatCommands(),
             ["paralives_run_whitelisted_cheat"] = RunWhitelistedCheat
         };
+        public static readonly Dictionary<string, Func<Dictionary<string, object>, object>> Actions = BuildActions();
 
         public static bool IsAvailable
         {
-            get
-            {
-                EnsureInitialized();
-                return File.Exists(paralivesAssemblyPath);
-            }
+            get { return ParalivesEnvironment.IsAvailable; }
         }
 
         public static object Handle(string action, Dictionary<string, object> parameters)
@@ -73,14 +64,26 @@ namespace UnityExplorer.McpBridge.Paralives
             throw new McpBridgeException("invalid_request", $"Unknown Paralives bridge action '{action}'.");
         }
 
+        private static Dictionary<string, Func<Dictionary<string, object>, object>> BuildActions()
+        {
+            Dictionary<string, Func<Dictionary<string, object>, object>> actions = new();
+            foreach (string action in actionHandlers.Keys)
+            {
+                string registeredAction = action;
+                actions[registeredAction] = parameters => Handle(registeredAction, parameters);
+            }
+            actions["paralives_read_resource"] = parameters => ReadResource(McpParameters.RequiredString(parameters, "uri"), parameters);
+            return actions;
+        }
+
         public static object ReadResource(string uri, Dictionary<string, object> parameters)
         {
             EnsureAvailable();
             return uri switch
             {
-                "paralives://types/managers" => new Dictionary<string, object> { ["types"] = typeIndex.Managers },
-                "paralives://types/settings" => new Dictionary<string, object> { ["types"] = typeIndex.Settings },
-                "paralives://types/cheats" => new Dictionary<string, object> { ["types"] = typeIndex.Cheats },
+                "paralives://types/managers" => new Dictionary<string, object> { ["types"] = ParalivesEnvironment.TypeIndex.Managers },
+                "paralives://types/settings" => new Dictionary<string, object> { ["types"] = ParalivesEnvironment.TypeIndex.Settings },
+                "paralives://types/cheats" => new Dictionary<string, object> { ["types"] = ParalivesEnvironment.TypeIndex.Cheats },
                 _ => throw new McpBridgeException("invalid_request", $"Unknown Paralives resource '{uri}'.")
             };
         }
@@ -140,9 +143,9 @@ namespace UnityExplorer.McpBridge.Paralives
             return new Dictionary<string, object>
             {
                 ["available"] = true,
-                ["rootPath"] = rootPath,
-                ["mainModPath"] = mainModPath,
-                ["index"] = typeIndex.ToSummary()
+                ["rootPath"] = ParalivesEnvironment.RootPath,
+                ["mainModPath"] = ParalivesEnvironment.MainModPath,
+                ["index"] = ParalivesEnvironment.TypeIndex.ToSummary()
             };
         }
 
@@ -171,11 +174,11 @@ namespace UnityExplorer.McpBridge.Paralives
             bool isMainMenuVisible = false;
             if (mainMenu)
             {
-                Component mainMenuComponent = FindComponentByName(mainMenu, "UIMainMenu");
+                Component mainMenuComponent = UnityReflectionUtility.FindComponentByName(mainMenu, "UIMainMenu");
                 if (mainMenuComponent != null)
                 {
                     Type type = mainMenuComponent.GetActualType();
-                    isMainMenuVisible = TryReadMember(mainMenuComponent, type, "IsVisible", out object isVisibleValue) 
+                    isMainMenuVisible = UnityReflectionUtility.TryReadMember(mainMenuComponent, type, "IsVisible", out object isVisibleValue) 
                         ? (bool)isVisibleValue 
                         : false;
                 }
@@ -186,7 +189,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["mode"] = inferredMode,
                 ["isMainMenu"] = isMainMenuVisible,
                 ["isMainMenuObjectPresent"] = mainMenu && mainMenu.activeInHierarchy,
-                ["mainMenu"] = mainMenu ? SummarizeGameObject(mainMenu) : null,
+                ["mainMenu"] = mainMenu ? UnityObjectSummary.FromGameObject(mainMenu) : null,
                 ["scenes"] = scenes,
                 ["activeUiRoots"] = GetActiveUiRoots(30),
                 ["loading"] = loadingState,
@@ -227,19 +230,6 @@ namespace UnityExplorer.McpBridge.Paralives
             return "unknown";
         }
 
-        private static Component FindComponentByName(GameObject go, string componentName)
-        {
-            foreach (Component component in go.GetComponents<Component>())
-            {
-                if (!component)
-                    continue;
-                Type type = component.GetActualType();
-                if (type.Name == componentName || type.FullName == componentName)
-                    return component;
-            }
-            return null;
-        }
-
         private static object ListMainMenuActions()
         {
             List<object> actions = new();
@@ -248,15 +238,15 @@ namespace UnityExplorer.McpBridge.Paralives
 
             return new Dictionary<string, object>
             {
-                ["mainMenu"] = FindMainMenuRoot() is GameObject menu ? SummarizeGameObject(menu) : null,
+                ["mainMenu"] = FindMainMenuRoot() is GameObject menu ? UnityObjectSummary.FromGameObject(menu) : null,
                 ["actions"] = actions
             };
         }
 
         private static object InvokeMainMenuAction(Dictionary<string, object> parameters)
         {
-            string action = GetRequiredString(parameters, "action");
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            string action = McpParameters.RequiredString(parameters, "action");
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
 
             if (!mainMenuActionButtons.TryGetValue(action, out string buttonName))
@@ -274,7 +264,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["dryRun"] = dryRun,
                 ["confirmed"] = confirmed,
                 ["buttonType"] = isStandardButton ? "Button" : isParaButton ? "ParaButton" : "NotFound",
-                ["button"] = buttonObject ? SummarizeGameObject(buttonObject) : null,
+                ["button"] = buttonObject ? UnityObjectSummary.FromGameObject(buttonObject) : null,
                 ["available"] = buttonObject && buttonObject.activeInHierarchy
             };
 
@@ -297,7 +287,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (paraButton != null)
                 {
                     Type paraButtonType = paraButton.GetActualType();
-                    bool interactable = TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
+                    bool interactable = UnityReflectionUtility.TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
                         ? (bool)interactableValue 
                         : true;
                     result["interactable"] = interactable;
@@ -325,7 +315,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (messageEntity != null)
                 {
                     Type entityType = messageEntity.GetActualType();
-                    string messageComponentName = TryReadMember(messageEntity, entityType, "MessageComponentName", out object msgValue) 
+                    string messageComponentName = UnityReflectionUtility.TryReadMember(messageEntity, entityType, "MessageComponentName", out object msgValue) 
                         ? msgValue.ToString() 
                         : "";
                     result["messageComponent"] = messageComponentName;
@@ -392,7 +382,7 @@ namespace UnityExplorer.McpBridge.Paralives
             int defaultLimit = UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit != null
                 ? UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit.Value
                 : 50;
-            int limit = Clamp(GetOptionalInt(parameters, "limit", defaultLimit), 1, MaxListedSavedGames);
+            int limit = McpParameters.Clamp(McpParameters.OptionalInt(parameters, "limit", defaultLimit), 1, MaxListedSavedGames);
             List<object> managerItems = TryListSavedGamesFromManager(limit);
             List<object> files = ListSavedGameFiles(limit);
 
@@ -409,18 +399,18 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object LoadSavedGame(Dictionary<string, object> parameters)
         {
-            string savePath = GetOptionalString(parameters, "savePath");
-            string saveName = GetOptionalString(parameters, "saveName");
-            string saveId = GetOptionalString(parameters, "saveId");
+            string savePath = McpParameters.OptionalString(parameters, "savePath");
+            string saveName = McpParameters.OptionalString(parameters, "saveName");
+            string saveId = McpParameters.OptionalString(parameters, "saveId");
             string saveArgument = savePath ?? saveName ?? saveId;
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
 
             if (string.IsNullOrEmpty(saveArgument))
                 throw new McpBridgeException("invalid_request", "One of 'savePath', 'saveName', or 'saveId' is required.");
 
             Type managerType = ReflectionUtility.GetTypeByName("SavedGameManager");
-            object manager = GetSingletonInstance(managerType);
+            object manager = UnityReflectionUtility.GetSingletonInstance(managerType);
             List<object> candidateMethods = ListLoadSavedGameMethods(managerType, saveArgument);
 
             Dictionary<string, object> result = new()
@@ -457,7 +447,7 @@ namespace UnityExplorer.McpBridge.Paralives
         private static object ListContentMods()
         {
             List<object> mods = new();
-            foreach (string metaPath in Directory.GetFiles(rootPath, "*.mod.meta", SearchOption.AllDirectories))
+            foreach (string metaPath in Directory.GetFiles(ParalivesEnvironment.RootPath, "*.mod.meta", SearchOption.AllDirectories))
             {
                 string modPath = Path.GetDirectoryName(metaPath);
                 Dictionary<string, string> meta = ReadMetaFile(metaPath);
@@ -469,7 +459,7 @@ namespace UnityExplorer.McpBridge.Paralives
                     ["guid"] = GetMetaValue(meta, "GUID"),
                     ["modName"] = GetMetaValue(meta, "ModName"),
                     ["enabled"] = GetMetaValue(meta, "Enabled"),
-                    ["isMainMod"] = string.Equals(modPath, mainModPath, StringComparison.OrdinalIgnoreCase)
+                    ["isMainMod"] = string.Equals(modPath, ParalivesEnvironment.MainModPath, StringComparison.OrdinalIgnoreCase)
                 });
             }
             return new Dictionary<string, object> { ["mods"] = mods };
@@ -477,8 +467,8 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object InspectContentMod(Dictionary<string, object> parameters)
         {
-            string modPath = ResolveModPath(GetRequiredString(parameters, "modPath"));
-            int limit = Clamp(GetOptionalInt(parameters, "limit", 100), 1, MaxListedFiles);
+            string modPath = ResolveModPath(McpParameters.RequiredString(parameters, "modPath"));
+            int limit = McpParameters.Clamp(McpParameters.OptionalInt(parameters, "limit", 100), 1, MaxListedFiles);
             List<object> files = new();
 
             foreach (string file in Directory.GetFiles(modPath, "*", SearchOption.AllDirectories).Take(limit))
@@ -509,10 +499,10 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object CreateContentMod(Dictionary<string, object> parameters)
         {
-            string modName = SanitizeModName(GetRequiredString(parameters, "modName"));
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            string modName = SanitizeModName(McpParameters.RequiredString(parameters, "modName"));
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
-            string targetPath = Path.Combine(rootPath, modName + ".mod");
+            string targetPath = Path.Combine(ParalivesEnvironment.RootPath, modName + ".mod");
 
             Dictionary<string, object> result = new()
             {
@@ -547,10 +537,10 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object ImportAssetToMod(Dictionary<string, object> parameters)
         {
-            string sourcePath = Path.GetFullPath(GetRequiredString(parameters, "sourcePath"));
-            string modPath = ResolveModPath(GetRequiredString(parameters, "modPath"));
-            string subFolder = NormalizeRelativePath(GetOptionalString(parameters, "subFolder") ?? "");
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            string sourcePath = Path.GetFullPath(McpParameters.RequiredString(parameters, "sourcePath"));
+            string modPath = ResolveModPath(McpParameters.RequiredString(parameters, "modPath"));
+            string subFolder = NormalizeRelativePath(McpParameters.OptionalString(parameters, "subFolder") ?? "");
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
 
             if (!File.Exists(sourcePath))
@@ -587,11 +577,11 @@ namespace UnityExplorer.McpBridge.Paralives
         private static object ListManagerCollection(string managerTypeName, string memberName)
         {
             Type managerType = ReflectionUtility.GetTypeByName(managerTypeName);
-            object manager = GetSingletonInstance(managerType);
+            object manager = UnityReflectionUtility.GetSingletonInstance(managerType);
             if (manager == null)
                 return new Dictionary<string, object> { ["available"] = false, ["reason"] = $"{managerTypeName}.Instance is not available." };
 
-            object collection = ReadMember(manager, managerType, memberName);
+            object collection = UnityReflectionUtility.ReadMember(manager, managerType, memberName);
             List<object> items = new();
             if (collection is System.Collections.IEnumerable enumerable)
             {
@@ -599,7 +589,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 {
                     if (item == null)
                         continue;
-                    items.Add(SummarizeDomainObject(item));
+                    items.Add(UnityObjectSummary.DomainObject(item));
                     if (items.Count >= 200)
                         break;
                 }
@@ -616,7 +606,7 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object ListCheatCommands()
         {
-            List<object> methods = typeIndex.Cheats
+            List<object> methods = ParalivesEnvironment.TypeIndex.Cheats
                 .Where(type => string.Equals(type["name"]?.ToString(), "ProcessCheatCommandEvent", StringComparison.Ordinal))
                 .SelectMany(type => type["methods"] as List<object> ?? new List<object>())
                 .Where(method => method is Dictionary<string, object> dict && allowedCheats.Contains(dict["name"]?.ToString() ?? ""))
@@ -631,15 +621,15 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object SetNeedValue(Dictionary<string, object> parameters)
         {
-            ulong characterGuid = GetRequiredUInt64(parameters, "characterGuid");
-            ulong needGuid = GetRequiredUInt64(parameters, "needGuid");
-            float value = Convert.ToSingle(GetRequiredString(parameters, "value"), CultureInfo.InvariantCulture);
-            bool force = GetOptionalBool(parameters, "force", true);
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            ulong characterGuid = McpParameters.RequiredUInt64(parameters, "characterGuid");
+            ulong needGuid = McpParameters.RequiredUInt64(parameters, "needGuid");
+            float value = Convert.ToSingle(McpParameters.RequiredString(parameters, "value"), CultureInfo.InvariantCulture);
+            bool force = McpParameters.OptionalBool(parameters, "force", true);
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
 
             Type characterManagerType = ReflectionUtility.GetTypeByName("CharacterManager");
-            object characterManager = GetSingletonInstance(characterManagerType);
+            object characterManager = UnityReflectionUtility.GetSingletonInstance(characterManagerType);
             if (characterManager == null)
                 throw new McpBridgeException("not_available", "CharacterManager.Instance is not available.");
 
@@ -652,7 +642,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 throw new McpBridgeException("validation_failed", $"Character {characterGuid} was not found.");
 
             Type needManagerType = ReflectionUtility.GetTypeByName("NeedManager");
-            object needManager = GetSingletonInstance(needManagerType);
+            object needManager = UnityReflectionUtility.GetSingletonInstance(needManagerType);
             if (needManager == null)
                 throw new McpBridgeException("not_available", "NeedManager singleton is not available.");
 
@@ -687,8 +677,8 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static object RunWhitelistedCheat(Dictionary<string, object> parameters)
         {
-            string command = GetRequiredString(parameters, "command").Trim();
-            bool dryRun = GetOptionalBool(parameters, "dryRun", true);
+            string command = McpParameters.RequiredString(parameters, "command").Trim();
+            bool dryRun = McpParameters.OptionalBool(parameters, "dryRun", true);
             bool confirmed = IsConfirmed(parameters);
             string commandName = command.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "";
 
@@ -715,8 +705,8 @@ namespace UnityExplorer.McpBridge.Paralives
                 throw new McpBridgeException("execution_failed", "Could not find Paralives cheat event types.");
 
             object message = Activator.CreateInstance(messageType);
-            WriteMember(message, messageType, "CommandID", UnityEngine.Random.Range(1, int.MaxValue));
-            WriteMember(message, messageType, "Command", command);
+            UnityReflectionUtility.WriteMember(message, messageType, "CommandID", UnityEngine.Random.Range(1, int.MaxValue));
+            UnityReflectionUtility.WriteMember(message, messageType, "Command", command);
 
             MethodInfo broadcast = eventSystemType.GetMethods(ReflectionUtility.FLAGS)
                 .FirstOrDefault(method => method.Name == "Broadcast" && method.GetParameters().Length == 1);
@@ -730,33 +720,7 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static void EnsureAvailable()
         {
-            EnsureInitialized();
-            if (!IsAvailable)
-                throw new McpBridgeException("not_available", "Paralives.dll was not found; ParalivesBridge is disabled.");
-        }
-
-        private static void EnsureInitialized()
-        {
-            if (initialized)
-                return;
-
-            initialized = true;
-            managedPath = Path.Combine(Application.dataPath, "Managed");
-            rootPath = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-            mainModPath = Path.Combine(rootPath, "Main.mod");
-            paralivesAssemblyPath = Path.Combine(managedPath, "Paralives.dll");
-
-            try
-            {
-                typeIndex = ParalivesTypeIndex.Build(paralivesAssemblyPath);
-                if (File.Exists(paralivesAssemblyPath))
-                    ExplorerCore.Log($"ParalivesBridge indexed {typeIndex.Managers.Count} managers, {typeIndex.Settings.Count} settings, {typeIndex.Cheats.Count} cheat types.");
-            }
-            catch (Exception ex)
-            {
-                typeIndex = new ParalivesTypeIndex();
-                ExplorerCore.LogWarning($"ParalivesBridge failed to index Paralives.dll: {ex}");
-            }
+            ParalivesEnvironment.EnsureAvailable();
         }
 
         private static GameObject FindMainMenuRoot()
@@ -848,7 +812,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (paraButton != null)
                 {
                     Type paraButtonType = paraButton.GetActualType();
-                    interactable = TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
+                    interactable = UnityReflectionUtility.TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
                         ? (bool)interactableValue 
                         : true;
                 }
@@ -861,7 +825,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["buttonType"] = buttonType,
                 ["available"] = available,
                 ["interactable"] = interactable,
-                ["button"] = buttonObject ? SummarizeGameObject(buttonObject) : null
+                ["button"] = buttonObject ? UnityObjectSummary.FromGameObject(buttonObject) : null
             };
         }
 
@@ -901,15 +865,15 @@ namespace UnityExplorer.McpBridge.Paralives
         private static Dictionary<string, object> SummarizeManager(string managerTypeName, string[] memberNames)
         {
             Type type = ReflectionUtility.GetTypeByName(managerTypeName);
-            object manager = GetSingletonInstance(type);
+            object manager = UnityReflectionUtility.GetSingletonInstance(type);
             Dictionary<string, object> members = new();
 
             if (type != null && manager != null)
             {
                 foreach (string memberName in memberNames)
                 {
-                    if (TryReadMember(manager, type, memberName, out object value))
-                        members[memberName] = FormatRuntimeValue(value);
+                    if (UnityReflectionUtility.TryReadMember(manager, type, memberName, out object value))
+                        members[memberName] = UnityObjectSummary.RuntimeValue(value);
                 }
             }
 
@@ -933,7 +897,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (!go || !go.activeInHierarchy)
                     continue;
 
-                string path = GetPath(go);
+                string path = UnityObjectSummary.GetPath(go);
                 bool looksLikeUi = go.name.StartsWith("UI", StringComparison.OrdinalIgnoreCase)
                     || go.name.IndexOf("Menu", StringComparison.OrdinalIgnoreCase) >= 0
                     || path.IndexOf("/UI", StringComparison.OrdinalIgnoreCase) >= 0;
@@ -941,7 +905,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (!looksLikeUi || !seen.Add(go.GetInstanceID()))
                     continue;
 
-                results.Add(SummarizeGameObject(go));
+                results.Add(UnityObjectSummary.FromGameObject(go));
                 if (results.Count >= limit)
                     break;
             }
@@ -953,13 +917,13 @@ namespace UnityExplorer.McpBridge.Paralives
         {
             List<object> items = new();
             Type managerType = ReflectionUtility.GetTypeByName("SavedGameManager");
-            object manager = GetSingletonInstance(managerType);
+            object manager = UnityReflectionUtility.GetSingletonInstance(managerType);
             if (managerType == null || manager == null)
                 return items;
 
             foreach (string memberName in new[] { "SavedGames", "AllSavedGames", "SaveGames", "Saves", "SavedGameList", "SaveList", "SavedGameMetas", "savedGames" })
             {
-                if (!TryReadMember(manager, managerType, memberName, out object collection) || collection == null)
+                if (!UnityReflectionUtility.TryReadMember(manager, managerType, memberName, out object collection) || collection == null)
                     continue;
 
                 if (collection is System.Collections.IEnumerable enumerable && !(collection is string))
@@ -969,7 +933,7 @@ namespace UnityExplorer.McpBridge.Paralives
                         if (item == null)
                             continue;
 
-                        items.Add(SummarizeDomainObject(item));
+                        items.Add(UnityObjectSummary.DomainObject(item));
                         if (items.Count >= limit)
                             return items;
                     }
@@ -988,8 +952,8 @@ namespace UnityExplorer.McpBridge.Paralives
             AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "SaveGames"));
             AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "SavedGames"));
             AddExistingDirectory(candidateDirectories, Path.Combine(Application.persistentDataPath, "Saved Games"));
-            AddExistingDirectory(candidateDirectories, Path.Combine(rootPath, "Saves"));
-            AddExistingDirectory(candidateDirectories, Path.Combine(rootPath, "SaveGames"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(ParalivesEnvironment.RootPath, "Saves"));
+            AddExistingDirectory(candidateDirectories, Path.Combine(ParalivesEnvironment.RootPath, "SaveGames"));
 
             foreach (string directory in candidateDirectories.ToList())
             {
@@ -1159,196 +1123,6 @@ namespace UnityExplorer.McpBridge.Paralives
             }
         }
 
-        private static bool TryReadMember(object owner, Type type, string memberName, out object value)
-        {
-            value = null;
-            if (type == null)
-                return false;
-
-            try
-            {
-                PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
-                if (property != null && property.GetIndexParameters().Length == 0)
-                {
-                    value = property.GetValue(owner, null);
-                    return true;
-                }
-
-                FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
-                if (field != null)
-                {
-                    value = field.GetValue(owner);
-                    return true;
-                }
-            }
-            catch
-            {
-            }
-
-            return false;
-        }
-
-        private static Dictionary<string, object> SummarizeGameObject(GameObject go)
-        {
-            UnityEngine.SceneManagement.Scene scene = go.scene;
-            return new Dictionary<string, object>
-            {
-                ["instanceId"] = go.GetInstanceID(),
-                ["name"] = go.name,
-                ["path"] = GetPath(go),
-                ["tag"] = GetTag(go),
-                ["activeSelf"] = go.activeSelf,
-                ["activeInHierarchy"] = go.activeInHierarchy,
-                ["sceneName"] = scene.IsValid() ? scene.name : "",
-                ["childCount"] = go.transform.childCount
-            };
-        }
-
-        private static string GetPath(GameObject go)
-        {
-            List<string> names = new();
-            Transform current = go.transform;
-            while (current)
-            {
-                names.Add(current.name);
-                current = current.parent;
-            }
-            names.Reverse();
-            return string.Join("/", names.ToArray());
-        }
-
-        private static string GetTag(GameObject go)
-        {
-            try
-            {
-                return go.tag;
-            }
-            catch
-            {
-                return "";
-            }
-        }
-
-        private static object FormatRuntimeValue(object value)
-        {
-            if (value == null)
-                return null;
-
-            Type type = value.GetType();
-            if (type.IsPrimitive || value is string || value is decimal || type.IsEnum)
-                return value;
-
-            if (value is UnityEngine.Object unityObject)
-            {
-                if (!unityObject)
-                    return null;
-
-                GameObject gameObject = unityObject as GameObject;
-                if (!gameObject)
-                {
-                    Component component = unityObject.TryCast<Component>();
-                    gameObject = component ? component.gameObject : null;
-                }
-
-                return gameObject ? SummarizeGameObject(gameObject) : unityObject.ToString();
-            }
-
-            return value.ToString();
-        }
-
-        private static Dictionary<string, object> SummarizeDomainObject(object obj)
-        {
-            Type type = obj.GetActualType();
-            Dictionary<string, object> summary = new()
-            {
-                ["type"] = type.FullName,
-                ["display"] = obj.ToString()
-            };
-
-            foreach (string memberName in new[] { "GUID", "guid", "Name", "name", "FirstName", "LastName", "ModName", "Enabled" })
-            {
-                try
-                {
-                    object value = ReadMember(obj, type, memberName);
-                    if (value != null)
-                        summary[memberName] = value.ToString();
-                }
-                catch
-                {
-                }
-            }
-
-            return summary;
-        }
-
-        private static object GetSingletonInstance(Type type)
-        {
-            if (type == null)
-                return null;
-
-            foreach (string memberName in new[] { "Instance", "_instance", "instance", "<Instance>k__BackingField" })
-            {
-                try
-                {
-                    object value = ReadMember(null, type, memberName);
-                    if (value != null)
-                        return value;
-                }
-                catch
-                {
-                }
-            }
-
-            try
-            {
-                object lazy = ReadMember(null, type, "lazy");
-                if (lazy != null)
-                {
-                    PropertyInfo valueProperty = lazy.GetType().GetProperty("Value", ReflectionUtility.FLAGS);
-                    object value = valueProperty?.GetValue(lazy, null);
-                    if (value != null)
-                        return value;
-                }
-            }
-            catch
-            {
-            }
-
-            return UnityEngine.Object.FindObjectOfType(type);
-        }
-
-        private static object ReadMember(object owner, Type type, string memberName)
-        {
-            PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
-            if (property != null)
-                return property.GetValue(owner, null);
-
-            FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
-            if (field != null)
-                return field.GetValue(owner);
-
-            throw new McpBridgeException("member_not_found", $"{type.FullName}.{memberName} was not found.");
-        }
-
-        private static void WriteMember(object owner, Type type, string memberName, object value)
-        {
-            PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
-            if (property != null)
-            {
-                property.SetValue(owner, value, null);
-                return;
-            }
-
-            FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
-            if (field != null)
-            {
-                field.SetValue(owner, value);
-                return;
-            }
-
-            throw new McpBridgeException("member_not_found", $"{type.FullName}.{memberName} was not found.");
-        }
-
         private static Dictionary<string, string> ReadMetaFile(string path)
         {
             Dictionary<string, string> meta = new(StringComparer.OrdinalIgnoreCase);
@@ -1403,10 +1177,10 @@ namespace UnityExplorer.McpBridge.Paralives
         {
             string candidate = modPathOrName;
             if (!Path.IsPathRooted(candidate))
-                candidate = Path.Combine(rootPath, candidate.EndsWith(".mod", StringComparison.OrdinalIgnoreCase) ? candidate : candidate + ".mod");
+                candidate = Path.Combine(ParalivesEnvironment.RootPath, candidate.EndsWith(".mod", StringComparison.OrdinalIgnoreCase) ? candidate : candidate + ".mod");
 
             candidate = Path.GetFullPath(candidate);
-            if (!candidate.StartsWith(rootPath, StringComparison.OrdinalIgnoreCase))
+            if (!candidate.StartsWith(ParalivesEnvironment.RootPath, StringComparison.OrdinalIgnoreCase))
                 throw new McpBridgeException("validation_failed", "Mod path must be inside the Paralives game directory.");
             if (!Directory.Exists(candidate))
                 throw new McpBridgeException("validation_failed", $"Mod path does not exist: {candidate}");
@@ -1457,7 +1231,7 @@ namespace UnityExplorer.McpBridge.Paralives
 
         private static bool IsConfirmed(Dictionary<string, object> parameters)
         {
-            return string.Equals(GetOptionalString(parameters, "confirm"), ConfirmPhrase, StringComparison.Ordinal);
+            return string.Equals(McpParameters.OptionalString(parameters, "confirm"), ConfirmPhrase, StringComparison.Ordinal);
         }
 
         private static string GetMetaValue(Dictionary<string, string> meta, string key)
@@ -1465,41 +1239,6 @@ namespace UnityExplorer.McpBridge.Paralives
             return meta.TryGetValue(key, out string value) ? value : null;
         }
 
-        private static string GetRequiredString(Dictionary<string, object> parameters, string name)
-        {
-            if (!parameters.TryGetValue(name, out object value) || value == null)
-                throw new McpBridgeException("invalid_request", $"'{name}' is required.");
-            return value.ToString();
-        }
-
-        private static ulong GetRequiredUInt64(Dictionary<string, object> parameters, string name)
-        {
-            return ulong.Parse(GetRequiredString(parameters, name), CultureInfo.InvariantCulture);
-        }
-
-        private static string GetOptionalString(Dictionary<string, object> parameters, string name)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null ? value.ToString() : null;
-        }
-
-        private static int GetOptionalInt(Dictionary<string, object> parameters, string name, int fallback)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null
-                ? Convert.ToInt32(value, CultureInfo.InvariantCulture)
-                : fallback;
-        }
-
-        private static bool GetOptionalBool(Dictionary<string, object> parameters, string name, bool fallback)
-        {
-            return parameters.TryGetValue(name, out object value) && value != null
-                ? Convert.ToBoolean(value, CultureInfo.InvariantCulture)
-                : fallback;
-        }
-
-        private static int Clamp(int value, int min, int max)
-        {
-            return Math.Max(min, Math.Min(max, value));
-        }
     }
 }
 #endif

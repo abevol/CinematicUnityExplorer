@@ -39,6 +39,76 @@ namespace UnityExplorer.McpBridge
             throw new McpBridgeException("member_not_found", $"{type.FullName}.{memberName} was not found.");
         }
 
+        public static object ReadMemberSafe(object owner, Type type, string memberName)
+        {
+            return TryReadMember(owner, type, memberName, out object value) ? value : null;
+        }
+
+        public static bool ReadMemberBool(object owner, Type type, string memberName, bool fallback)
+        {
+            if (!TryReadMember(owner, type, memberName, out object value) || value == null)
+                return fallback;
+
+            try
+            {
+                return Convert.ToBoolean(value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
+
+        public static int ReadMemberInt(object owner, Type type, string memberName, int fallback)
+        {
+            if (!TryReadMember(owner, type, memberName, out object value) || value == null)
+                return fallback;
+
+            try
+            {
+                return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
+
+        public static string ReadMemberString(object owner, Type type, string memberName, string fallback)
+        {
+            return TryReadMember(owner, type, memberName, out object value) && value != null
+                ? value.ToString()
+                : fallback;
+        }
+
+        public static void WriteMember(object owner, Type type, string memberName, object value)
+        {
+            if (type == null)
+                throw new McpBridgeException("member_not_found", $"Type was null while writing {memberName}.");
+
+            PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
+            if (property != null)
+            {
+                if (!property.CanWrite || property.GetIndexParameters().Length != 0)
+                    throw new McpBridgeException("validation_failed", $"Property '{memberName}' is not writable.");
+
+                property.SetValue(owner, value, null);
+                return;
+            }
+
+            FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
+            if (field != null)
+            {
+                if (field.IsLiteral || field.IsInitOnly)
+                    throw new McpBridgeException("validation_failed", $"Field '{memberName}' is read-only.");
+
+                field.SetValue(owner, value);
+                return;
+            }
+
+            throw new McpBridgeException("member_not_found", $"{type.FullName}.{memberName} was not found.");
+        }
+
         public static object GetSingletonInstance(Type type)
         {
             if (type == null)
