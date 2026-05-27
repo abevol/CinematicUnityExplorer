@@ -85,7 +85,8 @@ namespace UnityExplorer
 
         internal static void Update()
         {
-            // check master toggle
+ExplorerKeybind.Update();
+
             if (IInputManager.GetKeyDown(ConfigManager.Master_Toggle.Value))
             {
                 UIManager.ShowMenu = !UIManager.ShowMenu;

@@ -29,6 +29,11 @@ namespace UnityExplorer.Config
         public static ConfigElement<UIManager.VerticalAnchor> Main_Navbar_Anchor;
         public static ConfigElement<KeyCode> World_MouseInspect_Keybind;
         public static ConfigElement<KeyCode> UI_MouseInspect_Keybind;
+        public static ConfigElement<KeyCode> TimeScale_Toggle_Keybind;
+        public static ConfigElement<KeyCode> TimeScale_Zero_Keybind;
+        public static ConfigElement<KeyCode> TimeScale_Normal_Keybind;
+        public static ConfigElement<KeyCode> TimeScale_Half_Keybind;
+        public static ConfigElement<KeyCode> TimeScale_Double_Keybind;
         public static ConfigElement<string> CSConsole_Assembly_Blacklist;
         public static ConfigElement<string> Reflection_Signature_Blacklist;
         public static ConfigElement<bool> Reflection_Hide_NativeInfoPtrs;
@@ -257,6 +262,31 @@ DetectDefaultLanguage(),
                 "Optional keybind to begin a UI-mode Mouse Inspect.",
                 KeyCode.None,
                 category: "Inspector");
+
+            TimeScale_Toggle_Keybind = new("TimeScale Toggle Keybind",
+                "Optional keybind to lock or unlock Time.timeScale.",
+                KeyCode.None,
+                category: "UI");
+
+            TimeScale_Zero_Keybind = new("TimeScale Zero Keybind",
+                "Optional keybind to lock Time.timeScale to 0.0.",
+                KeyCode.None,
+                category: "UI");
+
+            TimeScale_Normal_Keybind = new("TimeScale Normal Keybind",
+                "Optional keybind to lock Time.timeScale to 1.0.",
+                KeyCode.None,
+                category: "UI");
+
+            TimeScale_Half_Keybind = new("TimeScale Half Keybind",
+                "Optional keybind to halve and lock the current Time.timeScale target.",
+                KeyCode.None,
+                category: "UI");
+
+            TimeScale_Double_Keybind = new("TimeScale Double Keybind",
+                "Optional keybind to double and lock the current Time.timeScale target.",
+                KeyCode.None,
+                category: "UI");
 
             CSConsole_Assembly_Blacklist = new("CSharp Console Assembly Blacklist",
                 "Use this to blacklist Assembly names from being referenced by the C# Console. Requires a Reset of the C# Console.\n" +

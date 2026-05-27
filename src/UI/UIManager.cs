@@ -54,7 +54,6 @@ namespace UnityExplorer.UI
         private static readonly Vector2 NAVBAR_DIMENSIONS = new(1610f, 35f);
 
         private static ButtonRef closeBtn;
-        private static TimeScaleWidget timeScaleWidget;
 
         private static int lastScreenWidth;
         private static int lastScreenHeight;
@@ -148,7 +147,7 @@ namespace UnityExplorer.UI
                 UniverseLib.Config.ConfigManager.Force_Unlock_Mouse = !UniverseLib.Config.ConfigManager.Force_Unlock_Mouse;
 
             // update the timescale value
-            timeScaleWidget.Update();
+            TimeScaleWidget.Instance?.Update();
 
             // check screen dimension change
             Display display = DisplayManager.ActiveDisplay;
@@ -261,7 +260,7 @@ namespace UnityExplorer.UI
             UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(NavbarTabButtonHolder, false, true, true, true, 4, 2, 2, 2, 2);
 
             // Time scale widget
-            timeScaleWidget = new(navbarPanel);
+            TimeScaleWidget.SetUp(navbarPanel);
 
             //spacer
             GameObject spacer = UIFactory.CreateUIObject("Spacer", navbarPanel);
