@@ -246,6 +246,11 @@ const toolDefinitions: ToolDefinition[] = [
   tool("UnityExplorer:get_game_logs", "get_game_logs", "Read game console logs from Unity log callback. Risk: read-only diagnostics.", getGameLogsSchema),
   tool("UnityExplorer:subscribe_logs", "subscribe_logs", "Subscribe to Unity log callback for real-time logs. Risk: read-only diagnostics.", subscribeLogsSchema),
   tool("UnityExplorer:poll_logs", "poll_logs", "Poll a subscribed log stream. Risk: read-only diagnostics.", pollLogsSchema),
+  // 游戏数据工具
+  tool("Paralives:get_skill_data", "paralives_get_skill_data", "Read skill data from UISkillsInProgressAndUpcomingEvents. Returns skill names, levels, and progress. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_emotion_data", "paralives_get_emotion_data", "Read emotion data from UIThoughts/Emotions panel. Returns emotion names, types, and values. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_memory_data", "paralives_get_memory_data", "Read memory data from MemoryManager. Returns character memories and experiences. Risk: read-only diagnostics.", emptySchema),
+  tool("Paralives:get_goals_data", "paralives_get_goals_data", "Read goals/wants data from GoalsManager. Returns active goals and their progress. Risk: read-only diagnostics.", emptySchema),
 ];
 
 const toolActionByName = new Map(toolDefinitions.map((definition) => [definition.name, definition.action]));

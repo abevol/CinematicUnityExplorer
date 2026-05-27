@@ -25,6 +25,7 @@ namespace UnityExplorer.McpBridge
             Register(registry, Paralives.ParalivesCharacterRuntimeService.Actions);
             Register(registry, Paralives.ParalivesLogService.Actions);
             Register(registry, Paralives.ParalivesPerformanceCountersService.Actions);
+            Register(registry, Paralives.ParalivesGameDataService.Actions);
 #endif
             return registry;
         }
