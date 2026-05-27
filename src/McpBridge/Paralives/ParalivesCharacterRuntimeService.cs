@@ -94,6 +94,12 @@ namespace UnityExplorer.McpBridge.Paralives
 
                 Type type = component.GetActualType();
 
+                if (type.Name == "TooltipOpenerSimple" || type.Name == "TooltipOpenerNumericBreakdown")
+                    TryApplyTooltipText(component, type, needInfo);
+
+                if (type.Name == "UINeedsItem")
+                    TryExtractNeedData(component, type, needInfo);
+
                 if (type.Name == "TranslatedText")
                 {
                     if (UnityReflectionUtility.TryReadMember(component, type, "Key", out object keyValue))
@@ -102,7 +108,8 @@ namespace UnityExplorer.McpBridge.Paralives
                         if (!string.IsNullOrEmpty(key))
                         {
                             needInfo["translationKey"] = key;
-                            needInfo["needType"] = InferNeedTypeFromKey(key);
+                            if (!needInfo.ContainsKey("needType"))
+                                needInfo["needType"] = InferNeedTypeFromKey(key);
                         }
                     }
                 }
@@ -132,19 +139,81 @@ namespace UnityExplorer.McpBridge.Paralives
             }
         }
 
+        private static void TryApplyTooltipText(Component component, Type type, Dictionary<string, object> needInfo)
+        {
+            if (!UnityReflectionUtility.TryReadMember(component, type, "TextToShow", out object textValue))
+                return;
+
+            string tooltipText = textValue?.ToString();
+            if (string.IsNullOrEmpty(tooltipText))
+                return;
+
+            string title = ExtractTooltipTitle(tooltipText);
+            if (string.IsNullOrEmpty(title))
+                return;
+
+            needInfo["needName"] = title;
+            needInfo["displayText"] = title;
+            needInfo["tooltipSource"] = type.Name;
+            needInfo["tooltipText"] = tooltipText.Length > 300 ? tooltipText.Substring(0, 300) : tooltipText;
+            needInfo["needType"] = InferNeedTypeFromKey(title);
+        }
+
+        private static void TryExtractNeedData(Component component, Type type, Dictionary<string, object> needInfo)
+        {
+            if (UnityReflectionUtility.TryReadMember(component, type, "_max", out object maxValue) && maxValue != null)
+                needInfo["maxValue"] = Convert.ToSingle(maxValue);
+        }
+
+        private static string ExtractTooltipTitle(string tooltipText)
+        {
+            string plainText = StripRichTextTags(tooltipText).Trim();
+            if (string.IsNullOrEmpty(plainText))
+                return null;
+
+            int end = plainText.IndexOfAny(new[] { '\r', '\n', '.', '。', ':', '：' });
+            string title = end > 0 ? plainText.Substring(0, end) : plainText;
+            title = title.Trim();
+            return title.Length > 40 ? title.Substring(0, 40).Trim() : title;
+        }
+
+        private static string StripRichTextTags(string text)
+        {
+            System.Text.StringBuilder result = new();
+            bool inTag = false;
+            foreach (char ch in text)
+            {
+                if (ch == '<')
+                {
+                    inTag = true;
+                    continue;
+                }
+
+                if (ch == '>')
+                {
+                    inTag = false;
+                    continue;
+                }
+
+                if (!inTag)
+                    result.Append(ch);
+            }
+            return result.ToString();
+        }
+
         private static string InferNeedTypeFromKey(string key)
         {
-            if (key.Contains("Hunger") || key.Contains("Food"))
+            if (key.Contains("Hunger") || key.Contains("Food") || key.Contains("饥饿"))
                 return "hunger";
-            if (key.Contains("Hygiene") || key.Contains("Clean"))
+            if (key.Contains("Hygiene") || key.Contains("Clean") || key.Contains("卫生") || key.Contains("清洁"))
                 return "hygiene";
-            if (key.Contains("Energy") || key.Contains("Sleep") || key.Contains("Tired"))
+            if (key.Contains("Energy") || key.Contains("Sleep") || key.Contains("Tired") || key.Contains("精力") || key.Contains("体力") || key.Contains("活力"))
                 return "energy";
-            if (key.Contains("Fun") || key.Contains("Entertainment"))
+            if (key.Contains("Fun") || key.Contains("Entertainment") || key.Contains("娱乐") || key.Contains("乐趣"))
                 return "fun";
-            if (key.Contains("Social"))
+            if (key.Contains("Social") || key.Contains("社交"))
                 return "social";
-            if (key.Contains("Bladder") || key.Contains("Toilet"))
+            if (key.Contains("Bladder") || key.Contains("Toilet") || key.Contains("如厕") || key.Contains("厕所") || key.Contains("膀胱"))
                 return "bladder";
             if (key.Contains("Happy") || key.Contains("Emotion"))
                 return "emotion";
