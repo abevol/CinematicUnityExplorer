@@ -70,7 +70,10 @@ namespace UnityExplorer.McpBridge.Paralives
         {
             ParalivesUiQuery.VisitDescendants(parent, child =>
             {
-                if (child.name.Contains("NeedItem") || child.name.Contains("UINeed") || child.name.Contains("EmotionsItem"))
+                if (!child.gameObject.activeInHierarchy)
+                    return;
+
+                if (child.name.Contains("NeedItem"))
                 {
                     Dictionary<string, object> needInfo = new()
                     {
@@ -132,8 +135,10 @@ namespace UnityExplorer.McpBridge.Paralives
                     if (UnityReflectionUtility.TryReadMember(component, type, "text", out object textValue))
                     {
                         string text = textValue?.ToString();
-                        if (!string.IsNullOrEmpty(text) && text.Length < 20)
+                        if (!string.IsNullOrEmpty(text) && text.Length < 20 && text != "!" && !needInfo.ContainsKey("needName"))
                             needInfo["displayText"] = text;
+                        else if (!string.IsNullOrEmpty(text) && text == "!")
+                            needInfo["ignoredIndicator"] = text;
                     }
                 }
 
@@ -296,8 +301,12 @@ namespace UnityExplorer.McpBridge.Paralives
                 return "hunger";
             if (key.Contains("Hygiene") || key.Contains("Clean") || key.Contains("卫生") || key.Contains("清洁"))
                 return "hygiene";
-            if (key.Contains("Energy") || key.Contains("Sleep") || key.Contains("Tired") || key.Contains("精力") || key.Contains("体力") || key.Contains("活力"))
+            if (key.Contains("Energy") || key.Contains("Sleep") || key.Contains("Tired") || key.Contains("精力") || key.Contains("体力") || key.Contains("活力") || key.Contains("睡眠"))
                 return "energy";
+            if (key.Contains("Exercise") || key.Contains("Active") || key.Contains("运动"))
+                return "exercise";
+            if (key.Contains("Alone") || key.Contains("Solitude") || key.Contains("独处"))
+                return "solitude";
             if (key.Contains("Fun") || key.Contains("Entertainment") || key.Contains("娱乐") || key.Contains("乐趣"))
                 return "fun";
             if (key.Contains("Social") || key.Contains("社交"))
