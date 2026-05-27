@@ -46,10 +46,10 @@ namespace UnityExplorer.Inspectors
         public override bool CanDragAndResize => false;
         private Action<GameObject> inspectorAction = null;
 
-        private Text inspectorLabelTitle;
-        private Text objNameLabel;
-        private Text objPathLabel;
-        private Text mousePosLabel;
+internal Text inspectorLabelTitle;
+        internal Text objNameLabel;
+        internal Text objPathLabel;
+        internal Text mousePosLabel;
 
         public MouseInspector(UIBase owner) : base(owner)
         {

@@ -4,17 +4,33 @@ namespace UnityExplorer.Inspectors.MouseInspectors
 {
     public class WorldInspector : MouseInspectorBase
     {
-        private static Camera MainCamera;
+        internal static Camera MainCamera;
         private static GameObject lastHitObject;
 
         public override void OnBeginMouseInspect()
         {
+MainCamera = Camera.main;
+            List<Camera> cameras = Camera.allCameras.ToList();
 
             if (!EnsureMainCamera())
             {
-                ExplorerCore.LogWarning("No MainCamera found! Cannot inspect world!");
-                return;
+                ExplorerCore.LogWarning("No Main Camera was found, trying to find a camera named 'Main Camera' or 'MainCamera'.");
+                MainCamera = cameras.FirstOrDefault(c => c.name == "Main Camera" || c.name == "MainCamera");
+
+                if (!MainCamera)
+                {
+                    ExplorerCore.LogWarning("No camera named 'Main Camera' or 'MainCamera' found, using the first camera created.");
+                    MainCamera = cameras.FirstOrDefault();
+                    if (!MainCamera)
+                    {
+                        ExplorerCore.LogWarning("No valid cameras found! Cannot inspect world!");
+                        return;
+                    }
+                }
             }
+
+            MouseInspector.Instance.inspectorLabelTitle.text = $"<b>World Inspector ({MainCamera.name})</b> (press <b>ESC</b> to cancel)";
+            ExplorerCore.Log($"Using camera: '{MainCamera.transform.GetTransformPath(true)}'");
         }
 
         /// <summary>

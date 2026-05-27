@@ -22,8 +22,8 @@ namespace UnityExplorer.Inspectors.MouseInspectors
         public override void OnBeginMouseInspect()
         {
             SetupUIRaycast();
-            MouseInspector.Instance.UpdateInspectorTitle(DEFAULT_INSPECTOR_TITLE);
-            MouseInspector.Instance.UpdateObjectPathLabel("");
+MouseInspector.Instance.inspectorLabelTitle.text = "<b>UI Inspector</b> (press <b>ESC</b> to cancel)";
+            MouseInspector.Instance.objPathLabel.text = "";
         }
 
         public override void ClearHitData()
