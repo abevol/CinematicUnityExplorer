@@ -654,17 +654,101 @@ namespace UnityExplorer.McpBridge.Paralives
 
             foreach (Transform child in parent)
             {
-                if (child.name.Contains("NeedItem") || child.name.Contains("UINeed"))
+                if (child.name.Contains("NeedItem") || child.name.Contains("UINeed") || child.name.Contains("EmotionsItem"))
                 {
-                    needs.Add(new Dictionary<string, object>
+                    Dictionary<string, object> needInfo = new()
                     {
                         ["name"] = child.name,
                         ["path"] = GetPath(child.gameObject),
                         ["active"] = child.gameObject.activeInHierarchy
-                    });
+                    };
+
+                    // 尝试获取需求/情绪名称和值
+                    TryExtractNeedDetails(child.gameObject, needInfo);
+                    
+                    needs.Add(needInfo);
                 }
                 FindNeedsInChildren(child, needs, depth + 1);
             }
+        }
+
+        /// <summary>
+        /// 提取需求/情绪详情
+        /// </summary>
+        private static void TryExtractNeedDetails(GameObject go, Dictionary<string, object> needInfo)
+        {
+            // 查找 TranslatedText 组件获取翻译键
+            foreach (Component component in go.GetComponentsInChildren<Component>(true))
+            {
+                if (!component) continue;
+                Type type = component.GetActualType();
+                
+                // TranslatedText 组件包含 Key
+                if (type.Name == "TranslatedText")
+                {
+                    if (TryReadMember(component, type, "Key", out object keyValue))
+                    {
+                        string key = keyValue?.ToString();
+                        if (!string.IsNullOrEmpty(key))
+                        {
+                            needInfo["translationKey"] = key;
+                            // 推断需求类型
+                            needInfo["needType"] = InferNeedTypeFromKey(key);
+                        }
+                    }
+                }
+                
+                // TextMeshProUGUI 组件包含显示文本
+                if (type.Name == "TextMeshProUGUI")
+                {
+                    if (TryReadMember(component, type, "text", out object textValue))
+                    {
+                        string text = textValue?.ToString();
+                        if (!string.IsNullOrEmpty(text) && text.Length < 20)
+                        {
+                            needInfo["displayText"] = text;
+                        }
+                    }
+                }
+
+                // Image 组件可能包含 FillAmount（需求值）
+                if (type.Name == "Image")
+                {
+                    if (TryReadMember(component, type, "fillAmount", out object fillValue))
+                    {
+                        float fill = Convert.ToSingle(fillValue);
+                        if (fill > 0 && fill <= 1)
+                        {
+                            needInfo["fillAmount"] = Math.Round(fill, 2);
+                            needInfo["fillPercent"] = Math.Round(fill * 100, 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// 从翻译键推断需求类型
+        /// </summary>
+        private static string InferNeedTypeFromKey(string key)
+        {
+            if (key.Contains("Hunger") || key.Contains("Food"))
+                return "hunger";
+            if (key.Contains("Hygiene") || key.Contains("Clean"))
+                return "hygiene";
+            if (key.Contains("Energy") || key.Contains("Sleep") || key.Contains("Tired"))
+                return "energy";
+            if (key.Contains("Fun") || key.Contains("Entertainment"))
+                return "fun";
+            if (key.Contains("Social"))
+                return "social";
+            if (key.Contains("Bladder") || key.Contains("Toilet"))
+                return "bladder";
+            if (key.Contains("Happy") || key.Contains("Emotion"))
+                return "emotion";
+            if (key.Contains("Comfort"))
+                return "comfort";
+            return key;
         }
 
         /// <summary>
@@ -737,14 +821,69 @@ namespace UnityExplorer.McpBridge.Paralives
             {
                 if (child.name.Contains("QueueItem") || child.name.Contains("Interaction"))
                 {
-                    actions.Add(new Dictionary<string, object>
+                    Dictionary<string, object> actionInfo = new()
                     {
                         ["name"] = child.name,
                         ["path"] = GetPath(child.gameObject),
                         ["active"] = child.gameObject.activeInHierarchy
-                    });
+                    };
+
+                    // 尝试获取动作详情
+                    TryExtractActionDetails(child.gameObject, actionInfo);
+                    
+                    actions.Add(actionInfo);
                 }
                 FindActionsInChildren(child, actions, depth + 1);
+            }
+        }
+
+        /// <summary>
+        /// 提取动作详情
+        /// </summary>
+        private static void TryExtractActionDetails(GameObject go, Dictionary<string, object> actionInfo)
+        {
+            // 查找子对象中的文本组件
+            foreach (Component component in go.GetComponentsInChildren<Component>(true))
+            {
+                if (!component) continue;
+                Type type = component.GetActualType();
+                
+                // TextMeshProUGUI 组件包含显示文本
+                if (type.Name == "TextMeshProUGUI")
+                {
+                    if (TryReadMember(component, type, "text", out object textValue))
+                    {
+                        string text = textValue?.ToString();
+                        if (!string.IsNullOrEmpty(text) && text.Length < 50)
+                        {
+                            // 检查是否是动作名称
+                            string path = GetPath(component.gameObject);
+                            if (path.Contains("LabelInteractionName") || path.Contains("LabelName"))
+                            {
+                                actionInfo["interactionName"] = text;
+                            }
+                        }
+                    }
+                }
+
+                // TranslatedText 组件包含翻译键
+                if (type.Name == "TranslatedText")
+                {
+                    if (TryReadMember(component, type, "Key", out object keyValue))
+                    {
+                        string key = keyValue?.ToString();
+                        if (!string.IsNullOrEmpty(key) && key.Contains("Interaction"))
+                        {
+                            actionInfo["translationKey"] = key;
+                        }
+                    }
+                }
+
+                // 检查是否正在运行
+                if (component.gameObject.name == "ImageIsInteractionRunning")
+                {
+                    actionInfo["isRunning"] = component.gameObject.activeInHierarchy;
+                }
             }
         }
 
