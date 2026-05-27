@@ -32,8 +32,20 @@ namespace UnityExplorer.McpBridge
             {
                 if (action == "paralives_read_resource")
                     return Paralives.ParalivesBridgeService.ReadResource(GetRequiredString(parameters, "uri"), parameters);
+                
+                // 运行时状态工具
+                if (action == "paralives_get_runtime_summary" 
+                    || action == "paralives_get_game_time"
+                    || action == "paralives_get_economy" 
+                    || action == "paralives_get_selection")
+                    return Paralives.ParalivesRuntimeService.Handle(action, parameters);
+                
                 return Paralives.ParalivesBridgeService.Handle(action, parameters);
             }
+
+            // 日志工具
+            if (action == "get_game_logs" || action == "subscribe_logs" || action == "poll_logs")
+                return Paralives.ParalivesRuntimeService.Handle(action, parameters);
 #endif
             return action switch
             {

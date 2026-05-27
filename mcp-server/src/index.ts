@@ -185,6 +185,38 @@ const paralivesStartNewGameSchema = {
   },
 } as const;
 
+// ===== 日志工具 Schema =====
+const getGameLogsSchema = {
+  type: "object",
+  properties: {
+    limit: { type: "integer", minimum: 1, maximum: 500, default: 50 },
+    type: { type: "string", enum: ["all", "log", "warning", "exception"], default: "all" },
+    includeCollapsed: { type: "boolean", default: true },
+  },
+} as const;
+
+const subscribeLogsSchema = {
+  type: "object",
+  properties: {
+    bufferSize: { type: "integer", minimum: 10, maximum: 1000, default: 100 },
+    types: {
+      type: "array",
+      items: { type: "string", enum: ["log", "warning", "exception"] },
+      default: ["log", "warning", "exception"],
+    },
+  },
+} as const;
+
+const pollLogsSchema = {
+  type: "object",
+  properties: {
+    subscriptionId: { type: "string" },
+    since: { type: "integer" },
+    limit: { type: "integer", minimum: 1, maximum: 200, default: 50 },
+  },
+  required: ["subscriptionId"],
+} as const;
+
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -316,6 +348,43 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "Paralives:run_whitelisted_cheat",
       description: "Run a whitelisted read-only diagnostic Paralives cheat command. Defaults to dry-run and requires confirmation.",
       inputSchema: paralivesRunCheatSchema,
+    },
+    // ===== 运行时状态工具 =====
+    {
+      name: "Paralives:get_runtime_summary",
+      description: "Get comprehensive runtime state: time, funds, mode, selection, and current family. USE WHEN: user asks 'what's happening now', 'current state', or needs quick overview. TRIGGERS: '游戏状态', '当前状态', '现在怎样'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_game_time",
+      description: "Get game time state: pause status, speed, and formatted time. USE WHEN: user asks about time, 'is it paused?', or time speed. TRIGGERS: '时间', '几点了', '暂停了吗'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_economy",
+      description: "Get household funds and economic state. USE WHEN: user asks about money, funds, or finances. TRIGGERS: '钱', '资金', '多少钱'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_selection",
+      description: "Get currently selected object/character. USE WHEN: user asks 'what did I select?', 'what's selected?'. TRIGGERS: '选中了什么', '选择了谁'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    // ===== 日志工具 =====
+    {
+      name: "UnityExplorer:get_game_logs",
+      description: "Read game console logs from Unity log callback. USE WHEN: user asks about logs, errors, warnings, or 'what went wrong?'. TRIGGERS: '日志', '错误', '警告', '有什么问题'",
+      inputSchema: getGameLogsSchema,
+    },
+    {
+      name: "UnityExplorer:subscribe_logs",
+      description: "Subscribe to Unity log callback for real-time logs. USE WHEN: user wants to monitor logs continuously. TRIGGERS: '监控日志', '实时日志'",
+      inputSchema: subscribeLogsSchema,
+    },
+    {
+      name: "UnityExplorer:poll_logs",
+      description: "Poll subscribed log stream for new entries. USE WHEN: user has active subscription and wants latest logs. TRIGGERS: '新日志', '获取日志'",
+      inputSchema: pollLogsSchema,
     },
   ],
 }));
@@ -491,6 +560,22 @@ function toolNameToAction(name: string): string | null {
       return "paralives_list_cheat_commands";
     case "Paralives:run_whitelisted_cheat":
       return "paralives_run_whitelisted_cheat";
+    // ===== 运行时状态工具 =====
+    case "Paralives:get_runtime_summary":
+      return "paralives_get_runtime_summary";
+    case "Paralives:get_game_time":
+      return "paralives_get_game_time";
+    case "Paralives:get_economy":
+      return "paralives_get_economy";
+    case "Paralives:get_selection":
+      return "paralives_get_selection";
+    // ===== 日志工具 =====
+    case "UnityExplorer:get_game_logs":
+      return "get_game_logs";
+    case "UnityExplorer:subscribe_logs":
+      return "subscribe_logs";
+    case "UnityExplorer:poll_logs":
+      return "poll_logs";
     default:
       return null;
   }

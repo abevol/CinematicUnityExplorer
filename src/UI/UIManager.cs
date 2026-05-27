@@ -51,7 +51,10 @@ namespace UnityExplorer.UI
 
         public static RectTransform NavBarRect;
         public static GameObject NavbarTabButtonHolder;
-        private static readonly Vector2 NAVBAR_DIMENSIONS = new(1610f, 35f);
+private static Vector2 NAVBAR_DIMENSIONS = new(1020f, 35f);
+        private const float NAVBAR_WIDTH_RATIO = 0.8f;
+        private const float NAVBAR_MIN_WIDTH = 1020f;
+        private const float NAVBAR_MAX_WIDTH = 1920f;
 
         private static ButtonRef closeBtn;
 
@@ -183,6 +186,11 @@ namespace UnityExplorer.UI
 
         public static void SetNavBarAnchor()
         {
+            // 计算自适应宽度
+            float screenWidth = DisplayManager.ActiveDisplay.renderingWidth;
+            float adaptiveWidth = Mathf.Clamp(screenWidth * NAVBAR_WIDTH_RATIO, NAVBAR_MIN_WIDTH, NAVBAR_MAX_WIDTH);
+            NAVBAR_DIMENSIONS = new Vector2(adaptiveWidth, 35f);
+
             switch (NavbarAnchor)
             {
                 case VerticalAnchor.Top:
@@ -208,6 +216,9 @@ namespace UnityExplorer.UI
             Display display = DisplayManager.ActiveDisplay;
             lastScreenWidth = display.renderingWidth;
             lastScreenHeight = display.renderingHeight;
+
+            // 更新导航栏宽度
+            SetNavBarAnchor();
 
             foreach (KeyValuePair<Panels, UEPanel> panel in UIPanels)
             {

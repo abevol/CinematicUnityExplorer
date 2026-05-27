@@ -199,7 +199,10 @@ namespace UnityExplorer.McpBridge.Paralives
             if (!mainMenuActionButtons.TryGetValue(action, out string buttonName))
                 throw new McpBridgeException("validation_failed", $"Main menu action '{action}' is not whitelisted.");
 
-            Button button = FindButtonByName(buttonName);
+            // 查找按钮（支持标准 Button 和 ParaButton）
+            bool isStandardButton = FindButtonOrParaButton(buttonName, out Button button, out GameObject buttonObject);
+            bool isParaButton = !isStandardButton && buttonObject != null;
+            
             Dictionary<string, object> result = new()
             {
                 ["operation"] = "invoke_main_menu_action",
@@ -207,17 +210,38 @@ namespace UnityExplorer.McpBridge.Paralives
                 ["buttonName"] = buttonName,
                 ["dryRun"] = dryRun,
                 ["confirmed"] = confirmed,
-                ["button"] = button ? SummarizeGameObject(button.gameObject) : null,
-                ["available"] = button && button.gameObject.activeInHierarchy,
-                ["interactable"] = button && button.interactable
+                ["buttonType"] = isStandardButton ? "Button" : isParaButton ? "ParaButton" : "NotFound",
+                ["button"] = buttonObject ? SummarizeGameObject(buttonObject) : null,
+                ["available"] = buttonObject && buttonObject.activeInHierarchy
             };
 
-            if (!button)
+            if (!buttonObject)
                 throw new McpBridgeException("not_available", $"Main menu button '{buttonName}' was not found.");
-            if (!button.gameObject.activeInHierarchy)
+            if (!buttonObject.activeInHierarchy)
                 throw new McpBridgeException("not_available", $"Main menu button '{buttonName}' is inactive.");
-            if (!button.interactable)
-                throw new McpBridgeException("validation_failed", $"Main menu button '{buttonName}' is not interactable.");
+
+            // 检查是否可交互
+            if (isStandardButton)
+            {
+                result["interactable"] = button.interactable;
+                if (!button.interactable)
+                    throw new McpBridgeException("validation_failed", $"Main menu button '{buttonName}' is not interactable.");
+            }
+            else if (isParaButton)
+            {
+                // ParaButton 使用 ParaButton 组件
+                Component paraButton = buttonObject.GetComponent("ParaButton");
+                if (paraButton != null)
+                {
+                    Type paraButtonType = paraButton.GetActualType();
+                    bool interactable = TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
+                        ? (bool)interactableValue 
+                        : true;
+                    result["interactable"] = interactable;
+                    if (!interactable)
+                        throw new McpBridgeException("validation_failed", $"Main menu button '{buttonName}' (ParaButton) is not interactable.");
+                }
+            }
 
             if (dryRun || !confirmed)
             {
@@ -225,8 +249,64 @@ namespace UnityExplorer.McpBridge.Paralives
                 return result;
             }
 
-            button.onClick.Invoke();
-            result["invoked"] = true;
+            // 执行按钮点击
+            if (isStandardButton)
+            {
+                button.onClick.Invoke();
+                result["invoked"] = true;
+            }
+            else if (isParaButton)
+            {
+                // ParaButton 使用 ButtonCreateMessageEntity 组件
+                Component messageEntity = buttonObject.GetComponent("ButtonCreateMessageEntity");
+                if (messageEntity != null)
+                {
+                    Type entityType = messageEntity.GetActualType();
+                    string messageComponentName = TryReadMember(messageEntity, entityType, "MessageComponentName", out object msgValue) 
+                        ? msgValue.ToString() 
+                        : "";
+                    result["messageComponent"] = messageComponentName;
+                    
+                    // 通过 EventSystem 广播消息
+                    Type eventSystemType = ReflectionUtility.GetTypeByName("EventSystem");
+                    if (eventSystemType != null)
+                    {
+                        // 查找消息类型
+                        Type messageType = ReflectionUtility.GetTypeByName(messageComponentName);
+                        if (messageType != null)
+                        {
+                            object message = Activator.CreateInstance(messageType);
+                            
+                            // 查找 Broadcast 方法
+                            MethodInfo broadcast = eventSystemType.GetMethods(ReflectionUtility.FLAGS)
+                                .FirstOrDefault(m => m.Name == "Broadcast" && m.GetParameters().Length == 1);
+                            
+                            if (broadcast != null)
+                            {
+                                broadcast.Invoke(null, new[] { message });
+                                result["invoked"] = true;
+                            }
+                            else
+                            {
+                                result["error"] = "Could not find EventSystem.Broadcast method.";
+                            }
+                        }
+                        else
+                        {
+                            result["error"] = $"Message type '{messageComponentName}' not found.";
+                        }
+                    }
+                    else
+                    {
+                        result["error"] = "EventSystem type not found.";
+                    }
+                }
+                else
+                {
+                    result["error"] = "ButtonCreateMessageEntity component not found.";
+                }
+            }
+
             return result;
         }
 
@@ -639,6 +719,7 @@ namespace UnityExplorer.McpBridge.Paralives
                 if (!go || go.name != buttonName)
                     continue;
 
+                // 先查找标准 Button
                 Button button = go.GetComponent<Button>();
                 if (button)
                     return button;
@@ -651,16 +732,73 @@ namespace UnityExplorer.McpBridge.Paralives
             return null;
         }
 
+        /// <summary>
+        /// 查找按钮并返回是否为 ParaButton 类型
+        /// </summary>
+        private static bool FindButtonOrParaButton(string buttonName, out Button standardButton, out GameObject buttonObject)
+        {
+            standardButton = null;
+            buttonObject = null;
+
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
+            {
+                GameObject go = obj.TryCast<GameObject>();
+                if (!go || go.name != buttonName)
+                    continue;
+
+                buttonObject = go;
+
+                // 查找标准 Button
+                standardButton = go.GetComponent<Button>();
+                if (standardButton)
+                    return true;
+
+                standardButton = go.GetComponentInChildren<Button>(true);
+                if (standardButton)
+                    return true;
+
+                // 没有标准 Button，返回 false（是 ParaButton）
+                return false;
+            }
+
+            return false;
+        }
+
         private static Dictionary<string, object> SummarizeMainMenuAction(string action, string buttonName)
         {
-            Button button = FindButtonByName(buttonName);
+            bool isStandardButton = FindButtonOrParaButton(buttonName, out Button button, out GameObject buttonObject);
+            bool isParaButton = !isStandardButton && buttonObject != null;
+            
+            bool available = buttonObject && buttonObject.activeInHierarchy;
+            bool interactable = false;
+            string buttonType = "NotFound";
+            
+            if (isStandardButton)
+            {
+                buttonType = "Button";
+                interactable = button && button.interactable;
+            }
+            else if (isParaButton)
+            {
+                buttonType = "ParaButton";
+                Component paraButton = buttonObject.GetComponent("ParaButton");
+                if (paraButton != null)
+                {
+                    Type paraButtonType = paraButton.GetActualType();
+                    interactable = TryReadMember(paraButton, paraButtonType, "Interactable", out object interactableValue) 
+                        ? (bool)interactableValue 
+                        : true;
+                }
+            }
+
             return new Dictionary<string, object>
             {
                 ["action"] = action,
                 ["buttonName"] = buttonName,
-                ["available"] = button && button.gameObject.activeInHierarchy,
-                ["interactable"] = button && button.interactable,
-                ["button"] = button ? SummarizeGameObject(button.gameObject) : null
+                ["buttonType"] = buttonType,
+                ["available"] = available,
+                ["interactable"] = interactable,
+                ["button"] = buttonObject ? SummarizeGameObject(buttonObject) : null
             };
         }
 
