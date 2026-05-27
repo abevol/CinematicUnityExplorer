@@ -51,6 +51,9 @@ namespace UnityExplorer.McpBridge.Paralives
                 "paralives_get_game_time" => GetGameTime(),
                 "paralives_get_economy" => GetEconomy(),
                 "paralives_get_selection" => GetSelection(),
+                "paralives_get_active_context" => GetActiveContext(),
+                "paralives_get_character_needs" => GetCharacterNeeds(parameters),
+                "paralives_get_character_actions" => GetCharacterActions(parameters),
                 "get_game_logs" => GetGameLogs(parameters),
                 "subscribe_logs" => SubscribeLogs(parameters),
                 "poll_logs" => PollLogs(parameters),
@@ -425,6 +428,343 @@ namespace UnityExplorer.McpBridge.Paralives
             // 默认为未知
             return "unknown";
         }
+
+        #region 主控上下文功能
+
+        /// <summary>
+        /// 获取当前活跃上下文（家庭、角色、地段）
+        /// </summary>
+        private static object GetActiveContext()
+        {
+            // 获取当前家庭信息
+            Dictionary<string, object> householdInfo = GetActiveHouseholdInfo();
+            
+            // 获取当前活跃角色（从 UICharacters 面板推断）
+            Dictionary<string, object> characterInfo = GetActiveCharacterInfo();
+            
+            // 获取当前地段信息
+            Dictionary<string, object> lotInfo = GetCurrentLotInfo();
+
+            return new Dictionary<string, object>
+            {
+                ["timestamp"] = DateTime.UtcNow.ToString("O"),
+                ["activeHousehold"] = householdInfo,
+                ["activeCharacter"] = characterInfo,
+                ["currentLot"] = lotInfo
+            };
+        }
+
+        /// <summary>
+        /// 获取当前家庭信息
+        /// </summary>
+        private static Dictionary<string, object> GetActiveHouseholdInfo()
+        {
+            Type householdManagerType = ReflectionUtility.GetTypeByName("HouseholdManager");
+            if (householdManagerType == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "HouseholdManager type not found" };
+
+            object manager = GetSingletonInstance(householdManagerType);
+            if (manager == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "HouseholdManager instance not found" };
+
+            ulong guid = TryReadMember(manager, householdManagerType, "CurrentHouseholdGUID", out object guidValue) 
+                ? Convert.ToUInt64(guidValue) : 0;
+            bool hasHousehold = TryReadMember(manager, householdManagerType, "HasCurrentHousehold", out object hasValue) 
+                && (bool)hasValue;
+
+            if (!hasHousehold || guid == 0)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "No active household" };
+
+            // 尝试获取家庭名称和成员
+            string name = "Unknown";
+            int memberCount = 0;
+            List<object> members = new();
+
+            // 从 HouseholdManager 获取当前家庭对象
+            TryReadMember(manager, householdManagerType, "CurrentHousehold", out object householdObj);
+            if (householdObj != null)
+            {
+                Type householdType = householdObj.GetActualType();
+                name = TryReadMember(householdObj, householdType, "Name", out object nameValue) ? nameValue?.ToString() : "Unknown";
+                
+                // 获取成员列表
+                if (TryReadMember(householdObj, householdType, "Members", out object membersObj) && membersObj is System.Collections.IEnumerable enumerable)
+                {
+                    foreach (object member in enumerable)
+                    {
+                        if (member == null) continue;
+                        memberCount++;
+                        Type memberType = member.GetActualType();
+                        members.Add(new Dictionary<string, object>
+                        {
+                            ["type"] = memberType.FullName,
+                            ["display"] = member.ToString(),
+                            ["guid"] = TryReadMember(member, memberType, "GUID", out object memberGuid) ? memberGuid?.ToString() : null
+                        });
+                        if (members.Count >= 10) break;
+                    }
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = true,
+                ["guid"] = guid.ToString(),
+                ["name"] = name,
+                ["memberCount"] = memberCount,
+                ["members"] = members
+            };
+        }
+
+        /// <summary>
+        /// 获取当前活跃角色信息
+        /// </summary>
+        private static Dictionary<string, object> GetActiveCharacterInfo()
+        {
+            // 从 UICharacters 面板推断当前选中角色
+            GameObject uiCharacters = FindGameObjectByName("UICharacters(Clone)");
+            if (uiCharacters == null)
+                uiCharacters = FindGameObjectByName("UICharacters");
+
+            if (uiCharacters == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UICharacters not found" };
+
+            // 查找选中的角色
+            GameObject selectedCharacter = FindChildByName(uiCharacters, "SelectedCharacter");
+            if (selectedCharacter != null && selectedCharacter.activeInHierarchy)
+            {
+                // 找到父级 Character 对象
+                Transform parent = selectedCharacter.transform.parent;
+                if (parent != null)
+                {
+                    // 查找 CharacterThumbnail 中的 ImageCharacterIcon
+                    GameObject thumbnail = FindChildByName(parent.gameObject, "CharacterThumbnail");
+                    if (thumbnail != null)
+                    {
+                        return new Dictionary<string, object>
+                        {
+                            ["available"] = true,
+                            ["source"] = "UICharacters selection",
+                            ["parentPath"] = GetPath(parent.gameObject)
+                        };
+                    }
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = false,
+                ["reason"] = "No character selected in UICharacters"
+            };
+        }
+
+        /// <summary>
+        /// 获取当前地段信息
+        /// </summary>
+        private static Dictionary<string, object> GetCurrentLotInfo()
+        {
+            // 从场景对象推断当前地段
+            // 查找 NavMeshSurface 对象，它们通常属于当前地段
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(GameObject)))
+            {
+                GameObject go = obj.TryCast<GameObject>();
+                if (!go || !go.name.StartsWith("NavMeshSurface lot "))
+                    continue;
+
+                // 提取 lot GUID
+                string lotName = go.name.Replace("NavMeshSurface lot ", "");
+                if (ulong.TryParse(lotName.Split('/')[0], out ulong lotGuid))
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["available"] = true,
+                        ["guid"] = lotGuid.ToString(),
+                        ["name"] = go.name,
+                        ["path"] = GetPath(go),
+                        ["isActive"] = go.activeInHierarchy
+                    };
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = false,
+                ["reason"] = "Could not determine current lot"
+            };
+        }
+
+        /// <summary>
+        /// 获取角色需求状态
+        /// </summary>
+        private static object GetCharacterNeeds(Dictionary<string, object> parameters)
+        {
+            string characterGuid = GetOptionalString(parameters, "characterGuid");
+            
+            // 如果没有指定角色，尝试获取当前选中角色
+            if (string.IsNullOrEmpty(characterGuid))
+            {
+                Dictionary<string, object> activeChar = GetActiveCharacterInfo();
+                if (activeChar.TryGetValue("available", out object avail) && (bool)avail)
+                {
+                    // 从 UI 获取需求信息
+                    return GetNeedsFromUI();
+                }
+                return new Dictionary<string, object> 
+                { 
+                    ["available"] = false, 
+                    ["reason"] = "No character specified and no active character found" 
+                };
+            }
+
+            // 指定角色的需求获取
+            return GetCharacterNeedsByGuid(characterGuid);
+        }
+
+        /// <summary>
+        /// 从 UI 获取需求信息
+        /// </summary>
+        private static Dictionary<string, object> GetNeedsFromUI()
+        {
+            // 查找 UIThoughts 面板
+            GameObject uiThoughts = FindGameObjectByName("UIThoughts(Clone)");
+            if (uiThoughts == null)
+                uiThoughts = FindGameObjectByName("UIThoughts");
+
+            if (uiThoughts == null || !uiThoughts.activeInHierarchy)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UIThoughts not visible" };
+
+            // 查找需求项
+            List<object> needs = new();
+            FindNeedsInChildren(uiThoughts.transform, needs, 0);
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = true,
+                ["source"] = "UIThoughts panel",
+                ["needs"] = needs
+            };
+        }
+
+        /// <summary>
+        /// 递归查找需求项
+        /// </summary>
+        private static void FindNeedsInChildren(Transform parent, List<object> needs, int depth)
+        {
+            if (depth > 10 || needs.Count >= 20) return;
+
+            foreach (Transform child in parent)
+            {
+                if (child.name.Contains("NeedItem") || child.name.Contains("UINeed"))
+                {
+                    needs.Add(new Dictionary<string, object>
+                    {
+                        ["name"] = child.name,
+                        ["path"] = GetPath(child.gameObject),
+                        ["active"] = child.gameObject.activeInHierarchy
+                    });
+                }
+                FindNeedsInChildren(child, needs, depth + 1);
+            }
+        }
+
+        /// <summary>
+        /// 通过 GUID 获取角色需求
+        /// </summary>
+        private static Dictionary<string, object> GetCharacterNeedsByGuid(string characterGuid)
+        {
+            // 尝试通过 NeedManager 获取
+            Type needManagerType = ReflectionUtility.GetTypeByName("NeedManager");
+            if (needManagerType == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "NeedManager type not found" };
+
+            object needManager = GetSingletonInstance(needManagerType);
+            if (needManager == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "NeedManager instance not found" };
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = true,
+                ["characterGuid"] = characterGuid,
+                ["managerAvailable"] = true,
+                ["note"] = "Use Paralives:set_need_value to modify needs"
+            };
+        }
+
+        /// <summary>
+        /// 获取角色当前/排队动作
+        /// </summary>
+        private static object GetCharacterActions(Dictionary<string, object> parameters)
+        {
+            string characterGuid = GetOptionalString(parameters, "characterGuid");
+            
+            // 从 UIInteractionQueue 获取动作信息
+            return GetActionsFromUI();
+        }
+
+        /// <summary>
+        /// 从 UI 获取动作队列
+        /// </summary>
+        private static Dictionary<string, object> GetActionsFromUI()
+        {
+            // 查找 UIInteractionQueue 面板
+            GameObject uiInteractionQueue = FindGameObjectByName("UIInteractionQueue(Clone)");
+            if (uiInteractionQueue == null)
+                uiInteractionQueue = FindGameObjectByName("UIInteractionQueue");
+
+            if (uiInteractionQueue == null)
+                return new Dictionary<string, object> { ["available"] = false, ["reason"] = "UIInteractionQueue not found" };
+
+            // 查找队列项
+            List<object> actions = new();
+            FindActionsInChildren(uiInteractionQueue.transform, actions, 0);
+
+            return new Dictionary<string, object>
+            {
+                ["available"] = true,
+                ["source"] = "UIInteractionQueue",
+                ["actions"] = actions
+            };
+        }
+
+        /// <summary>
+        /// 递归查找动作项
+        /// </summary>
+        private static void FindActionsInChildren(Transform parent, List<object> actions, int depth)
+        {
+            if (depth > 10 || actions.Count >= 20) return;
+
+            foreach (Transform child in parent)
+            {
+                if (child.name.Contains("QueueItem") || child.name.Contains("Interaction"))
+                {
+                    actions.Add(new Dictionary<string, object>
+                    {
+                        ["name"] = child.name,
+                        ["path"] = GetPath(child.gameObject),
+                        ["active"] = child.gameObject.activeInHierarchy
+                    });
+                }
+                FindActionsInChildren(child, actions, depth + 1);
+            }
+        }
+
+        /// <summary>
+        /// 查找子对象
+        /// </summary>
+        private static GameObject FindChildByName(GameObject parent, string name)
+        {
+            foreach (Transform child in parent.transform)
+            {
+                if (child.name == name)
+                    return child.gameObject;
+                GameObject found = FindChildByName(child.gameObject, name);
+                if (found != null)
+                    return found;
+            }
+            return null;
+        }
+
+        #endregion
 
         #region 日志功能
 
@@ -808,6 +1148,54 @@ namespace UnityExplorer.McpBridge.Paralives
             return parameters.TryGetValue(name, out object value) && value is List<object> list
                 ? list
                 : new List<object>();
+        }
+
+        /// <summary>
+        /// 尝试读取成员值
+        /// </summary>
+        private static bool TryReadMember(object owner, Type type, string memberName, out object value)
+        {
+            value = null;
+            if (type == null)
+                return false;
+
+            try
+            {
+                PropertyInfo property = type.GetProperty(memberName, ReflectionUtility.FLAGS);
+                if (property != null && property.GetIndexParameters().Length == 0)
+                {
+                    value = property.GetValue(owner, null);
+                    return true;
+                }
+
+                FieldInfo field = type.GetField(memberName, ReflectionUtility.FLAGS);
+                if (field != null)
+                {
+                    value = field.GetValue(owner);
+                    return true;
+                }
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 获取 GameObject 路径
+        /// </summary>
+        private static string GetPath(GameObject go)
+        {
+            List<string> names = new();
+            Transform current = go.transform;
+            while (current)
+            {
+                names.Add(current.name);
+                current = current.parent;
+            }
+            names.Reverse();
+            return string.Join("/", names.ToArray());
         }
 
         #endregion

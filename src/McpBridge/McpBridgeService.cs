@@ -37,7 +37,10 @@ namespace UnityExplorer.McpBridge
                 if (action == "paralives_get_runtime_summary" 
                     || action == "paralives_get_game_time"
                     || action == "paralives_get_economy" 
-                    || action == "paralives_get_selection")
+                    || action == "paralives_get_selection"
+                    || action == "paralives_get_active_context"
+                    || action == "paralives_get_character_needs"
+                    || action == "paralives_get_character_actions")
                     return Paralives.ParalivesRuntimeService.Handle(action, parameters);
                 
                 return Paralives.ParalivesBridgeService.Handle(action, parameters);

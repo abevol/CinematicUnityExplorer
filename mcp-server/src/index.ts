@@ -217,6 +217,21 @@ const pollLogsSchema = {
   required: ["subscriptionId"],
 } as const;
 
+// ===== 新增工具 Schema =====
+const getCharacterNeedsSchema = {
+  type: "object",
+  properties: {
+    characterGuid: { type: "string", description: "Character GUID. If omitted, uses currently selected character." },
+  },
+} as const;
+
+const getCharacterActionsSchema = {
+  type: "object",
+  properties: {
+    characterGuid: { type: "string", description: "Character GUID. If omitted, uses currently selected character." },
+  },
+} as const;
+
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -369,6 +384,21 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "Paralives:get_selection",
       description: "Get currently selected object/character. USE WHEN: user asks 'what did I select?', 'what's selected?'. TRIGGERS: '选中了什么', '选择了谁'",
       inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_active_context",
+      description: "Get current active household, character, and lot in one call. USE WHEN: user asks 'who am I playing?', 'where am I?', 'current family'. TRIGGERS: '当前家庭', '主控角色', '在哪个地段'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_character_needs",
+      description: "Get character needs/status (hunger, hygiene, etc). USE WHEN: user asks about character needs, mood, or status. TRIGGERS: '需求', '饥饿', '心情', '角色状态'",
+      inputSchema: getCharacterNeedsSchema,
+    },
+    {
+      name: "Paralives:get_character_actions",
+      description: "Get current and queued actions for a character. USE WHEN: user asks 'what is character doing?', 'action queue'. TRIGGERS: '在做什么', '动作队列'",
+      inputSchema: getCharacterActionsSchema,
     },
     // ===== 日志工具 =====
     {
@@ -569,6 +599,12 @@ function toolNameToAction(name: string): string | null {
       return "paralives_get_economy";
     case "Paralives:get_selection":
       return "paralives_get_selection";
+    case "Paralives:get_active_context":
+      return "paralives_get_active_context";
+    case "Paralives:get_character_needs":
+      return "paralives_get_character_needs";
+    case "Paralives:get_character_actions":
+      return "paralives_get_character_actions";
     // ===== 日志工具 =====
     case "UnityExplorer:get_game_logs":
       return "get_game_logs";
