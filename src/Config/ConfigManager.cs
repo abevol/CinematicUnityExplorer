@@ -25,7 +25,7 @@ namespace UnityExplorer.Config
         public static ConfigElement<string> Default_Output_Path;
         public static ConfigElement<string> DnSpy_Path;
         public static ConfigElement<bool> Log_Unity_Debug;
-public static ConfigElement<bool> Log_To_Disk;
+        public static ConfigElement<bool> Log_To_Disk;
         public static ConfigElement<UIManager.VerticalAnchor> Main_Navbar_Anchor;
         public static ConfigElement<KeyCode> World_MouseInspect_Keybind;
         public static ConfigElement<KeyCode> UI_MouseInspect_Keybind;
@@ -244,8 +244,9 @@ DetectDefaultLanguage(),
                 category: "Console");
 
             Log_To_Disk = new("Log To Disk",
-                "Should CinematicUnityExplorer save log files to the disk?",
-                true);
+"Should CinematicUnityExplorer save log files to the disk?",
+                true,
+                category: "Console");
 
             World_MouseInspect_Keybind = new("World Mouse-Inspect Keybind",
                 "Optional keybind to being a World-mode Mouse Inspect.",

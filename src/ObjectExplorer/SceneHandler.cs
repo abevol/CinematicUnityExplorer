@@ -46,10 +46,32 @@ namespace UnityExplorer.ObjectExplorer
         /// <summary>Whether or not the "DontDestroyOnLoad" scene exists in this game.</summary>
         public static bool DontDestroyExists { get; private set; }
 
+        private const string dontDestroyName = "DontDestroyOnLoad";
+
         internal static void Init()
         {
             // Check if the game has "DontDestroyOnLoad"
-            DontDestroyExists = Scene.GetNameInternal(-12) == "DontDestroyOnLoad";
+            try
+            {
+                Type sceneType = ReflectionUtility.GetTypeByName("UnityEngine.SceneManagement.Scene");
+                if (sceneType == null)
+                    throw new Exception("This version of Unity does not ship with the 'Scene' class, or it was not unstripped.");
+
+                MethodInfo method = sceneType.GetMethod("GetNameInternal", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+                string sceneName = (string)method?.Invoke(null, new object[] { -12 });
+                if (string.IsNullOrEmpty(sceneName))
+                    throw new Exception("Scene.GetNameInternal returned null for DontDestroyOnLoad scene.");
+
+                DontDestroyExists = sceneName == dontDestroyName;
+            }
+            catch (Exception ex)
+            {
+                ExplorerCore.LogWarning($"Unable to check for existence of DontDestroyOnLoad scene via Scene.GetNameInternal: {ex}");
+#pragma warning disable CS0618
+                ExplorerCore.LogWarning("Falling back to checking loaded scenes for DontDestroyOnLoad via SceneManager.GetAllScenes(). This uses a deprecated API.");
+                DontDestroyExists = SceneManager.GetAllScenes().Any(s => s.name == dontDestroyName);
+#pragma warning restore CS0618
+            }
 
             // Try to get all scenes in the build settings. This may not work.
             try

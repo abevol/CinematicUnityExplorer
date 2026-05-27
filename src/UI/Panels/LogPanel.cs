@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 using UnityExplorer.Config;
 
@@ -174,7 +174,6 @@ namespace UnityExplorer.UI.Panels
 
 
             if (logScrollPool != null)
-
                 logScrollPool.Refresh(true, false);
 
             SetStatus(string.Format(Localizer.Get("STATUS_LOG_READY", "{0} log entries."), Logs.Count));
