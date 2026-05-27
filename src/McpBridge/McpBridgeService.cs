@@ -43,6 +43,13 @@ namespace UnityExplorer.McpBridge
                     || action == "paralives_get_character_actions")
                     return Paralives.ParalivesRuntimeService.Handle(action, parameters);
                 
+                // 性能分析工具
+                if (action == "paralives_get_performance_stats"
+                    || action == "paralives_get_performance_history"
+                    || action == "paralives_get_memory_stats"
+                    || action == "paralives_get_scene_stats")
+                    return Paralives.ParalivesProfilerService.Handle(action, parameters);
+                
                 return Paralives.ParalivesBridgeService.Handle(action, parameters);
             }
 

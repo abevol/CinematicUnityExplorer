@@ -232,6 +232,13 @@ const getCharacterActionsSchema = {
   },
 } as const;
 
+const getPerformanceHistorySchema = {
+  type: "object",
+  properties: {
+    limit: { type: "integer", minimum: 1, maximum: 100, default: 50, description: "Number of history samples to return" },
+  },
+} as const;
+
 server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
@@ -399,6 +406,27 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       name: "Paralives:get_character_actions",
       description: "Get current and queued actions for a character. USE WHEN: user asks 'what is character doing?', 'action queue'. TRIGGERS: '在做什么', '动作队列'",
       inputSchema: getCharacterActionsSchema,
+    },
+    // ===== 性能分析工具 =====
+    {
+      name: "Paralives:get_performance_stats",
+      description: "Get comprehensive performance stats: FPS, memory, GC, scene objects. USE WHEN: user asks about performance, FPS, memory usage. TRIGGERS: '性能', '帧率', '内存', '卡顿'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_performance_history",
+      description: "Get performance history with FPS and memory samples. USE WHEN: user wants to analyze performance trends. TRIGGERS: '性能历史', '帧率曲线'",
+      inputSchema: getPerformanceHistorySchema,
+    },
+    {
+      name: "Paralives:get_memory_stats",
+      description: "Get detailed memory statistics including Unity and managed heap. USE WHEN: user asks about memory leaks or allocation. TRIGGERS: '内存详情', 'GC'",
+      inputSchema: { type: "object", properties: {} },
+    },
+    {
+      name: "Paralives:get_scene_stats",
+      description: "Get scene statistics: game objects, components, loaded scenes. USE WHEN: user asks about scene complexity. TRIGGERS: '场景统计', '对象数量'",
+      inputSchema: { type: "object", properties: {} },
     },
     // ===== 日志工具 =====
     {
@@ -605,6 +633,15 @@ function toolNameToAction(name: string): string | null {
       return "paralives_get_character_needs";
     case "Paralives:get_character_actions":
       return "paralives_get_character_actions";
+    // ===== 性能分析工具 =====
+    case "Paralives:get_performance_stats":
+      return "paralives_get_performance_stats";
+    case "Paralives:get_performance_history":
+      return "paralives_get_performance_history";
+    case "Paralives:get_memory_stats":
+      return "paralives_get_memory_stats";
+    case "Paralives:get_scene_stats":
+      return "paralives_get_scene_stats";
     // ===== 日志工具 =====
     case "UnityExplorer:get_game_logs":
       return "get_game_logs";
