@@ -7,22 +7,6 @@ namespace UnityExplorer.McpBridge.Paralives
 
         public static bool IsAvailable => ParalivesEnvironment.IsAvailable;
 
-        public static Dictionary<string, Func<Dictionary<string, object>, object>> Actions => McpActionRegistry.Actions
-            .Where(pair => pair.Key.StartsWith("paralives_", StringComparison.Ordinal))
-            .ToDictionary(pair => pair.Key, pair => pair.Value);
-
-        public static object Handle(string action, Dictionary<string, object> parameters)
-        {
-            if (!action.StartsWith("paralives_", StringComparison.Ordinal))
-                throw new McpBridgeException("invalid_request", $"Unknown Paralives bridge action '{action}'.");
-
-            Dictionary<string, Func<Dictionary<string, object>, object>> actions = McpActionRegistry.Actions;
-            if (actions.TryGetValue(action, out Func<Dictionary<string, object>, object> handler))
-                return handler(parameters);
-
-            throw new McpBridgeException("invalid_request", $"Unknown Paralives bridge action '{action}'.");
-        }
-
         public static object ReadResource(string uri, Dictionary<string, object> parameters)
         {
             return ParalivesStateService.ReadResource(uri, parameters);
