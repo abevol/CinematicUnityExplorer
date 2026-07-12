@@ -260,7 +260,9 @@ namespace UniverseLib.Input
 
         public static void OverrideKeyString(ref bool __result, ref string name)
         {
-            KeyCode thisKeyCode = (KeyCode) System.Enum.Parse(typeof(KeyCode), name);
+            KeyCode thisKeyCode;
+            try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
+            catch { return; }
             getKeyDict[thisKeyCode] = __result;
             if (FreeCamPanel.ShouldOverrideInput()){
                 __result = false;
@@ -279,7 +281,9 @@ namespace UniverseLib.Input
 
         public static void OverrideKeyDownString(ref bool __result, ref string name)
         {
-            KeyCode thisKeyCode = (KeyCode) System.Enum.Parse(typeof(KeyCode), name);
+            KeyCode thisKeyCode;
+            try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
+            catch { return; }
             getKeyDownDict[thisKeyCode] = __result;
             if (FreeCamPanel.ShouldOverrideInput()){
                 __result = false;
@@ -298,7 +302,9 @@ namespace UniverseLib.Input
 
         public static void OverrideKeyUpString(ref bool __result, ref string name)
         {
-            KeyCode thisKeyCode = (KeyCode) System.Enum.Parse(typeof(KeyCode), name);
+            KeyCode thisKeyCode;
+            try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
+            catch { return; }
             getKeyUpDict[thisKeyCode] = __result;
             if (FreeCamPanel.ShouldOverrideInput()){
                 __result = false;
