@@ -6,6 +6,7 @@ using UnityExplorer.CacheObject.Views;
 using UnityExplorer.Config;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
+using UnityExplorer.Utility;
 using UnityExplorer.UI.Widgets;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -349,6 +350,7 @@ namespace UnityExplorer.Inspectors
 
         void OnCopyClicked()
         {
+            WindowsClipboard.SetText((this.Target ?? (object)this.TargetType)?.ToString() ?? "null");
             ClipboardPanel.Copy(this.Target ?? this.TargetType);
         }
 

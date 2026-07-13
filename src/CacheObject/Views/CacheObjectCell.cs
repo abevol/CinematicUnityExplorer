@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.UI.Panels;
+using UnityExplorer.Utility;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets.ScrollView;
@@ -80,6 +81,7 @@ namespace UnityExplorer.CacheObject.Views
 
         protected virtual void OnCopyClicked()
         {
+            WindowsClipboard.SetText(this.Occupant.Value?.ToString() ?? "null");
             ClipboardPanel.Copy(this.Occupant.Value);
         }
 

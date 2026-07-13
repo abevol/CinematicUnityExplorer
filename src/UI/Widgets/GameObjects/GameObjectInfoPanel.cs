@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.UI.Panels;
+using UnityExplorer.Utility;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 
@@ -202,6 +203,7 @@ namespace UnityExplorer.UI.Widgets
 
         void OnCopyClicked()
         {
+            WindowsClipboard.SetText(PathInput.Text);
             ClipboardPanel.Copy(this.Target);
         }
 
