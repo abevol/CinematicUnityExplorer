@@ -22,7 +22,7 @@ namespace UnityExplorer.UI.Widgets
             InitPatch();
         }
 
-        static TimeScaleWidget Instance;
+        public static TimeScaleWidget Instance;
 
         Toggle overrideTimeScaleToggle;
         InputFieldRef timeInput;

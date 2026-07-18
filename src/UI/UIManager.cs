@@ -180,7 +180,7 @@ private static Vector2 NAVBAR_DIMENSIONS = new(1020f, 35f);
             panel.SetActive(active);
         }
 
-        public static TimeScaleWidget GetTimeScaleWidget() { return timeScaleWidget;}
+        public static TimeScaleWidget GetTimeScaleWidget() { return TimeScaleWidget.Instance; }
 
         // navbar
 
@@ -271,7 +271,7 @@ private static Vector2 NAVBAR_DIMENSIONS = new(1020f, 35f);
             UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(NavbarTabButtonHolder, false, true, true, true, 4, 2, 2, 2, 2);
 
             // Time scale widget
-            TimeScaleWidget.SetUp(navbarPanel);
+            TimeScaleWidget unused = new TimeScaleWidget(navbarPanel);
 
             //spacer
             GameObject spacer = UIFactory.CreateUIObject("Spacer", navbarPanel);

@@ -134,7 +134,12 @@ namespace UnityExplorer.McpBridge
             {
             }
 
-            return UnityEngine.Object.FindObjectOfType(type);
+            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(type))
+            {
+                if (obj != null)
+                    return obj;
+            }
+            return null;
         }
 
         public static GameObject FindGameObjectByName(string name)

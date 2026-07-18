@@ -18,10 +18,10 @@
         <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     </PropertyGroup>
     <Target Name="PreBuild" BeforeTargets="ResolveReferences">
-        <Exec Command="dotnet build ..\UniverseLib_src\src\UniverseLib.sln -c Release_IL2CPP_Unhollower" Condition="'$(Configuration)'=='ML_Cpp_net6' or '$(Configuration)'=='ML_Cpp_net472' or '$(Configuration)'=='BIE_Cpp' or '$(Configuration)'=='STANDALONE_Cpp'" />
-        <Exec Command="dotnet build ..\UniverseLib_src\src\UniverseLib.sln -c Release_IL2CPP_Interop_BIE" Condition="'$(Configuration)'=='BIE_Cpp_CoreCLR' or '$(Configuration)'=='BIE_Unity_Cpp_CoreCLR' or '$(Configuration)'=='STANDALONE_Cpp_CoreCLR'" />
-        <Exec Command="dotnet build ..\UniverseLib_src\src\UniverseLib.sln -c Release_IL2CPP_Interop_ML" Condition="'$(Configuration)'=='ML_Cpp_net6_interop' or '$(Configuration)'=='ML_Cpp_CoreCLR'" />
-        <Exec Command="dotnet build ..\UniverseLib_src\src\UniverseLib.sln -c Release_Mono" Condition="'$(Configuration)'=='BIE6_Mono' or '$(Configuration)'=='BIE6_Unity_Mono' or '$(Configuration)'=='BIE5_Mono' or '$(Configuration)'=='ML_Mono' or '$(Configuration)'=='STANDALONE_Mono'" />
+        <Exec Command="dotnet build ..\UniverseLib\src\UniverseLib.sln -c Release_IL2CPP_Unhollower" Condition="'$(Configuration)'=='ML_Cpp_net6' or '$(Configuration)'=='ML_Cpp_net472' or '$(Configuration)'=='BIE_Cpp' or '$(Configuration)'=='STANDALONE_Cpp'" />
+        <Exec Command="dotnet build ..\UniverseLib\src\UniverseLib.sln -c Release_IL2CPP_Interop_BIE" Condition="'$(Configuration)'=='BIE_Cpp_CoreCLR' or '$(Configuration)'=='BIE_Unity_Cpp_CoreCLR' or '$(Configuration)'=='STANDALONE_Cpp_CoreCLR'" />
+        <Exec Command="dotnet build ..\UniverseLib\src\UniverseLib.sln -c Release_IL2CPP_Interop_ML" Condition="'$(Configuration)'=='ML_Cpp_net6_interop' or '$(Configuration)'=='ML_Cpp_CoreCLR'" />
+        <Exec Command="dotnet build ..\UniverseLib\src\UniverseLib.sln -c Release_Mono" Condition="'$(Configuration)'=='BIE6_Mono' or '$(Configuration)'=='BIE6_Unity_Mono' or '$(Configuration)'=='BIE5_Mono' or '$(Configuration)'=='ML_Mono' or '$(Configuration)'=='STANDALONE_Mono'" />
     </Target>
     <!-- ~~~~~ CONFIGURATIONS ~~~~~ -->
     <!-- ML IL2CPP Unhollower net6 -->
@@ -135,7 +135,7 @@
     <ItemGroup Condition="'$(Configuration)' == 'ML_Cpp_net6' or '$(Configuration)' == 'ML_Cpp_net472' or '$(Configuration)' == 'BIE_Cpp' or '$(Configuration)' == 'STANDALONE_Cpp'">
         <PackageReference Include="Il2CppAssemblyUnhollower.BaseLib" Version="0.4.22" />
         <Reference Include="UniverseLib.IL2CPP.Unhollower">
-            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Unhollower\UniverseLib.IL2CPP.Unhollower.dll</HintPath>
+            <HintPath>..\UniverseLib\Release\UniverseLib.Il2Cpp.Unhollower\UniverseLib.IL2CPP.Unhollower.dll</HintPath>
             <Private>True</Private>
         </Reference>
     </ItemGroup>
@@ -145,7 +145,7 @@
         <PackageReference Include="Il2CppInterop.Common" Version="1.0.0" />
         <PackageReference Include="Il2CppInterop.Runtime" Version="1.0.0" />
         <Reference Include="UniverseLib.BIE.IL2CPP.Interop">
-            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
+            <HintPath>..\UniverseLib\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.BIE.IL2CPP.Interop.dll</HintPath>
             <Private>True</Private>
         </Reference>
     </ItemGroup>
@@ -155,7 +155,7 @@
         <PackageReference Include="Il2CppInterop.Common" Version="1.0.0" />
         <PackageReference Include="Il2CppInterop.Runtime" Version="1.0.0" />
         <Reference Include="UniverseLib.ML.IL2CPP.Interop">
-            <HintPath>..\UniverseLib_src\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.ML.IL2CPP.Interop.dll</HintPath>
+            <HintPath>..\UniverseLib\Release\UniverseLib.Il2Cpp.Interop\UniverseLib.ML.IL2CPP.Interop.dll</HintPath>
             <Private>True</Private>
         </Reference>
     </ItemGroup>
@@ -163,7 +163,7 @@
     <!-- mono nuget -->
     <ItemGroup Condition="'$(Configuration)' == 'BIE6_Mono' or '$(Configuration)' == 'BIE6_Unity_Mono' or '$(Configuration)' == 'BIE5_Mono' or '$(Configuration)' == 'ML_Mono' or '$(Configuration)' == 'STANDALONE_Mono'">
         <Reference Include="UniverseLib.Mono">
-            <HintPath>..\UniverseLib_src\Release\UniverseLib.Mono\UniverseLib.Mono.dll</HintPath>
+            <HintPath>..\UniverseLib\Release\UniverseLib.Mono\UniverseLib.Mono.dll</HintPath>
             <Private>True</Private>
         </Reference>
     </ItemGroup>

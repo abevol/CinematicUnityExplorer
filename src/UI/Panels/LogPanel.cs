@@ -86,6 +86,21 @@ namespace UnityExplorer.UI.Panels
 
 
 
+public static object GetLogSnapshot(int limit)
+        {
+            lock (Logs)
+            {
+                int count = Math.Min(limit, Logs.Count);
+                var entries = new object[count];
+                for (int i = 0; i < count; i++)
+                {
+                    var log = Logs[Logs.Count - count + i];
+                    entries[i] = new { message = log.message, type = log.type.ToString() };
+                }
+                return entries;
+            }
+        }
+
         public override void SetActive(bool active)
 
         {
