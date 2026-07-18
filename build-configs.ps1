@@ -1,8 +1,8 @@
 # Script to build selected solution release configurations.
 #
 # Build the solution-level Release_* configurations instead of invoking
-# UnityExplorer.csproj directly. The solution maps these release configurations
-# to both UnityExplorer.csproj and UniverseLib project configurations.
+# CinematicUnityExplorer.csproj directly. The solution maps these release configurations
+# to both CinematicUnityExplorer.csproj and UniverseLib project configurations.
 
 Push-Location $PSScriptRoot
 
@@ -28,7 +28,7 @@ foreach ($config in $configurations) {
     Write-Host "Building configuration: $($config)"
     Write-Host "============================================="
 
-    dotnet build src/UnityExplorer.sln -c $($config)
+    dotnet build src/CinematicUnityExplorer.sln -c $($config)
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host "---------------------------------------------"

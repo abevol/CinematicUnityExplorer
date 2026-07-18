@@ -376,10 +376,10 @@ The inspector is used to see detailed information on objects of any type and man
 For targeted validation, build the solution with the solution-level `Release_*` configuration names, for example:
 
 ```powershell
-dotnet build src/UnityExplorer.sln -c Release_BIE6_Mono
+dotnet build src/CinematicUnityExplorer.sln -c Release_BIE6_Mono
 ```
 
-Do not validate by calling `UnityExplorer.csproj` directly with a project configuration such as `BIE6_Mono`; the `.sln` maps each `Release_*` configuration to the matching UnityExplorer and UniverseLib project configurations. Bypassing that mapping can produce misleading restore or framework errors.
+Do not validate by calling `CinematicUnityExplorer.csproj` directly with a project configuration such as `BIE6_Mono`; the `.sln` maps each `Release_*` configuration to the matching CinematicUnityExplorer and UniverseLib project configurations. Bypassing that mapping can produce misleading restore or framework errors.
 
 Building individual configurations from your IDE is fine, though note that the initial build process builds into `Release/<version>/...` instead of the subfolders that the powershell script uses. For scripted batch validation, use `build.ps1` or `build-configs.ps1` so the solution configuration mapping is preserved.
 
