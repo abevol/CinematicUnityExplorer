@@ -139,7 +139,10 @@ namespace UnityExplorer.Config
 
         public static ConfigElement<T> CreatePluginConfig<T>(string name, string description, T defaultValue, string category, bool requiresRestart = false, bool advanced = false)
         {
-            return new ConfigElement<T>(name, description, defaultValue, category: category, requiresRestart: requiresRestart, advanced: advanced);
+            var element = new ConfigElement<T>(name, description, defaultValue, category: category, requiresRestart: requiresRestart, advanced: advanced);
+            Handler.RegisterConfigElement(element);
+            ConfigElements[element.Name] = element;
+            return element;
         }
 
         private static void CreateConfigElements()
