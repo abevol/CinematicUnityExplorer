@@ -27,7 +27,6 @@ namespace UnityExplorer.UI
             CamPaths,
             PostProcessingPanel,
             MCP,
-            Paralives,
             AnimatorPanel,
             Misc,
             Plugin,

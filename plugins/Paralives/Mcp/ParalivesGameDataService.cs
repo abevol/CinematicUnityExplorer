@@ -1,5 +1,5 @@
 #if MONO
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     /// <summary>
     /// 提供 Paralives 游戏数据查询服务（技能、情绪、记忆、目标）

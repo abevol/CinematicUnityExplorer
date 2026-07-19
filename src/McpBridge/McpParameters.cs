@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace UnityExplorer.McpBridge
 {
-    internal static class McpParameters
+    public static class McpParameters
     {
         public static string RequiredString(Dictionary<string, object> parameters, string name)
         {

@@ -83,24 +83,10 @@ namespace UnityExplorer.Config
 
         public static ConfigElement<int> McpBridge_MaxFrameBudgetMs;
 
-        public static ConfigElement<ParalivesSafeActionMode> Paralives_SafeActionMode;
-
-        public static ConfigElement<int> Paralives_SavedGameListLimit;
-
-        public static ConfigElement<int> Paralives_LoadingWaitTimeoutMs;
-
-        public static ConfigElement<bool> Paralives_PreferUiFlowForSaveLoad;
-
         public enum Language
         {
             English,
             Chinese
-        }
-
-        public enum ParalivesSafeActionMode
-        {
-            ConfirmRequired,
-            OneClickInUI
         }
 
         // internal configs
@@ -201,26 +187,6 @@ DetectDefaultLanguage(),
                 2,
                 category: "MCP");
 
-            Paralives_SafeActionMode = new("Paralives Safe Action Mode",
-                "Controls whether game-side Paralives UI actions require a second click confirmation. MCP writes still require dryRun false and the confirmation phrase.",
-                ParalivesSafeActionMode.ConfirmRequired,
-                category: "Paralives");
-
-            Paralives_SavedGameListLimit = new("Paralives Saved Game List Limit",
-                "Maximum saved games to display in the Paralives panel.",
-                50,
-                category: "Paralives");
-
-            Paralives_LoadingWaitTimeoutMs = new("Paralives Loading Wait Timeout Ms",
-                "Maximum time to wait for Paralives loading actions before treating them as timed out.",
-                30000,
-                category: "Paralives",
-                advanced: true);
-
-            Paralives_PreferUiFlowForSaveLoad = new("Paralives Prefer UI Flow For Save Load",
-                "Prefer visible Paralives UI flows for save loading when available; fallback methods are shown before execution.",
-                true,
-                category: "Paralives");
             Startup_Delay_Time = new("Startup Delay Time",
                 "The delay on startup before the UI is created.",
                 1f,

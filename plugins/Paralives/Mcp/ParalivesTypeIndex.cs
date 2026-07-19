@@ -1,7 +1,7 @@
 #if MONO
 using Mono.Cecil;
 
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     internal sealed class ParalivesTypeIndex
     {

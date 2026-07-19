@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 
 namespace UnityExplorer.McpBridge
 {
-    internal static class UnityObjectSummary
+    public static class UnityObjectSummary
     {
         public static Dictionary<string, object> FromGameObject(GameObject go)
         {

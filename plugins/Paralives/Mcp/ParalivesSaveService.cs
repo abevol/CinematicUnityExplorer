@@ -1,7 +1,9 @@
 #if MONO
 using System.Globalization;
 
-namespace UnityExplorer.McpBridge.Paralives
+using CinematicUnityExplorer.Plugins.Paralives;
+
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     internal static class ParalivesSaveService
     {
@@ -33,8 +35,8 @@ namespace UnityExplorer.McpBridge.Paralives
         private static object ListSavedGames(Dictionary<string, object> parameters)
         {
             ParalivesShared.EnsureAvailable();
-            int defaultLimit = UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit != null
-                ? UnityExplorer.Config.ConfigManager.Paralives_SavedGameListLimit.Value
+            int defaultLimit = ParalivesPluginConfig.SavedGameListLimit != null
+                ? ParalivesPluginConfig.SavedGameListLimit.Value
                 : 50;
             int limit = McpParameters.Clamp(McpParameters.OptionalInt(parameters, "limit", defaultLimit), 1, MaxListedSavedGames);
             List<object> managerItems = TryListSavedGamesFromManager(limit);

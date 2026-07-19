@@ -1,6 +1,6 @@
 namespace UnityExplorer.McpBridge
 {
-    internal class McpBridgeException : Exception
+    public class McpBridgeException : Exception
     {
         public string Code { get; }
 

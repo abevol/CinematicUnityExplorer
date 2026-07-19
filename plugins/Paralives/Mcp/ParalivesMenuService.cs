@@ -1,5 +1,5 @@
 #if MONO
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     internal static class ParalivesMenuService
     {

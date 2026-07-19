@@ -1,7 +1,7 @@
 #if MONO
 using System.Globalization;
 
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     internal static class ParalivesNeedService
     {

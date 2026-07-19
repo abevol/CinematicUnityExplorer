@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net35</TargetFramework>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <Configurations>BIE6_Unity_Mono</Configurations>
+    <DefineConstants>MONO,BIE,BIE6,BIPUNITY</DefineConstants>
+    <OutputPath>..\..\Release\CinematicUnityExplorer.BepInEx6.Unity.Mono\</OutputPath>
+    <AssemblyName>CinematicUnityExplorer.ParalivesPlugin</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net35" Version="1.0.3" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Reflection" />
+    <Using Include="System.Text" />
+    <Using Include="UnityEngine" />
+    <Using Include="UnityEngine.UI" />
+    <Using Include="UnityExplorer" />
+    <Using Include="UnityExplorer.McpBridge" />
+    <Using Include="UniverseLib" />
+    <Using Include="UniverseLib.Utility" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="CinematicUnityExplorer.BIE6.Unity.Mono">
+      <HintPath>..\..\Release\CinematicUnityExplorer.BepInEx6.Unity.Mono\CinematicUnityExplorer.BIE6.Unity.Mono.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UniverseLib.Mono">
+      <HintPath>..\..\UniverseLib\Release\UniverseLib.Mono\UniverseLib.Mono.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>..\..\lib\net35\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>..\..\lib\net35\UnityEngine.UI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>..\..\UnityEditorPackage\Runtime\Mono.Cecil.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,6 +1,6 @@
 namespace UnityExplorer.McpBridge
 {
-    internal static class UnityReflectionUtility
+    public static class UnityReflectionUtility
     {
         public static bool TryReadMember(object owner, Type type, string memberName, out object value)
         {

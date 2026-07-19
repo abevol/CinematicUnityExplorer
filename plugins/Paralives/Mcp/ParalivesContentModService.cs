@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     internal static class ParalivesContentModService
     {

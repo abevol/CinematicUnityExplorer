@@ -1,7 +1,7 @@
 #if MONO
 using System.Globalization;
 
-namespace UnityExplorer.McpBridge.Paralives
+namespace CinematicUnityExplorer.Plugins.Paralives.Mcp
 {
     /// <summary>
     /// 提供 Paralives 运行时状态查询和日志读取功能
