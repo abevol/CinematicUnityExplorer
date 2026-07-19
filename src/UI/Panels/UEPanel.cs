@@ -11,6 +11,8 @@ namespace UnityExplorer.UI.Panels
         protected UEPanel(UIBase owner) : base(owner) { }
 
         public abstract UIManager.Panels PanelType { get; }
+        public virtual string PanelSaveKey => PanelType.ToString();
+        public virtual string NavButtonId => PanelType.ToString();
         public virtual bool ShowByDefault => false;
         public virtual bool ShouldSaveActiveState => true;
 
@@ -86,7 +88,7 @@ namespace UnityExplorer.UI.Panels
         }
 
         private void SetSaveDataToConfigValue() 
-            => ConfigManager.GetPanelSaveData(this.PanelType).Value = this.ToSaveData();
+            => ConfigManager.GetPanelSaveData(PanelSaveKey).Value = this.ToSaveData();
 
         public virtual string ToSaveData()
         {
@@ -108,8 +110,13 @@ namespace UnityExplorer.UI.Panels
 
         public virtual void ApplySaveData()
         {
-            string data = ConfigManager.GetPanelSaveData(this.PanelType).Value;
+            string data = ConfigManager.GetPanelSaveData(PanelSaveKey).Value;
             ApplySaveData(data);
+        }
+
+        protected virtual void OnNavButtonClicked()
+        {
+            UIManager.TogglePanel(PanelType);
         }
 
         protected virtual void ApplySaveData(string data)
@@ -143,14 +150,14 @@ namespace UnityExplorer.UI.Panels
             {
                 // create navbar button
 
-                NavButton = UIFactory.CreateButton(UIManager.NavbarTabButtonHolder, $"Button_{PanelType}", Name);
+                NavButton = UIFactory.CreateButton(UIManager.NavbarTabButtonHolder, $"Button_{NavButtonId}", Name);
                 GameObject navBtn = NavButton.Component.gameObject;
                 navBtn.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
                 UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(navBtn, false, true, true, true, 0, 0, 0, 5, 5, TextAnchor.MiddleCenter);
                 UIFactory.SetLayoutElement(navBtn, minWidth: 80);
 
                 RuntimeHelper.SetColorBlock(NavButton.Component, UniversalUI.DisabledButtonColor, UniversalUI.DisabledButtonColor * 1.2f);
-                NavButton.OnClick += () => { UIManager.TogglePanel(PanelType); };
+                NavButton.OnClick += OnNavButtonClicked;
 
                 GameObject txtObj = navBtn.transform.Find("Text").gameObject;
                 txtObj.AddComponent<ContentSizeFitter>().horizontalFit = ContentSizeFitter.FitMode.PreferredSize;

@@ -105,13 +105,18 @@ namespace UnityExplorer.Config
 
         // internal configs
         internal static InternalConfigHandler InternalHandler { get; private set; }
-        internal static readonly Dictionary<UIManager.Panels, ConfigElement<string>> PanelSaveData = new();
+        internal static readonly Dictionary<string, ConfigElement<string>> PanelSaveData = new();
 
         internal static ConfigElement<string> GetPanelSaveData(UIManager.Panels panel)
         {
-            if (!PanelSaveData.ContainsKey(panel))
-                PanelSaveData.Add(panel, new ConfigElement<string>(panel.ToString(), string.Empty, string.Empty, true));
-            return PanelSaveData[panel];
+            return GetPanelSaveData(panel.ToString());
+        }
+
+        internal static ConfigElement<string> GetPanelSaveData(string panelKey)
+        {
+            if (!PanelSaveData.ContainsKey(panelKey))
+                PanelSaveData.Add(panelKey, new ConfigElement<string>(panelKey, string.Empty, string.Empty, true));
+            return PanelSaveData[panelKey];
         }
 
         public static void Init(ConfigHandler configHandler)
@@ -144,6 +149,11 @@ namespace UnityExplorer.Config
                 InternalHandler.RegisterConfigElement(configElement);
                 InternalConfigs.Add(configElement.Name, configElement);
             }
+        }
+
+        public static ConfigElement<T> CreatePluginConfig<T>(string name, string description, T defaultValue, string category, bool requiresRestart = false, bool advanced = false)
+        {
+            return new ConfigElement<T>(name, description, defaultValue, category: category, requiresRestart: requiresRestart, advanced: advanced);
         }
 
         private static void CreateConfigElements()
