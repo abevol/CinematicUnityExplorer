@@ -379,6 +379,16 @@ For targeted validation, build the solution with the solution-level `Release_*` 
 dotnet build src/CinematicUnityExplorer.sln -c Release_BIE6_Mono
 ```
 
+```text
+Game-specific plugins are optional assemblies loaded from the CinematicUnityExplorer plugin folder. The first supported plugin build path is `BIE6_Unity_Mono`; validate it with:
+
+~~~powershell
+dotnet build src/CinematicUnityExplorer.sln -c Release_BIE6_Unity_Mono
+~~~
+
+When no game-specific plugin is installed or available, CinematicUnityExplorer runs with only its core panels and core MCP tools.
+```
+
 Do not validate by calling `CinematicUnityExplorer.csproj` directly with a project configuration such as `BIE6_Mono`; the `.sln` maps each `Release_*` configuration to the matching CinematicUnityExplorer and UniverseLib project configurations. Bypassing that mapping can produce misleading restore or framework errors.
 
 Building individual configurations from your IDE is fine, though note that the initial build process builds into `Release/<version>/...` instead of the subfolders that the powershell script uses. For scripted batch validation, use `build.ps1` or `build-configs.ps1` so the solution configuration mapping is preserved.
