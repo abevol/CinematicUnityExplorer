@@ -8,7 +8,7 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <AllowedReferenceRelatedFileExtensions>none</AllowedReferenceRelatedFileExtensions>
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>embedded</DebugType>
+    <DebugType>portable</DebugType>
     <RootNamespace>CinematicUnityExplorer</RootNamespace>
     <LangVersion>latest</LangVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
