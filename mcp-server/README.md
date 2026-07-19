@@ -29,6 +29,28 @@ Optional environment variables:
 - `UNITY_EXPLORER_MCP_PORT`, default `8765`
 - `UNITY_EXPLORER_MCP_TIMEOUT_MS`, default `5000`
 
+## AI Agent Integration
+
+Register as a global command:
+
+```sh
+bun link
+```
+
+Then add the following entry to your AI Agent's MCP configuration. For example, OpenCode's `~/.config/opencode/opencode.json`：
+
+```json
+{
+  "mcp": {
+      "unity-explorer-mcp": {
+          "type": "local",
+          "command": ["unity-explorer-mcp"],
+          "enabled": true
+      }
+  }
+}
+```
+
 The server exposes UnityExplorer tools:
 
 - `UnityExplorer:find_game_objects`
