@@ -1,12 +1,10 @@
 ﻿using UnityExplorer.Config;
 using UnityExplorer.McpBridge;
+using UnityExplorer.Plugins;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
 using UnityExplorer.UI.Widgets;
 using UniverseLib.Input;
-#if MONO
-using UnityExplorer.McpBridge.Paralives;
-#endif
 #if CPP
 #if UNHOLLOWER
 using UnhollowerRuntimeLib;
@@ -44,9 +42,7 @@ namespace UnityExplorer
         {
             McpBridgeController.Update();
             ExplorerCore.Update();
-#if MONO
-            ParalivesPerformanceCountersService.Update();
-#endif
+            PluginManager.UpdatePlugins();
         }
 
         // For editor, to clean up objects
@@ -63,9 +59,7 @@ namespace UnityExplorer
             if (quitting) return;
             quitting = true;
             McpBridgeController.Shutdown();
-#if MONO
-            ParalivesPerformanceCountersService.Shutdown();
-#endif
+            PluginManager.ShutdownPlugins();
 
             TryDestroy(UIManager.UIRoot?.transform.root.gameObject);
 

@@ -10,6 +10,7 @@ global using UniverseLib.Utility;
 using UnityExplorer.CatmullRom;
 using UnityExplorer.Config;
 using UnityExplorer.ObjectExplorer;
+using UnityExplorer.Plugins;
 using UnityExplorer.Runtime;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
@@ -47,6 +48,7 @@ namespace UnityExplorer
             ConfigManager.Init(Loader.ConfigHandler);
 
             ConfigManager.SetUniverseLibBypassICall(ConfigManager.Bypass_UniverseLib_ICall.Value);
+            PluginManager.LoadPlugins();
 
             Universe.Init(ConfigManager.Startup_Delay_Time.Value, LateInit, Log, new()
             {
