@@ -1,0 +1,23 @@
+{
+  "skill_name": "game-plugin-authoring",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我想为 Paralives 做一个 CinematicUnityExplorer 插件。请阅读游戏反编译代码后，暴露当前家庭、角色需求和存档相关 MCP 工具，并做一个工具面板。",
+      "expected_output": "设计并生成一个可选游戏插件，不把 Paralives 功能固定进主程序集；MCP 写工具默认 dry-run 并要求确认。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "为一个 Unity 生活模拟游戏制作 CUE 插件，只允许只读 MCP 工具，不允许写游戏状态。反编译代码里有 CharacterManager、NeedManager、HouseholdManager。",
+      "expected_output": "只设计只读工具，基于 manager 类型建立工具和面板，不生成写入或 cheat 工具。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "我有一个游戏的 Assembly-CSharp.dll，帮我找 manager 类型并生成专属 MCP 面板插件。构建验证用 BIE6_Unity_Mono。",
+      "expected_output": "先研究反编译程序集结构，再按 UnityExplorer.Plugins API 生成插件，并使用 Release_BIE6_Unity_Mono 验证。",
+      "files": []
+    }
+  ]
+}
