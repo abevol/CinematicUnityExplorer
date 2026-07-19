@@ -48,7 +48,9 @@ namespace UnityExplorer
             ConfigManager.Init(Loader.ConfigHandler);
 
             ConfigManager.SetUniverseLibBypassICall(ConfigManager.Bypass_UniverseLib_ICall.Value);
+#if MONO && BIE && BIPUNITY && BIE6
             PluginManager.LoadPlugins();
+#endif
 
             Universe.Init(ConfigManager.Startup_Delay_Time.Value, LateInit, Log, new()
             {

@@ -42,7 +42,9 @@ namespace UnityExplorer
         {
             McpBridgeController.Update();
             ExplorerCore.Update();
+#if MONO && BIE && BIPUNITY && BIE6
             PluginManager.UpdatePlugins();
+#endif
         }
 
         // For editor, to clean up objects
@@ -59,7 +61,9 @@ namespace UnityExplorer
             if (quitting) return;
             quitting = true;
             McpBridgeController.Shutdown();
+#if MONO && BIE && BIPUNITY && BIE6
             PluginManager.ShutdownPlugins();
+#endif
 
             TryDestroy(UIManager.UIRoot?.transform.root.gameObject);
 
