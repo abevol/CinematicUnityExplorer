@@ -68,7 +68,7 @@ namespace UnityExplorer.UI.Panels
 
             GameObject tools = UEUI.CreateSection(content, "Tools", Localizer.Get("LBL_MCP_TOOL_GROUPS", "Tool Groups"));
             UEUI.AddInfoRow(tools, "UnityExplorer", "find_game_objects, get_object_detail, set_component_property, call_component_method, get_scene_hierarchy, get_object_components, get_runtime_status, get_recent_logs, list_config, get_mcp_status");
-            UEUI.AddInfoRow(tools, "Paralives", Localizer.Get("TXT_MCP_PARALIVES_TOOLS", "Available in Paralives only; write tools keep dry-run/confirm policy."));
+            UEUI.AddInfoRow(tools, "Plugins", "Plugin MCP tools are exposed dynamically when a game plugin is available.");
 
             GameObject requests = UEUI.CreateSection(content, "RequestLog", Localizer.Get("LBL_MCP_RECENT_REQUESTS", "Recent Requests"));
             List<object> logs = GetList(status, "requests");

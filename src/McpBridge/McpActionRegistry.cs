@@ -39,21 +39,6 @@ namespace UnityExplorer.McpBridge
             Register(registry, UnityObjectService.Actions);
             Register(registry, UnityComponentService.Actions);
             Register(registry, UnityRuntimeService.Actions);
-#if MONO
-            Register(registry, Paralives.ParalivesStateService.Actions);
-            Register(registry, Paralives.ParalivesMenuService.Actions);
-            Register(registry, Paralives.ParalivesSaveService.Actions);
-            Register(registry, Paralives.ParalivesContentModService.Actions);
-            Register(registry, Paralives.ParalivesCollectionService.Actions);
-            Register(registry, Paralives.ParalivesNeedService.Actions);
-            Register(registry, Paralives.ParalivesCheatService.Actions);
-            Register(registry, Paralives.ParalivesRuntimeService.Actions);
-            Register(registry, Paralives.ParalivesActiveContextService.Actions);
-            Register(registry, Paralives.ParalivesCharacterRuntimeService.Actions);
-            Register(registry, Paralives.ParalivesLogService.Actions);
-            Register(registry, Paralives.ParalivesPerformanceCountersService.Actions);
-            Register(registry, Paralives.ParalivesGameDataService.Actions);
-#endif
             return registry;
         }
 

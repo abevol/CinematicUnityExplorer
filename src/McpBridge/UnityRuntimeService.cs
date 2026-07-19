@@ -1,5 +1,6 @@
 using UnityEngine.SceneManagement;
 using UnityExplorer.Config;
+using UnityExplorer.Plugins;
 using UnityExplorer.UI;
 using UnityExplorer.UI.Panels;
 
@@ -15,7 +16,9 @@ namespace UnityExplorer.McpBridge
             ["get_runtime_status"] = GetRuntimeStatus,
             ["get_recent_logs"] = GetRecentLogs,
             ["list_config"] = ListConfig,
-            ["get_mcp_status"] = GetMcpStatus
+            ["get_mcp_status"] = GetMcpStatus,
+            ["get_plugin_status"] = GetPluginStatus,
+            ["get_mcp_tool_definitions"] = GetMcpToolDefinitions
         };
 
         private static object GetRuntimeStatus(Dictionary<string, object> parameters)
@@ -129,6 +132,43 @@ namespace UnityExplorer.McpBridge
         private static object GetMcpStatus(Dictionary<string, object> parameters)
         {
             return McpBridgeController.GetStatusSnapshot();
+        }
+
+        private static object GetPluginStatus(Dictionary<string, object> parameters)
+        {
+            return new Dictionary<string, object>
+            {
+                ["plugins"] = PluginManager.GetStatusSnapshot()
+            };
+        }
+
+        private static object GetMcpToolDefinitions(Dictionary<string, object> parameters)
+        {
+            List<object> tools = McpActionRegistry.PluginTools.Select(tool => new Dictionary<string, object>
+            {
+                ["name"] = tool.Name,
+                ["action"] = tool.Action,
+                ["description"] = tool.Description,
+                ["inputSchema"] = McpJson.Parse(tool.InputSchemaJson),
+                ["group"] = tool.Group,
+                ["risk"] = tool.Risk
+            }).Cast<object>().ToList();
+
+            List<object> resources = McpActionRegistry.PluginResources.Select(resource => new Dictionary<string, object>
+            {
+                ["uri"] = resource.Uri,
+                ["name"] = resource.Name,
+                ["description"] = resource.Description,
+                ["mimeType"] = resource.MimeType,
+                ["action"] = resource.Action,
+                ["params"] = resource.Parameters
+            }).Cast<object>().ToList();
+
+            return new Dictionary<string, object>
+            {
+                ["tools"] = tools,
+                ["resources"] = resources
+            };
         }
 
         private static string FormatConfigValue(object value)

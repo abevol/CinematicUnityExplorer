@@ -39,29 +39,10 @@ The server exposes UnityExplorer tools:
 - `UnityExplorer:get_recent_logs`
 - `UnityExplorer:list_config`
 - `UnityExplorer:get_mcp_status`
+- `UnityExplorer:get_plugin_status`
 
-It also exposes Paralives-specific tools when the bridge is running inside Paralives:
-
-- `Paralives:get_type_index`
-- `Paralives:get_game_state`
-- `Paralives:list_main_menu_actions`
-- `Paralives:invoke_main_menu_action`
-- `Paralives:list_saved_games`
-- `Paralives:load_saved_game`
-- `Paralives:start_new_game`
-- `Paralives:get_loading_state`
-- `Paralives:list_content_mods`
-- `Paralives:inspect_content_mod`
-- `Paralives:create_content_mod`
-- `Paralives:import_asset_to_mod`
-- `Paralives:list_characters`
-- `Paralives:list_households`
-- `Paralives:list_lots`
-- `Paralives:set_need_value`
-- `Paralives:list_cheat_commands`
-- `Paralives:run_whitelisted_cheat`
-
-Writes default to dry-run. To execute a write, pass `dryRun: false` and `confirm: "CONFIRM_PARALIVES_WRITE"`.
+Game-specific tools and resources are discovered dynamically from loaded CinematicUnityExplorer plugins.
+Plugin write tools define their own confirmation policy in the exposed schema and description.
 
 Resources:
 
@@ -70,6 +51,4 @@ Resources:
 - `unity://runtime/status`
 - `unity://config/options`
 - `unity://mcp/status`
-- `paralives://types/managers`
-- `paralives://types/settings`
-- `paralives://types/cheats`
+- `unity://plugins/status`
