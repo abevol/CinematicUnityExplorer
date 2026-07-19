@@ -1,4 +1,5 @@
 ﻿using UnityEngine.SceneManagement;
+using UnityExplorer.Localization;
 using UnityExplorer.Serializers;
 using UniverseLib.Input;
 using UniverseLib.UI;
@@ -32,7 +33,7 @@ namespace UnityExplorer.UI.Panels
             tensionCatmullRomSlider = new Slider();
         }
 
-        public override string Name => "Cam Paths";
+        public override string Name => Localizer.Get("PANEL_CAM_PATHS", "Cam Paths");
         public override UIManager.Panels PanelType => UIManager.Panels.CamPaths;
         public override int MinWidth => 725;
         public override int MinHeight => 300;
@@ -130,7 +131,7 @@ namespace UnityExplorer.UI.Panels
             AddNodeButton.ButtonText.fontSize = 20;
             AddNodeButton.OnClick += AddNode;
 
-            ButtonRef DeletePath = UIFactory.CreateButton(horiGroup, "DeletePath", "Clear");
+            ButtonRef DeletePath = UIFactory.CreateButton(horiGroup, "DeletePath", Localizer.Get("BTN_CLEAR_PATH", "Clear"));
             UIFactory.SetLayoutElement(DeletePath.GameObject, minWidth: 70, minHeight: 25);
             DeletePath.OnClick += () => {
                 controlPoints.Clear();
@@ -143,7 +144,7 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(toggleClosedLoopObj, minHeight: 25, flexibleWidth: 9999);
             closedLoopToggle.isOn = false;
             closedLoopToggle.onValueChanged.AddListener((isClosedLoop) => {closedLoop = isClosedLoop; MaybeRedrawPath(); EventSystemHelper.SetSelectedGameObject(null);});
-            toggleClosedLoopText.text = "Close path in a loop";
+            toggleClosedLoopText.text = Localizer.Get("LBL_CLOSED_LOOP", "Close path in a loop");
 
             AddInputField("Time", "Path time (in seconds at 60fps):", $"Default: {time}", out TimeInput, Time_OnEndEdit, 50, horiGroup);
             TimeInput.Text = time.ToString();
@@ -157,25 +158,25 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(visualizePathObj, minHeight: 25, flexibleWidth: 9999);
             visualizePathToggle.isOn = false;
             visualizePathToggle.onValueChanged.AddListener(ToggleVisualizePath);
-            visualizePathText.text = "Visualize path";
+            visualizePathText.text = Localizer.Get("LBL_VISUALIZE_PATH", "Visualize path");
 
             GameObject unpauseOnPlayObj = UIFactory.CreateToggle(secondRow, "Unpause on play", out Toggle unpauseOnPlayToggle, out Text unpauseOnPlayText);
             UIFactory.SetLayoutElement(unpauseOnPlayObj, minHeight: 25, flexibleWidth: 9999);
             unpauseOnPlayToggle.isOn = false;
             unpauseOnPlayToggle.onValueChanged.AddListener((value) => unpauseOnPlay = value);
-            unpauseOnPlayText.text = "Unpause on play";
+            unpauseOnPlayText.text = Localizer.Get("LBL_UNPAUSE_ON_PLAY", "Unpause on play");
 
             GameObject pauseOnFinishObj = UIFactory.CreateToggle(secondRow, "Pause on finish", out Toggle pauseOnFinishToggle, out Text pauseOnFinishText);
             UIFactory.SetLayoutElement(pauseOnFinishObj, minHeight: 25, flexibleWidth: 9999);
             pauseOnFinishToggle.isOn = false;
             pauseOnFinishToggle.onValueChanged.AddListener((value) => pauseOnFinish = value);
-            pauseOnFinishText.text = "Pause on finish";
+            pauseOnFinishText.text = Localizer.Get("LBL_PAUSE_ON_FINISH", "Pause on finish");
 
             GameObject waitBeforePlayObj = UIFactory.CreateToggle(secondRow, "Wait before play", out Toggle waitBeforePlayToggle, out Text waitBeforePlayText);
             UIFactory.SetLayoutElement(waitBeforePlayObj, minHeight: 25, flexibleWidth: 9999);
             waitBeforePlayToggle.isOn = false;
             waitBeforePlayToggle.onValueChanged.AddListener((value) => waitBeforePlay = value);
-            waitBeforePlayText.text = "Wait 3 seconds before start";
+            waitBeforePlayText.text = Localizer.Get("LBL_WAIT_BEFORE_PLAY", "Wait 3 seconds before start");
 
 
             // CatmullRom alpha value
@@ -216,24 +217,24 @@ namespace UnityExplorer.UI.Panels
                 default, new Color(1, 1, 1, 0), TextAnchor.MiddleLeft);
             UIFactory.SetLayoutElement(fourthRow, minHeight: 25, flexibleWidth: 9999);
 
-            saveLoadInputField = UIFactory.CreateInputField(fourthRow, "PathName", "File name");
+            saveLoadInputField = UIFactory.CreateInputField(fourthRow, "PathName", Localizer.Get("TXT_FILE_NAME", "File name"));
             UIFactory.SetLayoutElement(saveLoadInputField.GameObject, minWidth: 320, minHeight: 25);
 
             GameObject spacer1 = UIFactory.CreateUIObject("Spacer", fourthRow);
             LayoutElement spaceLayout1 = UIFactory.SetLayoutElement(spacer1, minWidth: 20, flexibleWidth: 0);
 
-            ButtonRef savePath = UIFactory.CreateButton(fourthRow, "SavePathButton", "Save path");
+            ButtonRef savePath = UIFactory.CreateButton(fourthRow, "SavePathButton", Localizer.Get("BTN_SAVE_PATH", "Save path"));
             UIFactory.SetLayoutElement(savePath.GameObject, minWidth: 100, minHeight: 25);
             savePath.OnClick += SavePath;
 
-            ButtonRef loadPath = UIFactory.CreateButton(fourthRow, "LoadPathButton", "Load path");
+            ButtonRef loadPath = UIFactory.CreateButton(fourthRow, "LoadPathButton", Localizer.Get("BTN_LOAD_PATH", "Load path"));
             UIFactory.SetLayoutElement(loadPath.GameObject, minWidth: 100, minHeight: 25);
             loadPath.OnClick += LoadPath;
 
             GameObject loadPathOnCamObj = UIFactory.CreateToggle(fourthRow, "Load path on cam", out loadPathOnCamToggle, out Text loadPathOnCamText);
             UIFactory.SetLayoutElement(loadPathOnCamObj, minHeight: 25, flexibleWidth: 9999);
             loadPathOnCamToggle.isOn = false;
-            loadPathOnCamText.text = "Load path starting on current camera state";
+            loadPathOnCamText.text = Localizer.Get("LBL_LOAD_PATH_ON_CAM", "Load path starting on current camera state");
 
             nodesScrollPool = UIFactory.CreateScrollPool<CamPathNodeCell>(ContentRoot, "NodeList", out GameObject scrollObj,
                 out GameObject scrollContent, new Color(0.03f, 0.03f, 0.03f));

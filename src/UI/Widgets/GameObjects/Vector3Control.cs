@@ -1,4 +1,5 @@
-﻿using UniverseLib.UI;
+﻿using UnityExplorer.Localization;
+using UniverseLib.UI;
 using UniverseLib.UI.Models;
 
 namespace UnityExplorer.UI.Widgets
@@ -125,7 +126,7 @@ namespace UnityExplorer.UI.Widgets
                 UIFactory.SetLayoutGroup<HorizontalLayoutGroup>(extraRowObj, false, false, true, true, 5, 0, 0, 0, 0, default);
                 UIFactory.SetLayoutElement(extraRowObj, minHeight: 25, flexibleWidth: 9999);
 
-                Text uniformScaleTitleLabel = UIFactory.CreateLabel(extraRowObj, "UniformScaleLabel", "Uniform Scale:", TextAnchor.MiddleRight, Color.grey);
+                Text uniformScaleTitleLabel = UIFactory.CreateLabel(extraRowObj, "UniformScaleLabel", Localizer.Get("LBL_UNIFORM_SCALE", "Uniform Scale:"), TextAnchor.MiddleRight, Color.grey);
                 UIFactory.SetLayoutElement(uniformScaleTitleLabel.gameObject, minHeight: 25, minWidth: 110);
 
                 GameObject uniformScaleControlObj = UIFactory.CreateSlider(extraRowObj, "UniformScaleSlider", out Slider uniformScaleControl);

@@ -607,7 +607,7 @@ namespace UnityExplorer.UI.Panels
 
             GameObject CameraModeRow = UIFactory.CreateHorizontalGroup(ContentRoot, "CameraModeRow", false, false, true, true, 3, default, new(1, 1, 1, 0));
 
-            Text CameraMode = UIFactory.CreateLabel(CameraModeRow, "Camera Mode", "Camera Mode:");
+            Text CameraMode = UIFactory.CreateLabel(CameraModeRow, "Camera Mode", Localizer.Get("LBL_CAMERA_MODE", "Camera Mode:"));
             UIFactory.SetLayoutElement(CameraMode.gameObject, minWidth: 75, minHeight: 25);
 
             GameObject cameraTypeDropdownObj = UIFactory.CreateDropdown(CameraModeRow, "CameraType_Dropdown", out cameraTypeDropdown, null, 14, (idx) => {
@@ -622,7 +622,7 @@ namespace UnityExplorer.UI.Panels
 
             if (ConfigManager.Freecam_Camera_Target_Selection.Value)
             {
-                Text TargetCamLabel = UIFactory.CreateLabel(CameraModeRow, "Target_cam_label", " Target cam:");
+                Text TargetCamLabel = UIFactory.CreateLabel(CameraModeRow, "Target_cam_label", Localizer.Get("LBL_TARGET_CAM", "Target cam:"));
                 UIFactory.SetLayoutElement(TargetCamLabel.gameObject, minWidth: 75, minHeight: 25);
 
                 GameObject targetCameraDropdownObj = UIFactory.CreateDropdown(CameraModeRow, "TargetCamera_Dropdown", out targetCameraDropdown, null, 14, null);
@@ -655,7 +655,7 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(resetPosButton.GameObject, minWidth: 70, minHeight: 25);
             resetPosButton.OnClick += OnResetPosButtonClicked;
 
-            Text componentsToDisableLabel = UIFactory.CreateLabel(ContentRoot, $"ComponentsToDisable_Label", "Disable Components/GameObjects:");
+            Text componentsToDisableLabel = UIFactory.CreateLabel(ContentRoot, $"ComponentsToDisable_Label", Localizer.Get("LBL_DISABLE_COMPONENTS", "Disable Components/GameObjects:"));
             UIFactory.SetLayoutElement(componentsToDisableLabel.gameObject, minWidth: 250, minHeight: 25);
 
             componentsToDisableInput = UIFactory.CreateInputField(ContentRoot, $"componentsToDisable_Input", "CinemachineBrain");
@@ -666,7 +666,7 @@ namespace UnityExplorer.UI.Panels
 
             GameObject controllerRow = UIFactory.CreateHorizontalGroup(ContentRoot, "ControllerRow", false, false, true, true, 3, default, new(1, 1, 1, 0));
 
-            Text ControllerLabel = UIFactory.CreateLabel(controllerRow, "Controller_label", " Controller:");
+            Text ControllerLabel = UIFactory.CreateLabel(controllerRow, "Controller_label", Localizer.Get("LBL_CONTROLLER", "Controller:"));
             UIFactory.SetLayoutElement(ControllerLabel.gameObject, minWidth: 75, minHeight: 25);
 
             if (InputManager.CurrentType == InputType.InputSystem)
@@ -687,13 +687,13 @@ namespace UnityExplorer.UI.Panels
             GameObject blockFreecamMovement = UIFactory.CreateToggle(togglesRow, "blockFreecamMovement", out blockFreecamMovementToggle, out Text blockFreecamMovementText);
             UIFactory.SetLayoutElement(blockFreecamMovement, minHeight: 25, flexibleWidth: 9999);
             blockFreecamMovementToggle.isOn = false;
-            blockFreecamMovementText.text = "Block Freecam movement";
+            blockFreecamMovementText.text = Localizer.Get("LBL_BLOCK_FREECAM_MOVEMENT", "Block Freecam movement");
 
             if (supportedInput){
                 GameObject blockGamesInputOnFreecam = UIFactory.CreateToggle(togglesRow, "blockGamesInputOnFreecam", out blockGamesInputOnFreecamToggle, out Text blockGamesInputOnFreecamText);
                 UIFactory.SetLayoutElement(blockGamesInputOnFreecam, minHeight: 25, flexibleWidth: 9999);
                 blockGamesInputOnFreecamToggle.isOn = true;
-                blockGamesInputOnFreecamText.text = "Block games input on Freecam";
+                blockGamesInputOnFreecamText.text = Localizer.Get("LBL_BLOCK_GAMES_INPUT", "Block games input on Freecam");
             }
 
             AddSpacer(5);
@@ -738,19 +738,19 @@ namespace UnityExplorer.UI.Panels
 
             AddSpacer(5);
 
-            followLookAtObjectLabel = UIFactory.CreateLabel(ContentRoot, "CurrentFollowLookAtObject", "Not following/looking at any object.");
+            followLookAtObjectLabel = UIFactory.CreateLabel(ContentRoot, "CurrentFollowLookAtObject", Localizer.Get("LBL_NOT_FOLLOWING", "Not following/looking at any object."));
             UIFactory.SetLayoutElement(followLookAtObjectLabel.gameObject, minWidth: 150, minHeight: 25);
 
             GameObject followObjectRow = UIFactory.CreateHorizontalGroup(ContentRoot, $"FollowObjectRow", false, false, true, true, 3, default, new(1, 1, 1, 0));
 
-            ButtonRef followButton = UIFactory.CreateButton(followObjectRow, "FollowButton", "Follow GameObject");
+            ButtonRef followButton = UIFactory.CreateButton(followObjectRow, "FollowButton", Localizer.Get("BTN_FOLLOW_GAMEOBJECT", "Follow GameObject"));
             UIFactory.SetLayoutElement(followButton.GameObject, minWidth: 150, minHeight: 25, flexibleWidth: 9999);
             followButton.OnClick += FollowButton_OnClick;
 
             GameObject followRotationGameObject = UIFactory.CreateToggle(followObjectRow, "followRotationToggle", out followRotationToggle, out Text followRotationText);
             UIFactory.SetLayoutElement(followRotationGameObject, minWidth: 150, minHeight: 25, flexibleWidth: 9999);
             followRotationToggle.isOn = false;
-            followRotationText.text = "Follow Object Rotation";
+            followRotationText.text = Localizer.Get("LBL_FOLLOW_ROTATION", "Follow Object Rotation");
             followRotationToggle.onValueChanged.AddListener((value) => {
                 if (followObject != null){
                     CamPaths CamPathsPanel = UIManager.GetPanel<CamPaths>(UIManager.Panels.CamPaths);
@@ -767,11 +767,11 @@ namespace UnityExplorer.UI.Panels
 
             GameObject lookAtObjectRow = UIFactory.CreateHorizontalGroup(ContentRoot, $"LookAtObjectRow", false, false, true, true, 3, default, new(1, 1, 1, 0));
 
-            ButtonRef lookAtButton = UIFactory.CreateButton(lookAtObjectRow, "LookAtButton", "Look At GameObject");
+            ButtonRef lookAtButton = UIFactory.CreateButton(lookAtObjectRow, "LookAtButton", Localizer.Get("BTN_LOOK_AT_GAMEOBJECT", "Look At GameObject"));
             UIFactory.SetLayoutElement(lookAtButton.GameObject, minWidth: 140, minHeight: 25, flexibleWidth: 9999);
             lookAtButton.OnClick += LookAtButton_OnClick;
 
-            ButtonRef releaseFollowLookAtButton = UIFactory.CreateButton(lookAtObjectRow, "ReleaseFollowLookAtButton", "Release Follow/Look At");
+            ButtonRef releaseFollowLookAtButton = UIFactory.CreateButton(lookAtObjectRow, "ReleaseFollowLookAtButton", Localizer.Get("BTN_RELEASE_FOLLOW_LOOK", "Release Follow/Look At"));
             UIFactory.SetLayoutElement(releaseFollowLookAtButton.GameObject, minWidth: 160, minHeight: 25, flexibleWidth: 9999);
             releaseFollowLookAtButton.OnClick += ReleaseFollowLookAtButton_OnClick;
 
@@ -809,7 +809,7 @@ namespace UnityExplorer.UI.Panels
             inspectButton.OnClick += () => { InspectorManager.Inspect(ourCamera); };
             inspectButton.GameObject.SetActive(false);
 
-            ButtonRef teleportButton = UIFactory.CreateButton(ContentRoot, "TeleportSelected", "Teleport to Selected");
+            ButtonRef teleportButton = UIFactory.CreateButton(ContentRoot, "TeleportSelected", Localizer.Get("BTN_TELEPORT_SELECTED", "Teleport to Selected"));
             UIFactory.SetLayoutElement(teleportButton.GameObject, flexibleWidth: 9999, minHeight: 25);
             teleportButton.OnClick += OnTeleportSelectedClicked;
 

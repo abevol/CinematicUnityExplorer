@@ -292,12 +292,12 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutElement(ViewParentButton.Component.gameObject, minHeight: 25, minWidth: 100);
             ViewParentButton.OnClick += OnViewParentClicked;
 
-            FollowObjectButton = UIFactory.CreateButton(firstRow, "FollowObjectButton", "Follow object with Freecam", new Color(0.2f, 0.2f, 0.2f));
+            FollowObjectButton = UIFactory.CreateButton(firstRow, "FollowObjectButton", Localizer.Get("BTN_FOLLOW_WITH_FREECAM", "Follow object with Freecam"), new Color(0.2f, 0.2f, 0.2f));
             FollowObjectButton.ButtonText.fontSize = 13;
             UIFactory.SetLayoutElement(FollowObjectButton.Component.gameObject, minHeight: 25, minWidth: 100);
             FollowObjectButton.OnClick += () => FreeCamPanel.FollowObjectAction(this.Target.gameObject);
 
-            LookAtObjectButton = UIFactory.CreateButton(firstRow, "LookAtObjectButton", "Look at object with Freecam", new Color(0.2f, 0.2f, 0.2f));
+            LookAtObjectButton = UIFactory.CreateButton(firstRow, "LookAtObjectButton", Localizer.Get("BTN_LOOK_AT_WITH_FREECAM", "Look at object with Freecam"), new Color(0.2f, 0.2f, 0.2f));
             LookAtObjectButton.ButtonText.fontSize = 13;
             UIFactory.SetLayoutElement(LookAtObjectButton.Component.gameObject, minHeight: 25, minWidth: 100);
             LookAtObjectButton.OnClick += () => FreeCamPanel.LookAtObjectAction(this.Target.gameObject);
@@ -331,7 +331,7 @@ namespace UnityExplorer.UI.Widgets
             NameInput.Component.textComponent.fontSize = 15;
             NameInput.Component.GetOnEndEdit().AddListener((string val) => { OnNameEndEdit(val); });
 
-            ButtonRef MoveToCameraButton = UIFactory.CreateButton(titleRow, "MoveToCameraButton", "Move to Camera", new Color(0.2f, 0.2f, 0.2f));
+            ButtonRef MoveToCameraButton = UIFactory.CreateButton(titleRow, "MoveToCameraButton", Localizer.Get("BTN_MOVE_TO_CAMERA", "Move to Camera"), new Color(0.2f, 0.2f, 0.2f));
             MoveToCameraButton.ButtonText.fontSize = 13;
             UIFactory.SetLayoutElement(MoveToCameraButton.Component.gameObject, minHeight: 25, minWidth: 120);
             MoveToCameraButton.OnClick += () => {

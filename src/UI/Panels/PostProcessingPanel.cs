@@ -1,6 +1,7 @@
 ﻿using UnityExplorer.CacheObject;
 using UnityExplorer.ObjectExplorer;
 using UnityExplorer.Inspectors;
+using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.ObjectPool;
@@ -19,7 +20,7 @@ namespace UnityExplorer.UI.Panels
         {
         }
 
-        public override string Name => "Post-processing";
+        public override string Name => Localizer.Get("PANEL_POST_PROCESSING", "Post-processing");
         public override UIManager.Panels PanelType => UIManager.Panels.PostProcessingPanel;
         public override int MinWidth => 500;
         public override int MinHeight => 500;
@@ -256,11 +257,11 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(horiGroup, minHeight: 25, flexibleWidth: 9999);
             //UIElements.Add(horiGroup);
 
-            updateEffects = UIFactory.CreateButton(horiGroup, "RefreshEffects", "Refresh Effects");
+            updateEffects = UIFactory.CreateButton(horiGroup, "RefreshEffects", Localizer.Get("BTN_REFRESH_EFFECTS", "Refresh Effects"));
             UIFactory.SetLayoutElement(updateEffects.GameObject, minWidth: 150, minHeight: 25);
             updateEffects.OnClick += UpdatePPElements;
 
-            Text openComponentLabel = UIFactory.CreateLabel(horiGroup, "OpenComponentLabel", "Open object in inspector  ", TextAnchor.MiddleRight, Color.white, false, 15);
+            Text openComponentLabel = UIFactory.CreateLabel(horiGroup, "OpenComponentLabel", Localizer.Get("LBL_OPEN_IN_INSPECTOR", "Open object in inspector"), TextAnchor.MiddleRight, Color.white, false, 15);
             UIFactory.SetLayoutElement(openComponentLabel.gameObject, minHeight: 25, minWidth: 60, flexibleWidth: 9999);
         }
     }

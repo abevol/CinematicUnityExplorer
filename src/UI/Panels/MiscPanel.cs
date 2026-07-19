@@ -1,5 +1,6 @@
 ﻿using UnityExplorer.CacheObject;
 using UnityExplorer.Inspectors;
+using UnityExplorer.Localization;
 using UnityExplorer.ObjectExplorer;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
@@ -29,7 +30,7 @@ namespace UnityExplorer.UI.Panels
             screenshotStatus = ScreenshotState.DoNothing;
         }
 
-        public override string Name => "Misc";
+        public override string Name => Localizer.Get("PANEL_MISC", "Misc");
         public override UIManager.Panels PanelType => UIManager.Panels.Misc;
         public override int MinWidth => 325;
         public override int MinHeight => 200;
@@ -238,14 +239,14 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(HUDToggleObj, minHeight: 25);
             HUDToggle.onValueChanged.AddListener(SetValueHUDElements);
             HUDToggle.isOn = true; // we picked up only the active UI elements
-            HUDToggleText.text = "Toggle HUD";
+            HUDToggleText.text = Localizer.Get("LBL_TOGGLE_HUD", "Toggle HUD");
 
             HighLodToggle = new Toggle();
             GameObject HighLodToggleObj = UIFactory.CreateToggle(ContentRoot, "HighLOD", out HighLodToggle, out Text HighLodToggleText);
             UIFactory.SetLayoutElement(HighLodToggleObj, minHeight: 25);
             HighLodToggle.onValueChanged.AddListener(ToogleHighLods);
             HighLodToggle.isOn = false;
-            HighLodToggleText.text = "High LODs Toggle";
+            HighLodToggleText.text = Localizer.Get("LBL_HIGH_LODS", "High LODs Toggle");
 
             // Screenshot function
             FindCaptureScreenshotFunction();
@@ -254,7 +255,7 @@ namespace UnityExplorer.UI.Panels
                 default, new Color(1, 1, 1, 0), TextAnchor.MiddleLeft);
                 UIFactory.SetLayoutElement(TakeScreenshotHoriGroup, minHeight: 25, flexibleWidth: 9999);
 
-                ButtonRef takeScreenshot = UIFactory.CreateButton(TakeScreenshotHoriGroup, "TakeScreenshot", "Take screenshot");
+                ButtonRef takeScreenshot = UIFactory.CreateButton(TakeScreenshotHoriGroup, "TakeScreenshot", Localizer.Get("BTN_TAKE_SCREENSHOT", "Take screenshot"));
                 UIFactory.SetLayoutElement(takeScreenshot.GameObject, minWidth: 150, minHeight: 25);
                 takeScreenshot.OnClick += () => screenshotStatus = ScreenshotState.TurnOffUI;
 
@@ -266,14 +267,14 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(ShadowMeshesObj, minHeight: 25);
             ShadowMeshesToggle.onValueChanged.AddListener(ToggleAllMeshesCastAndRecieveShadows);
             ShadowMeshesToggle.isOn = false;
-            ShadowMeshesText.text = "Make all meshes cast and recieve shadows";
+            ShadowMeshesText.text = Localizer.Get("LBL_ALL_MESHES_SHADOW", "Make all meshes cast and recieve shadows");
 
             Toggle ShadowsOnAllLightsToggle = new Toggle();
             GameObject ShadowsOnAllLightsObj = UIFactory.CreateToggle(ContentRoot, "ShadowOnAllLights", out ShadowsOnAllLightsToggle, out Text ShadowsOnAllLightsText);
             UIFactory.SetLayoutElement(ShadowsOnAllLightsObj, minHeight: 25);
             ShadowsOnAllLightsToggle.onValueChanged.AddListener(ToggleShadowsOnAllLights);
             ShadowsOnAllLightsToggle.isOn = false;
-            ShadowsOnAllLightsText.text = "Make all game lights emit shadow";
+            ShadowsOnAllLightsText.text = Localizer.Get("LBL_ALL_LIGHTS_SHADOW", "Make all game lights emit shadow");
 
             // High Resolution Shadows
             GameObject HighResShadowsGroup = UIFactory.CreateHorizontalGroup(ContentRoot, "HighRes shadows group", false, false, true, true, 3,
@@ -285,7 +286,7 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(HighResShadowsObj, minHeight: 25);
             HighResShadowsToggle.onValueChanged.AddListener(ToggleHighResShadows);
             HighResShadowsToggle.isOn = false;
-            HighResShadowsText.text = "High Res Shadows";
+            HighResShadowsText.text = Localizer.Get("LBL_HIGH_RES_SHADOWS", "High Res Shadows");
 
             AddInputField(HighResShadowsGroup, "Resolution", "Resolution:", $"{5000}", HighResShadowsResolution_OnEndEdit);
         }

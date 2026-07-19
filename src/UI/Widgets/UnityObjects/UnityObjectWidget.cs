@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.Inspectors;
+using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.ObjectPool;
@@ -115,7 +116,7 @@ namespace UnityExplorer.UI.Widgets
             UIFactory.SetLayoutElement(nameInput.UIRoot, minHeight: 25, minWidth: 100, flexibleWidth: 1000);
             nameInput.Component.readOnly = true;
 
-            gameObjectButton = UIFactory.CreateButton(UIRoot, "GameObjectButton", "Inspect GameObject", new Color(0.2f, 0.2f, 0.2f));
+            gameObjectButton = UIFactory.CreateButton(UIRoot, "GameObjectButton", Localizer.Get("BTN_INSPECT_GAMEOBJECT", "Inspect GameObject"), new Color(0.2f, 0.2f, 0.2f));
             UIFactory.SetLayoutElement(gameObjectButton.Component.gameObject, minHeight: 25, minWidth: 160);
             gameObjectButton.OnClick += OnGameObjectButtonClicked;
 

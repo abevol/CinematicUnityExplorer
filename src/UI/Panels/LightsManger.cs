@@ -1,4 +1,5 @@
-﻿using UniverseLib.Input;
+﻿using UnityExplorer.Localization;
+using UniverseLib.Input;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.Widgets;
@@ -21,7 +22,7 @@ namespace UnityExplorer.UI.Panels
         {
         }
 
-        public override string Name => "Lights Manager";
+        public override string Name => Localizer.Get("PANEL_LIGHTS_MANAGER", "Lights Manager");
         public override UIManager.Panels PanelType => UIManager.Panels.LightsManager;
         public override int MinWidth => 650;
         public override int MinHeight => 200;
@@ -92,12 +93,12 @@ namespace UnityExplorer.UI.Panels
             //UIElements.Add(horiGroup);
 
             //Create SpotLight
-            createSpotLightButton = UIFactory.CreateButton(horiGroup, "ToggleButton", "Create SpotLight");
+            createSpotLightButton = UIFactory.CreateButton(horiGroup, "ToggleButton", Localizer.Get("BTN_CREATE_SPOTLIGHT", "Create SpotLight"));
             UIFactory.SetLayoutElement(createSpotLightButton.GameObject, minWidth: 150, minHeight: 25);
             createSpotLightButton.OnClick += () => CreateLight(LightType.Spot);
 
             //Create PointLight
-            createPointLightButton = UIFactory.CreateButton(horiGroup, "ToggleButton", "Create PointLight");
+            createPointLightButton = UIFactory.CreateButton(horiGroup, "ToggleButton", Localizer.Get("BTN_CREATE_POINTLIGHT", "Create PointLight"));
             UIFactory.SetLayoutElement(createPointLightButton.GameObject, minWidth: 150, minHeight: 25);
             createPointLightButton.OnClick += () => CreateLight(LightType.Point);
 
@@ -109,7 +110,7 @@ namespace UnityExplorer.UI.Panels
             UIFactory.SetLayoutElement(toggleObj, minHeight: 25, flexibleWidth: 9999);
             vanillaLightsToggle.onValueChanged.AddListener(ToggleGameLights);
             vanillaLightsToggle.isOn = true;
-            toggleText.text = "Vanilla Game Lights";
+            toggleText.text = Localizer.Get("LBL_VANILLA_GAME_LIGHTS", "Vanilla Game Lights");
 
             lightsScrollPool = UIFactory.CreateScrollPool<LightCell>(ContentRoot, "NodeList", out GameObject scrollObj,
                 out GameObject scrollContent, new Color(0.03f, 0.03f, 0.03f));

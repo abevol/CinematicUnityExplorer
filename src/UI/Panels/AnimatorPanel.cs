@@ -1,6 +1,7 @@
 ﻿using UnityExplorer.CacheObject;
 using UnityExplorer.ObjectExplorer;
 using UnityExplorer.Inspectors;
+using UnityExplorer.Localization;
 using UniverseLib.UI;
 using UniverseLib.UI.Models;
 using UniverseLib.UI.ObjectPool;
@@ -21,7 +22,7 @@ namespace UnityExplorer.UI.Panels
         {
         }
 
-        public override string Name => "Animator";
+        public override string Name => Localizer.Get("PANEL_ANIMATOR", "Animator");
         public override UIManager.Panels PanelType => UIManager.Panels.AnimatorPanel;
         public override int MinWidth => 1300;
         public override int MinHeight => 200;
@@ -143,18 +144,18 @@ namespace UnityExplorer.UI.Panels
             GameObject meshObj = UIFactory.CreateToggle(firstGroup, "Master Mesh Toggle", out masterMeshToggle, out Text masterMeshText);
             UIFactory.SetLayoutElement(meshObj, minHeight: 25, minWidth: 230);
             masterMeshToggle.onValueChanged.AddListener(value => MasterToggleMeshes(value));
-            masterMeshText.text = "Master Mesh Toggler";
+            masterMeshText.text = Localizer.Get("BTN_MASTER_MESH_TOGGLE", "Master Mesh Toggler");
 
             masterAnimatorPlayer = new AnimatorPausePlayButton(firstGroup);
             masterAnimatorPlayer.OnClick += MasterToggleAnimators;
 
-            Text masterAnimatorPlayerText = UIFactory.CreateLabel(firstGroup, "MasterAnimatorToggleLabel", "Master Animator Toggler", TextAnchor.MiddleRight);
+            Text masterAnimatorPlayerText = UIFactory.CreateLabel(firstGroup, "MasterAnimatorToggleLabel", Localizer.Get("BTN_MASTER_ANIMATOR_TOGGLE", "Master Animator Toggler"), TextAnchor.MiddleRight);
             UIFactory.SetLayoutElement(masterAnimatorPlayerText.gameObject, flexibleWidth: 0, minHeight: 25);
 
             GameObject headerSpace2 = UIFactory.CreateUIObject("HeaderSpace2", firstGroup);
             UIFactory.SetLayoutElement(headerSpace2, minWidth: 10, flexibleWidth: 0);
 
-            ButtonRef resetAnimators = UIFactory.CreateButton(firstGroup, "ResetAnimators", "Reset Animators");
+            ButtonRef resetAnimators = UIFactory.CreateButton(firstGroup, "ResetAnimators", Localizer.Get("BTN_RESET_ANIMATORS", "Reset Animators"));
             UIFactory.SetLayoutElement(resetAnimators.GameObject, minWidth: 150, minHeight: 25);
             resetAnimators.OnClick += ResetAllAnimators;
 
@@ -162,7 +163,7 @@ namespace UnityExplorer.UI.Panels
             default, new Color(1, 1, 1, 0), TextAnchor.MiddleRight);
             UIFactory.SetLayoutElement(secondGroup, minHeight: 25, flexibleWidth: 9999);
 
-            ButtonRef updateAnimators = UIFactory.CreateButton(secondGroup, "RefreshAnimators", "Refresh Animators");
+            ButtonRef updateAnimators = UIFactory.CreateButton(secondGroup, "RefreshAnimators", Localizer.Get("BTN_REFRESH_ANIMATORS", "Refresh Animators"));
             UIFactory.SetLayoutElement(updateAnimators.GameObject, minWidth: 150, minHeight: 25);
             updateAnimators.OnClick += FindAllAnimators;
 
