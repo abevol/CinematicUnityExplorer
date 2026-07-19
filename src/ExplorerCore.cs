@@ -46,12 +46,13 @@ namespace UnityExplorer
             Directory.CreateDirectory(ExplorerFolder);
             ConfigManager.Init(Loader.ConfigHandler);
 
+            ConfigManager.SetUniverseLibBypassICall(ConfigManager.Bypass_UniverseLib_ICall.Value);
+
             Universe.Init(ConfigManager.Startup_Delay_Time.Value, LateInit, Log, new()
             {
                 Disable_EventSystem_Override = ConfigManager.Disable_EventSystem_Override.Value,
                 Force_Unlock_Mouse = ConfigManager.Force_Unlock_Mouse.Value,
                 Disable_Setup_Force_ReLoad_ManagedAssemblies = ConfigManager.Disable_Setup_Force_ReLoad_ManagedAssemblies.Value,
-                Bypass_UniverseLib_ICall = ConfigManager.Bypass_UniverseLib_ICall.Value,
                 Unhollowed_Modules_Folder = loader.UnhollowedModulesFolder
             });
 

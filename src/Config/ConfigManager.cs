@@ -257,7 +257,7 @@ DetectDefaultLanguage(),
                 category: "Advanced",
                 requiresRestart: true,
                 advanced: true);
-            Bypass_UniverseLib_ICall.OnValueChanged += (bool value) => UniverseLib.Config.ConfigManager.Bypass_UniverseLib_ICall = value;
+            Bypass_UniverseLib_ICall.OnValueChanged += SetUniverseLibBypassICall;
 
             Default_Output_Path = new("Default Output Path",
                 "The default output path when exporting things from CinematicUnityExplorer.",
@@ -477,6 +477,19 @@ false,
                 "The camera that will be targeted by the freecam methods.\n" +
                 "Only used when Freecam Camera Target Selection is enabled.",
                 "\\");
+        }
+
+        internal static void SetUniverseLibBypassICall(bool value)
+        {
+            try
+            {
+                typeof(UniverseLib.Config.ConfigManager)
+                    .GetProperty("Bypass_UniverseLib_ICall", BindingFlags.Public | BindingFlags.Static)
+                    ?.SetValue(null, value, null);
+            }
+            catch
+            {
+            }
         }
 
         private static Language DetectDefaultLanguage()
