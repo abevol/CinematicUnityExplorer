@@ -37,6 +37,20 @@ namespace UnityExplorer.McpBridge
                 });
             }
 
+            foreach (UEPanel panel in UIManager.PluginPanels)
+            {
+                panels.Add(new Dictionary<string, object>
+                {
+                    ["id"] = panel.PanelSaveKey,
+                    ["name"] = panel.Name,
+                    ["active"] = panel.Enabled,
+                    ["showByDefault"] = panel.ShowByDefault,
+                    ["minWidth"] = panel.MinWidth,
+                    ["minHeight"] = panel.MinHeight,
+                    ["plugin"] = true
+                });
+            }
+
             return new Dictionary<string, object>
             {
                 ["name"] = ExplorerCore.NAME,

@@ -30,6 +30,7 @@ namespace UnityExplorer.UI
             Paralives,
             AnimatorPanel,
             Misc,
+            Plugin,
         }
 
         public enum VerticalAnchor
@@ -48,6 +49,7 @@ namespace UnityExplorer.UI
         public static Canvas UICanvas { get; private set; }
 
         internal static readonly Dictionary<Panels, UEPanel> UIPanels = new();
+        internal static readonly List<UEPanel> PluginPanels = new();
 
         public static RectTransform NavBarRect;
         public static GameObject NavbarTabButtonHolder;
@@ -105,10 +107,8 @@ private static Vector2 NAVBAR_DIMENSIONS = new(1020f, 35f);
             UIPanels.Add(Panels.CamPaths, new CamPaths(UiBase));
             UIPanels.Add(Panels.PostProcessingPanel, new PostProcessingPanel(UiBase));
             UIPanels.Add(Panels.MCP, new McpPanel(UiBase));
-#if MONO
-            if (UnityExplorer.McpBridge.Paralives.ParalivesControlService.IsAvailable)
-                UIPanels.Add(Panels.Paralives, new ParalivesPanel(UiBase));
-#endif
+            foreach (UnityExplorer.Plugins.PluginPanelDescriptor descriptor in UnityExplorer.Plugins.PluginManager.RegisteredPanels)
+                PluginPanels.Add(new PluginPanelAdapter(UiBase, descriptor));
             UIPanels.Add(Panels.AnimatorPanel, new AnimatorPanel(UiBase));
             UIPanels.Add(Panels.Misc, new UnityExplorer.UI.Panels.Misc(UiBase));
             UIPanels.Add(Panels.Options, new OptionsPanel(UiBase));
@@ -225,6 +225,13 @@ private static Vector2 NAVBAR_DIMENSIONS = new(1020f, 35f);
                 panel.Value.EnsureValidSize();
                 panel.Value.EnsureValidPosition();
                 panel.Value.Dragger.OnEndResize();
+            }
+
+            foreach (UEPanel panel in PluginPanels)
+            {
+                panel.EnsureValidSize();
+                panel.EnsureValidPosition();
+                panel.Dragger.OnEndResize();
             }
         }
 
