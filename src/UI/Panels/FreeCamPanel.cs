@@ -795,7 +795,7 @@ namespace UnityExplorer.UI.Panels
             "Extra:\n" +
             $"- {ConfigManager.Freecam_Toggle.Value}: Freecam toggle\n" +
             $"- {ConfigManager.Block_Freecam_Movement.Value}: Toggle block Freecam\n" +
-            (supportedInput ? $"- {ConfigManager.Toggle_Block_Games_Input.Value}: Toggle games input on Freecam\n" : "") +
+            (supportedInput ? $"- {ConfigManager.Freecam_Block_Games_Input.Value}: Toggle games input on Freecam\n" : "") +
             $"- {ConfigManager.HUD_Toggle.Value}: HUD toggle\n" +
             $"- {ConfigManager.Pause.Value}: Pause\n" +
             $"- {ConfigManager.Frameskip.Value}: Frameskip\n" +

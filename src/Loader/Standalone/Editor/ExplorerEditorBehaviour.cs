@@ -22,6 +22,7 @@ namespace UnityExplorer.Loader.Standalone
         public UIManager.VerticalAnchor Main_Navbar_Anchor = UIManager.VerticalAnchor.Top;
         public bool Log_Unity_Debug = false;
         public float Startup_Delay_Time = 1f;
+        public KeyCode Block_Game_Input_Toggle;
         public KeyCode World_MouseInspect_Keybind;
         public KeyCode UI_MouseInspect_Keybind;
         public bool Force_Unlock_Mouse = true;
@@ -41,7 +42,7 @@ namespace UnityExplorer.Loader.Standalone
         public KeyCode HUD_Toggle;
         public KeyCode Freecam_Toggle;
         public KeyCode Block_Freecam_Movement;
-        public KeyCode Toggle_Block_Games_Input;
+        public KeyCode Freecam_Block_Games_Input;
         public KeyCode Speed_Up_Movement;
         public KeyCode Speed_Down_Movement;
         public KeyCode Forwards_1;
@@ -83,6 +84,7 @@ namespace UnityExplorer.Loader.Standalone
             ConfigManager.Main_Navbar_Anchor.Value = this.Main_Navbar_Anchor;
             ConfigManager.Log_Unity_Debug.Value = this.Log_Unity_Debug;
             ConfigManager.Startup_Delay_Time.Value = this.Startup_Delay_Time;
+            ConfigManager.Block_Game_Input_Toggle.Value = this.Block_Game_Input_Toggle;
             ConfigManager.World_MouseInspect_Keybind.Value = this.World_MouseInspect_Keybind;
             ConfigManager.UI_MouseInspect_Keybind.Value = this.UI_MouseInspect_Keybind;
             ConfigManager.Force_Unlock_Mouse.Value = this.Force_Unlock_Mouse;
@@ -103,7 +105,7 @@ namespace UnityExplorer.Loader.Standalone
             ConfigManager.HUD_Toggle.Value = this.HUD_Toggle;
             ConfigManager.Freecam_Toggle.Value = this.Freecam_Toggle;
             ConfigManager.Block_Freecam_Movement.Value = this.Block_Freecam_Movement;
-            ConfigManager.Toggle_Block_Games_Input.Value = this.Toggle_Block_Games_Input;
+            ConfigManager.Freecam_Block_Games_Input.Value = this.Freecam_Block_Games_Input;
             ConfigManager.Speed_Up_Movement.Value = this.Speed_Up_Movement;
             ConfigManager.Speed_Down_Movement.Value = this.Speed_Down_Movement;
             ConfigManager.Forwards_1.Value = this.Forwards_1;

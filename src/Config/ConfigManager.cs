@@ -29,6 +29,7 @@ namespace UnityExplorer.Config
         public static ConfigElement<bool> Log_Unity_Debug;
         public static ConfigElement<bool> Log_To_Disk;
         public static ConfigElement<UIManager.VerticalAnchor> Main_Navbar_Anchor;
+        public static ConfigElement<KeyCode> Block_Game_Input_Toggle;
         public static ConfigElement<KeyCode> World_MouseInspect_Keybind;
         public static ConfigElement<KeyCode> UI_MouseInspect_Keybind;
         public static ConfigElement<KeyCode> TimeScale_Toggle_Keybind;
@@ -50,7 +51,7 @@ namespace UnityExplorer.Config
         public static ConfigElement<KeyCode> HUD_Toggle;
         public static ConfigElement<KeyCode> Freecam_Toggle;
         public static ConfigElement<KeyCode> Block_Freecam_Movement;
-        public static ConfigElement<KeyCode> Toggle_Block_Games_Input;
+        public static ConfigElement<KeyCode> Freecam_Block_Games_Input;
         public static ConfigElement<KeyCode> Speed_Up_Movement;
         public static ConfigElement<KeyCode> Speed_Down_Movement;
         public static ConfigElement<KeyCode> Forwards_1;
@@ -264,6 +265,11 @@ DetectDefaultLanguage(),
                 true,
                 category: "Console");
 
+            Block_Game_Input_Toggle = new("Block Game Input Toggle",
+                "Toggle to block all game input and freeze the mouse cursor position.",
+                KeyCode.None,
+                category: "Inspector");
+
             World_MouseInspect_Keybind = new("World Mouse-Inspect Keybind",
                 "Optional keybind to being a World-mode Mouse Inspect.",
                 KeyCode.None,
@@ -336,7 +342,8 @@ false,
 
             Freecam_Camera_Target_Selection = new("Freecam Camera Target Selection",
                 "Enables certain advanced settings on the Freecam panel, in case the user can't get the freecam to work properly (requires game reset).",
-                false);
+                false,
+                category: "Freecam");
 
             Pause = new("Pause",
                 "Toggle the pause of the game.",
@@ -357,88 +364,109 @@ false,
 
             Freecam_Toggle = new("Freecam",
                 "Toggles freecamera mode.",
-                KeyCode.Insert);
+                KeyCode.Insert,
+                category: "Freecam");
 
             Block_Freecam_Movement = new("Toggle block Freecam movement",
                 "Blocks the freecam from moving when pressing the freecam-related hotkeys.",
-                KeyCode.Home);
+                KeyCode.Home,
+                category: "Freecam");
 
-            Toggle_Block_Games_Input = new("Toggle block games input",
+            Freecam_Block_Games_Input = new("Toggle block games input on Freecam mode",
                 "Blocks the games input when the the freecam is on.\n" +
                 "If you don't see a 'Block games input on Freecam' checkbox on the FreecCam panel then it's not supported for this game.",
-                KeyCode.KeypadPeriod);
+                KeyCode.KeypadPeriod,
+                category: "Freecam");
 
             Speed_Up_Movement = new("Speed up movement",
                 "Maintain this key pressed while moving the camera around to increase the freecam movement speed.",
-                KeyCode.LeftShift);
+                KeyCode.LeftShift,
+                category: "Freecam");
 
             Speed_Down_Movement = new("Speed down movement",
                 "Maintain this key pressed while moving the camera around to decrease the freecam movement speed.",
-                KeyCode.LeftAlt);
+                KeyCode.LeftAlt,
+                category: "Freecam");
 
             Forwards_1 = new("Forwards 1",
                 "Move the freecam forwards.",
-                KeyCode.W);
+                KeyCode.W,
+                category: "Freecam");
 
             Forwards_2 = new("Forwards 2",
                 "Move the freecam forwards, alt key.",
-                KeyCode.UpArrow);
+                KeyCode.UpArrow,
+                category: "Freecam");
 
             Backwards_1 = new("Backwards 1",
                 "Move the freecam backward.",
-                KeyCode.S);
+                KeyCode.S,
+                category: "Freecam");
 
             Backwards_2 = new("Backwards 2",
                 "Move the freecam backward, alt key.",
-                KeyCode.DownArrow);
+                KeyCode.DownArrow,
+                category: "Freecam");
 
             Left_1 = new("Left 1",
                 "Move the freecam to the left.",
-                KeyCode.A);
+                KeyCode.A,
+                category: "Freecam");
 
             Left_2 = new("Left 2",
                 "Move the freecam to the left, alt key.",
-                KeyCode.LeftArrow);
+                KeyCode.LeftArrow,
+                category: "Freecam");
 
             Right_1 = new("Right 1",
                 "Move the freecam to the right.",
-                KeyCode.D);
+                KeyCode.D,
+                category: "Freecam");
 
             Right_2 = new("Right 2",
                 "Move the freecam to the right, alt key.",
-                KeyCode.RightArrow);
+                KeyCode.RightArrow,
+                category: "Freecam");
 
             Up = new("Up",
                 "Move the freecam upwards.",
-                KeyCode.Space);
+                KeyCode.Space,
+                category: "Freecam");
 
             Down = new("Down",
                 "Move the freecam down.",
-                KeyCode.LeftControl);
+                KeyCode.LeftControl,
+                category: "Freecam");
 
             Tilt_Left = new("Tilt left",
                 "Tilt the camera to the left.",
-                KeyCode.Keypad1);
+                KeyCode.Keypad1,
+                category: "Freecam");
 
             Tilt_Right = new("Tilt right",
                 "Tilt the camera to the left.",
-                KeyCode.Keypad3);
+                KeyCode.Keypad3,
+                category: "Freecam");
 
             Tilt_Reset = new("Tilt reset",
                 "Resets the tilt the camera.",
-                KeyCode.Keypad2);
+                KeyCode.Keypad2,
+                category: "Freecam");
 
             Increase_FOV = new("Increase FOV",
                 "Increase the field of view of the current freecam.",
-                KeyCode.KeypadPlus);
+                KeyCode.KeypadPlus,
+                category: "Freecam");
 
             Decrease_FOV = new("Decrease FOV",
                 "Decrease the field of view of the current freecam.",
-                KeyCode.KeypadMinus);
+                KeyCode.KeypadMinus,
+                category: "Freecam");
 
             Reset_FOV = new("Reset FOV",
                 "Resets the field of view of the current freecam to the original one.",
-                KeyCode.KeypadMultiply);
+                KeyCode.KeypadMultiply,
+                category: "Freecam");
 
             Toggle_Animations = new("Toggle NPC animations",
                 "Toggle NPC animations as selected in the Animator panel.",
@@ -446,7 +474,8 @@ false,
 
             Default_Freecam = new("Default Freecam mode",
                 "Default type of freecam selected on startup (gets automatically updated with the last type of camera used).",
-                FreeCamPanel.FreeCameraType.ForcedMatrix);
+                FreeCamPanel.FreeCameraType.ForcedMatrix,
+                category: "Freecam");
 
             Custom_Components_To_Disable = new("Custom components to disable",
                 "List of custom components to disable when enabling the freecam (gets automatically updated when editing it from the freecam panel).",

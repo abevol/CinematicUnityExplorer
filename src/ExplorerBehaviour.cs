@@ -1,4 +1,5 @@
 ﻿using UnityExplorer.Config;
+using UnityExplorer.Inspectors;
 using UnityExplorer.McpBridge;
 using UnityExplorer.Plugins;
 using UnityExplorer.UI;
@@ -155,9 +156,18 @@ namespace UnityExplorer
                 UIManager.GetPanel<UnityExplorer.UI.Panels.AnimatorPanel>(UIManager.Panels.AnimatorPanel).HotkeyToggleAnimators();
             }
 
-            if (FreeCamPanel.supportedInput && IInputManager.GetKeyDown(ConfigManager.Toggle_Block_Games_Input.Value))
+            if (FreeCamPanel.supportedInput && IInputManager.GetKeyDown(ConfigManager.Freecam_Block_Games_Input.Value))
             {
                 FreeCamPanel.blockGamesInputOnFreecamToggle.isOn = !FreeCamPanel.blockGamesInputOnFreecamToggle.isOn;
+            }
+
+            if (IInputManager.GetKeyDown(ConfigManager.Block_Game_Input_Toggle.Value))
+            {
+                MouseInspector.BlockGameInput = !MouseInspector.BlockGameInput;
+                if (MouseInspector.BlockGameInput)
+                    MouseInspector.FrozenMousePosition = IInputManager.MousePosition;
+                else
+                    MouseInspector.FrozenMousePosition = null;
             }
 
             // Gamepad controls

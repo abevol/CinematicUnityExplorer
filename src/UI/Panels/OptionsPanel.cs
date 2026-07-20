@@ -21,6 +21,7 @@ namespace UnityExplorer.UI.Panels
             "Console",
             "Inspector",
             "Export",
+            "Freecam",
             "Advanced"
         };
 

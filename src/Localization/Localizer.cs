@@ -555,6 +555,7 @@ public class MyCoro
             { "CATEGORY_CONSOLE", "控制台" },
             { "CATEGORY_INSPECTOR", "检查器" },
             { "CATEGORY_EXPORT", "导出" },
+            { "CATEGORY_FREECAM", "自由相机" },
             { "CATEGORY_ADVANCED", "高级" },
             { "BADGE_RESTART", "需重启" },
             { "BADGE_ADVANCED", "高级" },
@@ -714,6 +715,9 @@ public class MyCoro
 
             { "Should UnityExplorer save log files to the disk?", "UnityExplorer 是否将日志文件保存到磁盘？" },
 
+            { "Block Game Input Toggle", "屏蔽游戏输入快捷键" },
+            { "Toggle to block all game input and freeze the mouse cursor position.", "切换以屏蔽所有游戏输入并冻结鼠标光标位置。" },
+
             { "World Mouse-Inspect Keybind", "世界模式鼠标检查快捷键" },
             { "Optional keybind to being a World-mode Mouse Inspect.", "用于开始游戏世界模式下鼠标悬停检查的快捷键。" },
 
@@ -788,7 +792,7 @@ public class MyCoro
             { "Toggles freecamera mode.", "切换自由相机模式。" },
             { "Toggle block Freecam movement", "切换锁定自由相机移动" },
             { "Blocks the freecam from moving when pressing the freecam-related hotkeys.", "按自由相机相关快捷键时阻止自由相机移动。" },
-            { "Toggle block games input", "切换锁定游戏输入" },
+            { "Toggle block games input on Freecam mode", "切换锁定自由相机模式下的游戏输入" },
             { "Blocks the games input when the the freecam is on.\nIf you don't see a 'Block games input on Freecam' checkbox on the FreecCam panel then it's not supported for this game.", "自由相机开启时阻止游戏输入。\n如果在自由相机面板上看不到'锁定游戏输入'复选框，则表示此游戏不支持该功能。" },
             { "Speed up movement", "加速移动" },
             { "Maintain this key pressed while moving the camera around to increase the freecam movement speed.", "按住此键移动相机时可以提高自由相机移动速度。" },
