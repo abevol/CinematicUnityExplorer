@@ -497,7 +497,9 @@ namespace UnityExplorer.UI.Panels
                 IEnumerable<Behaviour> comps = ourCamera.GetComponentsInChildren<Behaviour>();
                 foreach (Behaviour comp in comps)
                 {
-                    string comp_type = comp.GetActualType().ToString();
+                    System.Type actualType = comp.GetActualType();
+                    if (actualType == null) continue;
+                    string comp_type = actualType.ToString();
                     if (comp_type == "Cinemachine.CinemachineBrain" || comp_type == "Il2CppCinemachine.CinemachineBrain"){
                         comp.enabled = enable;
                         disabledCinemachine = !enable;
@@ -512,7 +514,9 @@ namespace UnityExplorer.UI.Panels
                 IEnumerable<Behaviour> comps = ourCamera.GetComponentsInChildren<Behaviour>();
                 foreach (Behaviour comp in comps)
                 {
-                    string comp_type = comp.GetActualType().ToString();
+                    System.Type actualType = comp.GetActualType();
+                    if (actualType == null) continue;
+                    string comp_type = actualType.ToString();
                     if (comp_type == "Cinemachine.CinemachineBrain" || comp_type == "Il2CppCinemachine.CinemachineBrain"){
                         GameObject.Destroy(comp);
                         break;
@@ -1124,7 +1128,9 @@ namespace UnityExplorer.UI.Panels
                 IEnumerable<Behaviour> comps = obj.GetComponents<Behaviour>();
                 foreach (Behaviour comp in comps)
                 {
-                    string comp_type = comp.GetActualType().ToString();
+                    System.Type actualType = comp.GetActualType();
+                    if (actualType == null) continue;
+                    string comp_type = actualType.ToString();
                     if (comp_type == componentsName){
                         return comp;
                     }
@@ -1780,10 +1786,13 @@ namespace UnityExplorer.UI.Panels
                 catch { }
             }
 
-            EventInfo onBeforeRenderEvent = typeof(Application).GetEvent("onBeforeRender");
-            if (onBeforeRenderEvent != null) {
-                onBeforeRenderEvent.RemoveEventHandler(null, onBeforeRenderAction);
+            try {
+                EventInfo onBeforeRenderEvent = typeof(Application).GetEvent("onBeforeRender");
+                if (onBeforeRenderEvent != null) {
+                    onBeforeRenderEvent.RemoveEventHandler(null, onBeforeRenderAction);
+                }
             }
+            catch { }
         }
 
         private void OnBeforeEvent(object arg1, Camera[] arg2)
