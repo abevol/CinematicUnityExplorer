@@ -9,20 +9,13 @@ namespace UnityExplorer.Inspectors.MouseInspectors
     {
         public static readonly List<GameObject> LastHitObjects = new();
 
-        private static GraphicRaycaster[] graphicRaycasters;
-
         private static readonly List<GameObject> currentHitObjects = new();
-
-        private static readonly List<Graphic> wasDisabledGraphics = new();
-        private static readonly List<CanvasGroup> wasDisabledCanvasGroups = new();
-        private static readonly List<GameObject> objectsAddedCastersTo = new();
 
         private const string DEFAULT_INSPECTOR_TITLE = "<b>UI Inspector</b> (press <b>ESC</b> to cancel)";
 
         public override void OnBeginMouseInspect()
         {
-            SetupUIRaycast();
-MouseInspector.Instance.inspectorLabelTitle.text = "<b>UI Inspector</b> (press <b>ESC</b> to cancel)";
+            MouseInspector.Instance.inspectorLabelTitle.text = "<b>UI Inspector</b> (press <b>ESC</b> to cancel)";
             MouseInspector.Instance.objPathLabel.text = "";
         }
 
@@ -51,24 +44,20 @@ MouseInspector.Instance.inspectorLabelTitle.text = "<b>UI Inspector</b> (press <
         {
             currentHitObjects.Clear();
 
-            PointerEventData ped = new(null)
+            foreach (Canvas canvas in RuntimeHelper.FindObjectsOfTypeAll<Canvas>())
             {
-                position = mousePos
-            };
-
-            foreach (GraphicRaycaster gr in graphicRaycasters)
-            {
-                if (!gr || !gr.canvas)
+                if (!canvas || !canvas.enabled || !canvas.gameObject.activeInHierarchy)
                     continue;
 
-                List<RaycastResult> list = new();
-                RuntimeHelper.GraphicRaycast(gr, ped, list);
-                if (list.Count > 0)
+                foreach (Graphic graphic in canvas.GetComponentsInChildren<Graphic>(true))
                 {
-                    foreach (RaycastResult hit in list)
+                    if (!graphic || !graphic.enabled || !graphic.gameObject.activeInHierarchy)
+                        continue;
+
+                    if (RectTransformUtility.RectangleContainsScreenPoint(graphic.rectTransform, mousePos, canvas.worldCamera))
                     {
-                        if (hit.gameObject)
-                            currentHitObjects.Add(hit.gameObject);
+                        if (!currentHitObjects.Contains(graphic.gameObject))
+                            currentHitObjects.Add(graphic.gameObject);
                     }
                 }
             }
@@ -79,69 +68,8 @@ MouseInspector.Instance.inspectorLabelTitle.text = "<b>UI Inspector</b> (press <
                 MouseInspector.Instance.UpdateObjectNameLabel( $"No UI objects under mouse.");
         }
 
-        private static void SetupUIRaycast()
-        {
-            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(Canvas)))
-            {
-                Canvas canvas = obj.TryCast<Canvas>();
-                if (!canvas || !canvas.enabled || !canvas.gameObject.activeInHierarchy)
-                    continue;
-                if (!canvas.GetComponent<GraphicRaycaster>())
-                {
-                    canvas.gameObject.AddComponent<GraphicRaycaster>();
-                    //ExplorerCore.Log("Added raycaster to " + canvas.name);
-                    objectsAddedCastersTo.Add(canvas.gameObject);
-                }
-            }
-
-            // recache Graphic Raycasters each time we start
-            UnityEngine.Object[] casters = RuntimeHelper.FindObjectsOfTypeAll(typeof(GraphicRaycaster));
-            graphicRaycasters = new GraphicRaycaster[casters.Length];
-            for (int i = 0; i < casters.Length; i++)
-            {
-                graphicRaycasters[i] = casters[i].TryCast<GraphicRaycaster>();
-            }
-
-            // enable raycastTarget on Graphics
-            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(Graphic)))
-            {
-                Graphic graphic = obj.TryCast<Graphic>();
-                if (!graphic || !graphic.enabled || graphic.raycastTarget || !graphic.gameObject.activeInHierarchy)
-                    continue;
-                graphic.raycastTarget = true;
-                //ExplorerCore.Log("Enabled raycastTarget on " + graphic.name);
-                wasDisabledGraphics.Add(graphic);
-            }
-
-            // enable blocksRaycasts on CanvasGroups
-            foreach (UnityEngine.Object obj in RuntimeHelper.FindObjectsOfTypeAll(typeof(CanvasGroup)))
-            {
-                CanvasGroup canvas = obj.TryCast<CanvasGroup>();
-                if (!canvas || !canvas.gameObject.activeInHierarchy || canvas.blocksRaycasts)
-                    continue;
-                canvas.blocksRaycasts = true;
-                //ExplorerCore.Log("Enabled raycasts on " + canvas.name);
-                wasDisabledCanvasGroups.Add(canvas);
-            }
-        }
-
         public override void OnEndInspect()
         {
-            foreach (GameObject obj in objectsAddedCastersTo)
-            {
-                if (obj.GetComponent<GraphicRaycaster>() is GraphicRaycaster raycaster)
-                    GameObject.Destroy(raycaster);
-            }
-
-            foreach (Graphic graphic in wasDisabledGraphics)
-                graphic.raycastTarget = false;
-
-            foreach (CanvasGroup canvas in wasDisabledCanvasGroups)
-                canvas.blocksRaycasts = false;
-
-            objectsAddedCastersTo.Clear();
-            wasDisabledCanvasGroups.Clear();
-            wasDisabledGraphics.Clear();
         }
     }
 }

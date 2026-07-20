@@ -7,6 +7,7 @@ using System.Reflection;
 using HarmonyLib;
 using UnityEngine;
 using UnityExplorer;
+using UnityExplorer.Inspectors;
 using UnityExplorer.UI.Panels;
 
 #if UNHOLLOWER
@@ -834,27 +835,32 @@ namespace UniverseLib.Input
             {
                 try
                 {
-                    if (_vector2XProp != null && _vector2YProp != null)
+                    // __result is a boxed Vector2 value, unbox it directly
+                    Vector2 vec = (Vector2)__result;
+                    _vector2Values[path] = vec;
+
+                    if (_isEnabled && (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()))
                     {
-                        float x = (float)_vector2XProp.GetValue(__result, BindingFlags.Default, null, null, null);
-                        float y = (float)_vector2YProp.GetValue(__result, BindingFlags.Default, null, null, null);
-
-#if IGAMEPAD_DEBUG
-                        ExplorerCore.LogWarning($"[IGamepadInputInterceptor] Postfix_Vector2ReadValue: {path} = ({x}, {y})");
-#endif
-                        _vector2Values[path] = new Vector2(x, y);
-
-                        if (_isEnabled && FreeCamPanel.ShouldOverrideInput() && _vector2XProp.CanWrite && _vector2YProp.CanWrite)
+                        // Mouse position: freeze at captured position during inspector mode
+                        if (MouseInspector.FrozenMousePosition.HasValue && path.Contains("/mouse/position"))
                         {
-                            _vector2XProp.SetValue(__result, 0f, BindingFlags.Default, null, null, null);
-                            _vector2YProp.SetValue(__result, 0f, BindingFlags.Default, null, null, null);
+                            var frozen = MouseInspector.FrozenMousePosition.Value;
+                            Vector2 frozenVec = new Vector2(frozen.x, frozen.y);
+                            __result = frozenVec;
+                            _vector2Values[path] = frozenVec;
+                        }
+                        // Mouse delta / gamepad sticks: zero out
+                        else
+                        {
+                            __result = Vector2.zero;
+                            _vector2Values[path] = Vector2.zero;
                         }
                     }
                 }
 #if IGAMEPAD_DEBUG
                 catch (Exception ex)
                 {
-                    ExplorerCore.LogWarning($"[IGamepadInputInterceptor] Error in Postfix_Vector2ReadValue: {ex.Message}");
+                    ExplorerCore.LogWarning($"[IGamepadInputInterceptor] Error in Postfix_Vector2ReadValue: {path} - {ex.Message}");
                 }
 #else
                 catch
@@ -957,7 +963,7 @@ namespace UniverseLib.Input
 #endif
                 _axisValues[adjustedPath] = __result;
                 // Block input if interception is enabled
-                if (_isEnabled && FreeCamPanel.ShouldOverrideInput())
+                if (_isEnabled && (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()))
                 {
 #if IGAMEPAD_DEBUG
                     ExplorerCore.LogWarning($"[IGamepadInputInterceptor] BLOCKING Postfix_AxisReadValue: {adjustedPath} (was {__result}, now 0f)");

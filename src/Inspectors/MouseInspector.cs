@@ -23,6 +23,28 @@ namespace UnityExplorer.Inspectors
 
         public static bool Inspecting { get; set; }
         public static MouseInspectMode Mode { get; set; }
+        public static Vector3? FrozenMousePosition { get; set; }
+
+        /// <summary>
+        /// User-controlled persistent toggle (higher priority than Inspecting).
+        /// When true, game input is blocked even after leaving inspect mode.
+        /// </summary>
+        public static bool BlockGameInput { get; set; }
+
+        /// <summary>
+        /// Combined check: the toggle has higher priority than the temporary inspect state.
+        /// </summary>
+        public static bool ShouldOverrideInput() => BlockGameInput || Inspecting;
+
+        /// <summary>
+        /// Mouse position should freeze when either the toggle or inspect mode is active.
+        /// </summary>
+        public static bool ShouldFreezeMouse() => BlockGameInput || Inspecting;
+
+        /// <summary>
+        /// Input interception is active (either freecam override input, or our own).
+        /// </summary>
+        public static bool IsInputIntercepted() => FreeCamPanel.ShouldOverrideInput() || ShouldOverrideInput();
 
         public MouseInspectorBase CurrentInspector => Mode switch
         {
@@ -73,6 +95,7 @@ internal Text inspectorLabelTitle;
         {
             Mode = mode;
             Inspecting = true;
+            FrozenMousePosition = IInputManager.MousePosition;
 
             CurrentInspector.OnBeginMouseInspect();
 
@@ -99,6 +122,7 @@ internal Text inspectorLabelTitle;
             CurrentInspector.OnEndInspect();
             ClearHitData();
             Inspecting = false;
+            FrozenMousePosition = null;
 
             UIManager.NavBarRect.gameObject.SetActive(true);
             UIManager.UiBase.Panels.PanelHolder.SetActive(true);

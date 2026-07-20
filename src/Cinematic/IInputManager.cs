@@ -4,6 +4,7 @@ using HarmonyLib;
 using UnityEngine;
 using UnityExplorer;
 using UnityExplorer.UI;
+using UnityExplorer.Inspectors;
 using UnityExplorer.UI.Panels;
 using UniverseLib.Input;
 #if UNHOLLOWER
@@ -101,7 +102,25 @@ namespace UniverseLib.Input
         // We won't mock this as it made it impossible to drag the mod panels across the screen in some games for some reason.
         // It might affect some games that use custom classes to control the camera, but those would still probably need to be
         // manually disabled because of the camera position control override. Should try it out with more games.
-        public static Vector3 MousePosition => (Vector3)InputManager.MousePosition;
+        //
+        // For mouse inspect mode we still need the real position for the inspector even though the game gets a frozen one.
+        public static Vector3 MousePosition {
+            get {
+                switch (currentInputType)
+                {
+                    case InputType.Legacy:
+                        _ = InputManager.MousePosition;
+                        return ILegacyInput.realMousePosition;
+                    case InputType.InputSystem:
+                        // For new InputSystem, the mouse position is read via Vector2Control.ReadValue()
+                        // which is patched in IGamepadInputInterceptor to return frozen when inspecting.
+                        return (Vector3)InputManager.MousePosition;
+                    case InputType.None:
+                    default:
+                        return (Vector3)InputManager.MousePosition;
+                }
+            }
+        }
     }
 
     public static class ILegacyInput {
@@ -111,6 +130,8 @@ namespace UniverseLib.Input
 
         public static Dictionary<int, bool> getMouseButton = new Dictionary<int, bool>();
         public static Dictionary<int, bool> getMouseButtonDown = new Dictionary<int, bool>();
+        public static Dictionary<string, float> getAxisDict = new Dictionary<string, float>();
+        public static Vector3 realMousePosition;
         
         // Wrapped methods
 
@@ -254,6 +275,42 @@ namespace UniverseLib.Input
                     postfix: new(AccessTools.Method(typeof(ILegacyInput), nameof(OverrideMouseButtonDown))));
             }
             catch {  }
+
+            try
+            {
+                MethodInfo getAxisTarget = t_Input.GetMethod("GetAxis", new Type[] {typeof(string)});
+#if CPP
+                if (IL2CPPUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(getAxisTarget) == null)
+                    throw new Exception();
+#endif
+                ExplorerCore.Harmony.Patch(getAxisTarget,
+                    postfix: new(AccessTools.Method(typeof(ILegacyInput), nameof(OverrideGetAxis))));
+            }
+            catch { }
+
+            try
+            {
+                MethodInfo getAxisRawTarget = t_Input.GetMethod("GetAxisRaw", new Type[] {typeof(string)});
+#if CPP
+                if (IL2CPPUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(getAxisRawTarget) == null)
+                    throw new Exception();
+#endif
+                ExplorerCore.Harmony.Patch(getAxisRawTarget,
+                    postfix: new(AccessTools.Method(typeof(ILegacyInput), nameof(OverrideGetAxisRaw))));
+            }
+            catch { }
+
+            try
+            {
+                MethodInfo mousePosTarget = t_Input.GetMethod("get_mousePosition", Type.EmptyTypes);
+#if CPP
+                if (IL2CPPUtils.GetIl2CppMethodInfoPointerFieldForGeneratedMethod(mousePosTarget) == null)
+                    throw new Exception();
+#endif
+                ExplorerCore.Harmony.Patch(mousePosTarget,
+                    postfix: new(AccessTools.Method(typeof(ILegacyInput), nameof(OverrideMousePosition))));
+            }
+            catch { }
         }
 
         // Postfix functions
@@ -264,7 +321,7 @@ namespace UniverseLib.Input
             try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
             catch { return; }
             getKeyDict[thisKeyCode] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -274,7 +331,7 @@ namespace UniverseLib.Input
             if (key == KeyCode.None) return;
 
             getKeyDict[key] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -285,7 +342,7 @@ namespace UniverseLib.Input
             try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
             catch { return; }
             getKeyDownDict[thisKeyCode] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -295,7 +352,7 @@ namespace UniverseLib.Input
             if (key == KeyCode.None) return;
 
             getKeyDownDict[key] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -306,7 +363,7 @@ namespace UniverseLib.Input
             try { thisKeyCode = (KeyCode)Enum.Parse(typeof(KeyCode), name); }
             catch { return; }
             getKeyUpDict[thisKeyCode] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -316,7 +373,7 @@ namespace UniverseLib.Input
             if (key == KeyCode.None) return;
 
             getKeyUpDict[key] = __result;
-            if (FreeCamPanel.ShouldOverrideInput()){
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput()){
                 __result = false;
             }
         }
@@ -326,7 +383,8 @@ namespace UniverseLib.Input
             getMouseButton[button] = __result;
             // Since CinematicUnityExplorer uses Unity's native UI for its menu, we can't switch off the mouse interaction with it on this wrapper.
             // Therefore, if we still want to interact with the Unity Explorer menu we would need to let the button action pass through when it's open.
-            if (FreeCamPanel.ShouldOverrideInput() && !(button == 0 && UIManager.ShowMenu)){
+            // In inspector mode, always block all mouse buttons - the inspector reads from the stored dictionary.
+            if (MouseInspector.Inspecting || MouseInspector.BlockGameInput || (FreeCamPanel.ShouldOverrideInput() && !(button == 0 && UIManager.ShowMenu))){
                 __result = false;
             }
         }
@@ -336,8 +394,36 @@ namespace UniverseLib.Input
             getMouseButtonDown[button] = __result;
             // Since CinematicUnityExplorer uses Unity's native UI for its menu, we can't switch off the mouse interaction with it on this wrapper.
             // Therefore, if we still want to interact with the Unity Explorer menu we would need to let the button action pass through when it's open.
-            if (FreeCamPanel.ShouldOverrideInput() && !(button == 0 && UIManager.ShowMenu)){
+            // In inspector mode, always block all mouse buttons - the inspector reads from the stored dictionary.
+            if (MouseInspector.Inspecting || MouseInspector.BlockGameInput || (FreeCamPanel.ShouldOverrideInput() && !(button == 0 && UIManager.ShowMenu))){
                 __result = false;
+            }
+        }
+
+        public static void OverrideGetAxis(ref float __result, ref string axisName)
+        {
+            getAxisDict[axisName] = __result;
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput())
+            {
+                __result = 0f;
+            }
+        }
+
+        public static void OverrideGetAxisRaw(ref float __result, ref string axisName)
+        {
+            getAxisDict[axisName] = __result;
+            if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput())
+            {
+                __result = 0f;
+            }
+        }
+
+        public static void OverrideMousePosition(ref Vector3 __result)
+        {
+            realMousePosition = __result;
+            if (MouseInspector.FrozenMousePosition.HasValue)
+            {
+                __result = MouseInspector.FrozenMousePosition.Value;
             }
         }
     }
@@ -576,7 +662,7 @@ namespace UniverseLib.Input
                 
                 dict[key] = __result;
 
-                if (FreeCamPanel.ShouldOverrideInput())
+                if (FreeCamPanel.ShouldOverrideInput() || MouseInspector.ShouldOverrideInput())
                 {
                     __result = false;
                 }
