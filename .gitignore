@@ -356,3 +356,7 @@ build-bep5mono.ps1
 
 # AI Agents cache files
 .codegraph/
+
+# UnityEditorPackage build outputs (rebuilt by build.ps1 -Variant Editor)
+UnityEditorPackage/Runtime/*.dll
+UnityEditorPackage/Runtime/*.pdb
